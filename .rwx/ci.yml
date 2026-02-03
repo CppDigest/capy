@@ -46,7 +46,6 @@ tasks:
     with:
       repository: https://github.com/timon0305/capy.git
       ref: ${{ init.commit-sha }}
-      github-token: ${{ vaults.default.github-apps.cppdigest-test.token }}
       path: capy-root
     filter:
       - .github/workflows/**
@@ -63,7 +62,6 @@ tasks:
       ref: develop
       path: boost-source-dev
       submodules: true
-      github-token: ${{ vaults.default.github-apps.cppdigest-test.token }}
     filter:
       - .github/workflows/ci.yml
 
@@ -74,7 +72,6 @@ tasks:
       ref: master
       path: boost-source-master
       submodules: true
-      github-token: ${{ vaults.default.github-apps.cppdigest-test.token }}
     filter:
       - .github/workflows/ci.yml
 
@@ -103,15 +100,11 @@ tasks:
 
   - key: install-gcc-15
     run: |
-      whoami
-      id
-      ls -la /var/lib/apt/lists/ || echo "Directory doesn't exist"
-      mkdir -p /var/lib/apt/lists/partial || echo "Cannot create directory"
-      apt-get update
-      apt-get install -y software-properties-common
-      add-apt-repository -y ppa:ubuntu-toolchain-r/test
-      apt-get update
-      apt-get install -y gcc-15 g++-15 build-essential git cmake
+      sudo apt-get update
+      sudo apt-get install -y software-properties-common
+      sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+      sudo apt-get update
+      sudo apt-get install -y gcc-15 g++-15 build-essential git cmake
     filter:
       - .github/workflows/ci.yml
 
@@ -156,7 +149,7 @@ tasks:
       cp -r capy-root boost-source-dev/libs/capy
 
       # Disable ASLR for sanitizers
-      sysctl vm.mmap_rnd_bits=28 || true
+      sudo sysctl vm.mmap_rnd_bits=28 || true
 
       # Build with B2 (with sanitizers)
       cd boost-source-dev
@@ -180,8 +173,8 @@ tasks:
 
   - key: install-gcc-12
     run: |
-      apt-get update
-      apt-get install -y gcc-12 g++-12 build-essential git cmake
+      sudo apt-get update
+      sudo apt-get install -y gcc-12 g++-12 build-essential git cmake
     filter:
       - .github/workflows/ci.yml
 
@@ -210,8 +203,8 @@ tasks:
 
   - key: install-gcc-13-coverage
     run: |
-      apt-get update
-      apt-get install -y gcc-13 g++-13 build-essential git cmake lcov wget unzip
+      sudo apt-get update
+      sudo apt-get install -y gcc-13 g++-13 build-essential git cmake lcov wget unzip
     filter:
       - .github/workflows/ci.yml
 
@@ -250,12 +243,12 @@ tasks:
 
   - key: install-clang-20
     run: |
-      apt-get update
-      apt-get install -y wget gnupg software-properties-common
-      wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
-      add-apt-repository "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main"
-      apt-get update
-      apt-get install -y clang-20 build-essential git cmake
+      sudo apt-get update
+      sudo apt-get install -y wget gnupg software-properties-common
+      wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+      sudo add-apt-repository "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main"
+      sudo apt-get update
+      sudo apt-get install -y clang-20 build-essential git cmake
     filter:
       - .github/workflows/ci.yml
 
@@ -300,7 +293,7 @@ tasks:
       cp -r capy-root boost-source-dev/libs/capy
 
       # Disable ASLR for sanitizers
-      sysctl vm.mmap_rnd_bits=28 || true
+      sudo sysctl vm.mmap_rnd_bits=28 || true
 
       # Build with B2 (with sanitizers)
       cd boost-source-dev
@@ -324,8 +317,8 @@ tasks:
 
   - key: install-clang-17
     run: |
-      apt-get update
-      apt-get install -y clang-17 build-essential git cmake
+      sudo apt-get update
+      sudo apt-get install -y clang-17 build-essential git cmake
     filter:
       - .github/workflows/ci.yml
 
@@ -354,12 +347,12 @@ tasks:
 
   - key: install-clang-20-multilib
     run: |
-      apt-get update
-      apt-get install -y wget gnupg software-properties-common
-      wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
-      add-apt-repository "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main"
-      apt-get update
-      apt-get install -y clang-20 build-essential git cmake gcc-multilib g++-multilib
+      sudo apt-get update
+      sudo apt-get install -y wget gnupg software-properties-common
+      wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+      sudo add-apt-repository "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main"
+      sudo apt-get update
+      sudo apt-get install -y clang-20 build-essential git cmake gcc-multilib g++-multilib
     filter:
       - .github/workflows/ci.yml
 
