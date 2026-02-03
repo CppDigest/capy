@@ -57,16 +57,16 @@ tasks:
 
   - key: clone-boost-develop
     run: |
-      echo "Starting Boost develop clone..."
-      git clone --depth 1 --branch develop --recurse-submodules --shallow-submodules https://github.com/boostorg/boost.git boost-source-dev || (echo "Clone failed!" && exit 1)
+      echo "Starting Boost develop clone (without submodules)..."
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev || (echo "Clone failed!" && exit 1)
       echo "Clone completed. Checking directory..."
       ls -la boost-source-dev | head -20
       echo "Boost develop cloned successfully"
 
   - key: clone-boost-master
     run: |
-      echo "Starting Boost master clone..."
-      git clone --depth 1 --branch master --recurse-submodules --shallow-submodules https://github.com/boostorg/boost.git boost-source-master || (echo "Clone failed!" && exit 1)
+      echo "Starting Boost master clone (without submodules)..."
+      git clone --depth 1 --branch master https://github.com/boostorg/boost.git boost-source-master || (echo "Clone failed!" && exit 1)
       echo "Clone completed. Checking directory..."
       ls -la boost-source-master | head -20
       echo "Boost master cloned successfully"
