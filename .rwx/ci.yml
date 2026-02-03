@@ -34,7 +34,7 @@ on:
 # Base configuration applied to all tasks
 base:
   image: ubuntu:24.04
-  config: rwx/base 1.0.0
+  user: root
 
 tasks:
   # ============================================================================
