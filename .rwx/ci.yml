@@ -62,8 +62,6 @@ tasks:
       echo "Clone completed. Checking directory..."
       ls -la boost-source-dev | head -20
       echo "Boost develop cloned successfully"
-    filter:
-      - .github/workflows/ci.yml
 
   - key: clone-boost-master
     run: |
@@ -72,8 +70,6 @@ tasks:
       echo "Clone completed. Checking directory..."
       ls -la boost-source-master | head -20
       echo "Boost master cloned successfully"
-    filter:
-      - .github/workflows/ci.yml
 
   # ============================================================================
   # Windows and macOS Builds
@@ -105,8 +101,6 @@ tasks:
       sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
       sudo apt-get update
       sudo apt-get install -y gcc-14 g++-14 build-essential git cmake
-    filter:
-      - .github/workflows/ci.yml
 
   - key: build-gcc-15
     use: [clone-capy, clone-boost-develop, install-gcc-15]
@@ -181,8 +175,6 @@ tasks:
     run: |
       sudo apt-get update
       sudo apt-get install -y gcc-12 g++-12 build-essential git cmake
-    filter:
-      - .github/workflows/ci.yml
 
   - key: build-gcc-12
     use: [clone-capy, clone-boost-develop, install-gcc-12]
@@ -211,8 +203,6 @@ tasks:
     run: |
       sudo apt-get update
       sudo apt-get install -y gcc-13 g++-13 build-essential git cmake lcov wget unzip
-    filter:
-      - .github/workflows/ci.yml
 
   - key: build-gcc-13-coverage
     use: [clone-capy, clone-boost-develop, install-gcc-13-coverage]
@@ -255,8 +245,6 @@ tasks:
       sudo add-apt-repository "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main"
       sudo apt-get update
       sudo apt-get install -y clang-20 build-essential git cmake
-    filter:
-      - .github/workflows/ci.yml
 
   - key: build-clang-20
     use: [clone-capy, clone-boost-develop, install-clang-20]
@@ -325,8 +313,6 @@ tasks:
     run: |
       sudo apt-get update
       sudo apt-get install -y clang-17 build-essential git cmake
-    filter:
-      - .github/workflows/ci.yml
 
   - key: build-clang-17
     use: [clone-capy, clone-boost-develop, install-clang-17]
@@ -359,8 +345,6 @@ tasks:
       sudo add-apt-repository "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main"
       sudo apt-get update
       sudo apt-get install -y clang-20 build-essential git cmake gcc-multilib g++-multilib
-    filter:
-      - .github/workflows/ci.yml
 
   - key: build-clang-20-x86
     use: [clone-capy, clone-boost-develop, install-clang-20-multilib]
