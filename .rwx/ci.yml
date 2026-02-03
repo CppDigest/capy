@@ -97,9 +97,17 @@ tasks:
       # Clone Boost directly here since 'use' isn't merging properly
       echo "Cloning Boost develop..."
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned, initializing build tools submodule..."
+      echo "Boost cloned, initializing required submodules..."
       cd boost-source-dev
-      git submodule update --init --depth 1 tools/build tools/boostdep
+      git submodule update --init --depth 1 \
+        tools/build \
+        tools/boostdep \
+        tools/boost_install \
+        libs/config \
+        libs/assert \
+        libs/throw_exception \
+        libs/core \
+        libs/static_assert
       cd ..
 
       # Ensure libs directory exists and patch Boost
@@ -137,9 +145,17 @@ tasks:
       # Clone Boost directly here
       echo "Cloning Boost develop..."
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned, initializing build tools submodule..."
+      echo "Boost cloned, initializing required submodules..."
       cd boost-source-dev
-      git submodule update --init --depth 1 tools/build tools/boostdep
+      git submodule update --init --depth 1 \
+        tools/build \
+        tools/boostdep \
+        tools/boost_install \
+        libs/config \
+        libs/assert \
+        libs/throw_exception \
+        libs/core \
+        libs/static_assert
       cd ..
 
       # Ensure libs directory exists and patch Boost
@@ -178,9 +194,17 @@ tasks:
       # Clone Boost directly here
       echo "Cloning Boost develop..."
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned, initializing build tools submodule..."
+      echo "Boost cloned, initializing required submodules..."
       cd boost-source-dev
-      git submodule update --init --depth 1 tools/build tools/boostdep
+      git submodule update --init --depth 1 \
+        tools/build \
+        tools/boostdep \
+        tools/boost_install \
+        libs/config \
+        libs/assert \
+        libs/throw_exception \
+        libs/core \
+        libs/static_assert
       cd ..
 
       # Ensure libs directory exists and patch Boost
@@ -212,9 +236,17 @@ tasks:
       # Clone Boost directly here
       echo "Cloning Boost develop..."
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned, initializing build tools submodule..."
+      echo "Boost cloned, initializing required submodules..."
       cd boost-source-dev
-      git submodule update --init --depth 1 tools/build tools/boostdep
+      git submodule update --init --depth 1 \
+        tools/build \
+        tools/boostdep \
+        tools/boost_install \
+        libs/config \
+        libs/assert \
+        libs/throw_exception \
+        libs/core \
+        libs/static_assert
       cd ..
 
       # Ensure libs directory exists and patch Boost
@@ -262,9 +294,17 @@ tasks:
       # Clone Boost directly here
       echo "Cloning Boost develop..."
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned, initializing build tools submodule..."
+      echo "Boost cloned, initializing required submodules..."
       cd boost-source-dev
-      git submodule update --init --depth 1 tools/build tools/boostdep
+      git submodule update --init --depth 1 \
+        tools/build \
+        tools/boostdep \
+        tools/boost_install \
+        libs/config \
+        libs/assert \
+        libs/throw_exception \
+        libs/core \
+        libs/static_assert
       cd ..
 
       # Ensure libs directory exists and patch Boost
@@ -301,9 +341,17 @@ tasks:
       # Clone Boost directly here
       echo "Cloning Boost develop..."
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned, initializing build tools submodule..."
+      echo "Boost cloned, initializing required submodules..."
       cd boost-source-dev
-      git submodule update --init --depth 1 tools/build tools/boostdep
+      git submodule update --init --depth 1 \
+        tools/build \
+        tools/boostdep \
+        tools/boost_install \
+        libs/config \
+        libs/assert \
+        libs/throw_exception \
+        libs/core \
+        libs/static_assert
       cd ..
 
       # Ensure libs directory exists and patch Boost
@@ -342,9 +390,17 @@ tasks:
       # Clone Boost directly here
       echo "Cloning Boost develop..."
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned, initializing build tools submodule..."
+      echo "Boost cloned, initializing required submodules..."
       cd boost-source-dev
-      git submodule update --init --depth 1 tools/build tools/boostdep
+      git submodule update --init --depth 1 \
+        tools/build \
+        tools/boostdep \
+        tools/boost_install \
+        libs/config \
+        libs/assert \
+        libs/throw_exception \
+        libs/core \
+        libs/static_assert
       cd ..
 
       # Ensure libs directory exists and patch Boost
@@ -380,9 +436,17 @@ tasks:
       # Clone Boost directly here
       echo "Cloning Boost develop..."
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned, initializing build tools submodule..."
+      echo "Boost cloned, initializing required submodules..."
       cd boost-source-dev
-      git submodule update --init --depth 1 tools/build tools/boostdep
+      git submodule update --init --depth 1 \
+        tools/build \
+        tools/boostdep \
+        tools/boost_install \
+        libs/config \
+        libs/assert \
+        libs/throw_exception \
+        libs/core \
+        libs/static_assert
       cd ..
 
       # Ensure libs directory exists and patch Boost
