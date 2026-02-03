@@ -42,11 +42,11 @@ tasks:
   # ============================================================================
 
   - key: clone-capy
-    call: git/clone 2.0.0
-    with:
-      repository: https://github.com/timon0305/capy.git
-      ref: ${{ init.commit-sha }}
-      path: capy-root
+    run: |
+      git clone --depth 1 https://github.com/timon0305/capy.git capy-root
+      cd capy-root
+      git fetch origin ${{ init.commit-sha }}
+      git checkout ${{ init.commit-sha }}
     filter:
       - .github/workflows/**
       - include/**
@@ -56,22 +56,14 @@ tasks:
       - Jamfile
 
   - key: clone-boost-develop
-    call: git/clone 2.0.0
-    with:
-      repository: https://github.com/boostorg/boost.git
-      ref: develop
-      path: boost-source-dev
-      submodules: true
+    run: |
+      git clone --depth 1 --branch develop --recurse-submodules --shallow-submodules https://github.com/boostorg/boost.git boost-source-dev
     filter:
       - .github/workflows/ci.yml
 
   - key: clone-boost-master
-    call: git/clone 2.0.0
-    with:
-      repository: https://github.com/boostorg/boost.git
-      ref: master
-      path: boost-source-master
-      submodules: true
+    run: |
+      git clone --depth 1 --branch master --recurse-submodules --shallow-submodules https://github.com/boostorg/boost.git boost-source-master
     filter:
       - .github/workflows/ci.yml
 
