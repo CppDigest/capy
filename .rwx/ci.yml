@@ -55,6 +55,49 @@ tasks:
       - CMakeLists.txt
       - Jamfile
 
+  # Clone and prepare full Boost tree with capy integrated for B2 builds
+  - key: setup-boost-tree
+    use: [clone-capy]
+    run: |
+      # Install Python for boostdep
+      sudo apt-get update
+      sudo apt-get install -y python3 python-is-python3
+
+      # Clone Boost (develop branch to match GitHub Actions default)
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      cd boost-source
+
+      # Initialize essential build tools and boostdep for dependency scanning
+      git submodule update --init --depth 1 \
+        tools/build \
+        tools/boostdep \
+        tools/boost_install
+
+      # Use boostdep to scan and initialize all dependencies for capy
+      cd ..
+      python3 boost-source/tools/boostdep/depinst/depinst.py \
+        --git_args "--depth 1" \
+        --scan capy-root \
+        boost-source
+
+      # Remove the placeholder capy module from boost-source
+      rm -rf boost-source/libs/capy || true
+
+      # Copy boost-source to boost-root (working tree)
+      cp -rL boost-source boost-root
+
+      # Patch boost-root with the actual capy being tested
+      cp -r capy-root boost-root/libs/capy
+
+      # Bootstrap B2 build system
+      cd boost-root
+      chmod +x bootstrap.sh
+      ./bootstrap.sh --with-toolset=gcc
+
+      echo "Boost tree prepared with capy at boost-root/libs/capy"
+    filter:
+      - capy-root/**
+
   # ============================================================================
   # Windows and macOS Builds
   # ============================================================================
@@ -86,10 +129,24 @@ tasks:
       sudo apt-get update
       sudo apt-get install -y gcc-14 g++-14 build-essential git cmake
 
-  - key: build-gcc-15
+  # GCC 15: All 3 build methods (B2 + CMake standalone + CMake from boost-root)
+  - key: build-gcc-15-b2
+    use: [setup-boost-tree, install-gcc-15]
+    run: |
+      cd boost-root
+      ./b2 \
+        toolset=gcc-14 \
+        cxxstd=20 \
+        variant=release \
+        address-model=64 \
+        link=shared \
+        libs/capy/test
+    filter:
+      - capy-root/**
+
+  - key: build-gcc-15-cmake-standalone
     use: [clone-capy, install-gcc-15]
     run: |
-      # Build with CMake (standalone, no Boost clone needed)
       cd capy-root
       cmake -B __build__ \
         -DCMAKE_BUILD_TYPE=Release \
@@ -101,23 +158,37 @@ tasks:
     filter:
       - capy-root/**
 
+  - key: build-gcc-15-cmake-boost-tree
+    use: [setup-boost-tree, install-gcc-15]
+    run: |
+      cd boost-root
+      cmake -B __build__ \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_CXX_STANDARD=20 \
+        -DCMAKE_CXX_COMPILER=g++-14 \
+        -DCMAKE_C_COMPILER=gcc-14
+      cmake --build __build__ --target boost_capy_tests
+      ctest --test-dir __build__
+    filter:
+      - capy-root/**
+
+  # GCC 15 asan+ubsan: B2 build only (no build-cmake flag in GitHub Actions)
   - key: build-gcc-15-asan-ubsan
-    use: [clone-capy, install-gcc-15]
+    use: [setup-boost-tree, install-gcc-15]
     run: |
       # Disable ASLR for sanitizers
       sudo sysctl vm.mmap_rnd_bits=28 || true
 
-      # Build with CMake (standalone, no Boost clone needed)
-      cd capy-root
-      cmake -B __build__ \
-        -DCMAKE_BUILD_TYPE=Debug \
-        -DCMAKE_CXX_STANDARD=20 \
-        -DCMAKE_CXX_COMPILER=g++-14 \
-        -DCMAKE_C_COMPILER=gcc-14 \
-        -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -fsanitize=pointer-subtract" \
-        -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address -fsanitize=undefined"
-      cmake --build __build__ --target boost_capy_tests
-      ctest --test-dir __build__
+      cd boost-root
+      ./b2 \
+        toolset=gcc-14 \
+        cxxstd=20 \
+        variant=debug \
+        address-model=64 \
+        link=shared \
+        cxxflags="-fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -fsanitize=pointer-subtract" \
+        linkflags="-fsanitize=address -fsanitize=undefined" \
+        libs/capy/test
     filter:
       - capy-root/**
     env:
@@ -128,38 +199,18 @@ tasks:
       sudo apt-get update
       sudo apt-get install -y gcc-12 g++-12 build-essential git cmake
 
+  # GCC 12: B2 build only
   - key: build-gcc-12
-    use: [clone-capy, install-gcc-12]
+    use: [setup-boost-tree, install-gcc-12]
     run: |
-      # Clone Boost directly here
-      echo "Cloning Boost develop..."
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned, initializing required submodules..."
-      cd boost-source-dev
-      git submodule update --init --depth 1 \
-        tools/build \
-        tools/boostdep \
-        tools/boost_install \
-        libs/config \
-        libs/assert \
-        libs/throw_exception \
-        libs/core \
-        libs/static_assert
-      cd ..
-
-      # Ensure libs directory exists and patch Boost
-      mkdir -p boost-source-dev/libs
-      cp -r capy-root boost-source-dev/libs/capy
-
-      # Build with CMake (B2 requires full Boost repository)
-      cd capy-root
-      cmake -B __build__ \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_CXX_STANDARD=20 \
-        -DCMAKE_CXX_COMPILER=g++-12 \
-        -DCMAKE_C_COMPILER=gcc-12
-      cmake --build __build__ --target boost_capy_tests
-      ctest --test-dir __build__
+      cd boost-root
+      ./b2 \
+        toolset=gcc-12 \
+        cxxstd=20 \
+        variant=release \
+        address-model=64 \
+        link=shared \
+        libs/capy/test
     filter:
       - capy-root/**
 
@@ -168,30 +219,10 @@ tasks:
       sudo apt-get update
       sudo apt-get install -y gcc-13 g++-13 build-essential git cmake lcov wget unzip
 
+  # GCC 13 coverage: CMake build only (coverage flag disables B2 in GitHub Actions)
   - key: build-gcc-13-coverage
     use: [clone-capy, install-gcc-13-coverage]
     run: |
-      # Clone Boost directly here
-      echo "Cloning Boost develop..."
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned, initializing required submodules..."
-      cd boost-source-dev
-      git submodule update --init --depth 1 \
-        tools/build \
-        tools/boostdep \
-        tools/boost_install \
-        libs/config \
-        libs/assert \
-        libs/throw_exception \
-        libs/core \
-        libs/static_assert
-      cd ..
-
-      # Ensure libs directory exists and patch Boost
-      mkdir -p boost-source-dev/libs
-      cp -r capy-root boost-source-dev/libs/capy
-
-      # Build with CMake (coverage enabled)
       cd capy-root
       cmake -B __build__ \
         -DCMAKE_BUILD_TYPE=Debug \
@@ -225,30 +256,24 @@ tasks:
       sudo apt-get update
       sudo apt-get install -y clang-20 build-essential git cmake
 
-  - key: build-clang-20
+  # Clang 20: All 3 build methods (B2 + CMake standalone + CMake from boost-root)
+  - key: build-clang-20-b2
+    use: [setup-boost-tree, install-clang-20]
+    run: |
+      cd boost-root
+      ./b2 \
+        toolset=clang-20 \
+        cxxstd=20,23 \
+        variant=release \
+        address-model=64 \
+        link=shared \
+        libs/capy/test
+    filter:
+      - capy-root/**
+
+  - key: build-clang-20-cmake-standalone
     use: [clone-capy, install-clang-20]
     run: |
-      # Clone Boost directly here
-      echo "Cloning Boost develop..."
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned, initializing required submodules..."
-      cd boost-source-dev
-      git submodule update --init --depth 1 \
-        tools/build \
-        tools/boostdep \
-        tools/boost_install \
-        libs/config \
-        libs/assert \
-        libs/throw_exception \
-        libs/core \
-        libs/static_assert
-      cd ..
-
-      # Ensure libs directory exists and patch Boost
-      mkdir -p boost-source-dev/libs
-      cp -r capy-root boost-source-dev/libs/capy
-
-      # Build with CMake (B2 requires full Boost repository)
       cd capy-root
       cmake -B __build__ \
         -DCMAKE_BUILD_TYPE=Release \
@@ -260,43 +285,37 @@ tasks:
     filter:
       - capy-root/**
 
-  - key: build-clang-20-asan-ubsan
-    use: [clone-capy, install-clang-20]
+  - key: build-clang-20-cmake-boost-tree
+    use: [setup-boost-tree, install-clang-20]
     run: |
-      # Clone Boost directly here
-      echo "Cloning Boost develop..."
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned, initializing required submodules..."
-      cd boost-source-dev
-      git submodule update --init --depth 1 \
-        tools/build \
-        tools/boostdep \
-        tools/boost_install \
-        libs/config \
-        libs/assert \
-        libs/throw_exception \
-        libs/core \
-        libs/static_assert
-      cd ..
+      cd boost-root
+      cmake -B __build__ \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_CXX_STANDARD=23 \
+        -DCMAKE_CXX_COMPILER=clang++-20 \
+        -DCMAKE_C_COMPILER=clang-20
+      cmake --build __build__ --target boost_capy_tests
+      ctest --test-dir __build__
+    filter:
+      - capy-root/**
 
-      # Ensure libs directory exists and patch Boost
-      mkdir -p boost-source-dev/libs
-      cp -r capy-root boost-source-dev/libs/capy
-
+  # Clang 20 asan+ubsan: B2 build only
+  - key: build-clang-20-asan-ubsan
+    use: [setup-boost-tree, install-clang-20]
+    run: |
       # Disable ASLR for sanitizers
       sudo sysctl vm.mmap_rnd_bits=28 || true
 
-      # Build with CMake (B2 requires full Boost repository)
-      cd capy-root
-      cmake -B __build__ \
-        -DCMAKE_BUILD_TYPE=Debug \
-        -DCMAKE_CXX_STANDARD=20 \
-        -DCMAKE_CXX_COMPILER=clang++-20 \
-        -DCMAKE_C_COMPILER=clang-20 \
-        -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -fsanitize=pointer-subtract" \
-        -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address -fsanitize=undefined"
-      cmake --build __build__ --target boost_capy_tests
-      ctest --test-dir __build__
+      cd boost-root
+      ./b2 \
+        toolset=clang-20 \
+        cxxstd=20 \
+        variant=debug \
+        address-model=64 \
+        link=static \
+        cxxflags="-fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -fsanitize=pointer-subtract" \
+        linkflags="-fsanitize=address -fsanitize=undefined" \
+        libs/capy/test
     filter:
       - capy-root/**
     env:
@@ -307,38 +326,18 @@ tasks:
       sudo apt-get update
       sudo apt-get install -y clang-17 build-essential git cmake
 
+  # Clang 17: B2 build only
   - key: build-clang-17
-    use: [clone-capy, install-clang-17]
+    use: [setup-boost-tree, install-clang-17]
     run: |
-      # Clone Boost directly here
-      echo "Cloning Boost develop..."
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned, initializing required submodules..."
-      cd boost-source-dev
-      git submodule update --init --depth 1 \
-        tools/build \
-        tools/boostdep \
-        tools/boost_install \
-        libs/config \
-        libs/assert \
-        libs/throw_exception \
-        libs/core \
-        libs/static_assert
-      cd ..
-
-      # Ensure libs directory exists and patch Boost
-      mkdir -p boost-source-dev/libs
-      cp -r capy-root boost-source-dev/libs/capy
-
-      # Build with CMake (B2 requires full Boost repository)
-      cd capy-root
-      cmake -B __build__ \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_CXX_STANDARD=20 \
-        -DCMAKE_CXX_COMPILER=clang++-17 \
-        -DCMAKE_C_COMPILER=clang-17
-      cmake --build __build__ --target boost_capy_tests
-      ctest --test-dir __build__
+      cd boost-root
+      ./b2 \
+        toolset=clang-17 \
+        cxxstd=20 \
+        variant=release \
+        address-model=64 \
+        link=static \
+        libs/capy/test
     filter:
       - capy-root/**
 
@@ -351,40 +350,20 @@ tasks:
       sudo apt-get update
       sudo apt-get install -y clang-20 build-essential git cmake gcc-multilib g++-multilib
 
+  # Clang 20 x86 (32-bit): B2 build only
   - key: build-clang-20-x86
-    use: [clone-capy, install-clang-20-multilib]
+    use: [setup-boost-tree, install-clang-20-multilib]
     run: |
-      # Clone Boost directly here
-      echo "Cloning Boost develop..."
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned, initializing required submodules..."
-      cd boost-source-dev
-      git submodule update --init --depth 1 \
-        tools/build \
-        tools/boostdep \
-        tools/boost_install \
-        libs/config \
-        libs/assert \
-        libs/throw_exception \
-        libs/core \
-        libs/static_assert
-      cd ..
-
-      # Ensure libs directory exists and patch Boost
-      mkdir -p boost-source-dev/libs
-      cp -r capy-root boost-source-dev/libs/capy
-
-      # Build with CMake (B2 requires full Boost repository)
-      cd capy-root
-      cmake -B __build__ \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_CXX_STANDARD=23 \
-        -DCMAKE_CXX_COMPILER=clang++-20 \
-        -DCMAKE_C_COMPILER=clang-20 \
-        -DCMAKE_CXX_FLAGS="-m32" \
-        -DCMAKE_C_FLAGS="-m32"
-      cmake --build __build__ --target boost_capy_tests
-      ctest --test-dir __build__
+      cd boost-root
+      ./b2 \
+        toolset=clang-20 \
+        cxxstd=20,23 \
+        variant=release \
+        address-model=32 \
+        link=static \
+        cxxflags="-m32" \
+        linkflags="-m32" \
+        libs/capy/test
     filter:
       - capy-root/**
 
