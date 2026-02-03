@@ -55,22 +55,6 @@ tasks:
       - CMakeLists.txt
       - Jamfile
 
-  - key: clone-boost-develop
-    run: |
-      echo "Starting Boost develop clone (without submodules)..."
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev || (echo "Clone failed!" && exit 1)
-      echo "Clone completed. Checking directory..."
-      ls -la boost-source-dev | head -20
-      echo "Boost develop cloned successfully"
-
-  - key: clone-boost-master
-    run: |
-      echo "Starting Boost master clone (without submodules)..."
-      git clone --depth 1 --branch master https://github.com/boostorg/boost.git boost-source-master || (echo "Clone failed!" && exit 1)
-      echo "Clone completed. Checking directory..."
-      ls -la boost-source-master | head -20
-      echo "Boost master cloned successfully"
-
   # ============================================================================
   # Windows and macOS Builds
   # ============================================================================
@@ -103,17 +87,26 @@ tasks:
       sudo apt-get install -y gcc-14 g++-14 build-essential git cmake
 
   - key: build-gcc-15
-    use: [clone-capy, clone-boost-develop, install-gcc-15]
+    use: [clone-capy, install-gcc-15]
     run: |
-      # Debug: Show current directory and available files
-      pwd
+      # Check and show current working directory
+      echo "Current directory: $(pwd)"
+      echo "Files in current directory:"
       ls -la
-      echo "=== Looking for directories ==="
-      ls -la . || true
+
+      # Clone Boost directly here since 'use' isn't merging properly
+      echo "Cloning Boost develop..."
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
+      echo "Boost cloned, checking..."
+      ls -la boost-source-dev | head -10
+
+      # Ensure libs directory exists before copying
+      echo "Creating libs/capy directory..."
+      mkdir -p boost-source-dev/libs/capy
 
       # Patch Boost
       rm -rf boost-source-dev/libs/capy || true
-      cp -r capy-root boost-source-dev/libs/capy
+      cp -r capy-root/* boost-source-dev/libs/capy/
 
       # Build with B2
       cd boost-source-dev
@@ -142,11 +135,19 @@ tasks:
       - boost-source-dev/libs/capy/**
 
   - key: build-gcc-15-asan-ubsan
-    use: [clone-capy, clone-boost-develop, install-gcc-15]
+    use: [clone-capy, install-gcc-15]
     run: |
+      # Clone Boost directly here
+      echo "Cloning Boost develop..."
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
+      echo "Boost cloned"
+
+      # Ensure libs directory exists before copying
+      mkdir -p boost-source-dev/libs/capy
+
       # Patch Boost
       rm -rf boost-source-dev/libs/capy || true
-      cp -r capy-root boost-source-dev/libs/capy
+      cp -r capy-root/* boost-source-dev/libs/capy/
 
       # Disable ASLR for sanitizers
       sudo sysctl vm.mmap_rnd_bits=28 || true
@@ -177,11 +178,19 @@ tasks:
       sudo apt-get install -y gcc-12 g++-12 build-essential git cmake
 
   - key: build-gcc-12
-    use: [clone-capy, clone-boost-develop, install-gcc-12]
+    use: [clone-capy, install-gcc-12]
     run: |
+      # Clone Boost directly here
+      echo "Cloning Boost develop..."
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
+      echo "Boost cloned"
+
+      # Ensure libs directory exists before copying
+      mkdir -p boost-source-dev/libs/capy
+
       # Patch Boost
       rm -rf boost-source-dev/libs/capy || true
-      cp -r capy-root boost-source-dev/libs/capy
+      cp -r capy-root/* boost-source-dev/libs/capy/
 
       # Build with B2
       cd boost-source-dev
@@ -205,11 +214,19 @@ tasks:
       sudo apt-get install -y gcc-13 g++-13 build-essential git cmake lcov wget unzip
 
   - key: build-gcc-13-coverage
-    use: [clone-capy, clone-boost-develop, install-gcc-13-coverage]
+    use: [clone-capy, install-gcc-13-coverage]
     run: |
+      # Clone Boost directly here
+      echo "Cloning Boost develop..."
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
+      echo "Boost cloned"
+
+      # Ensure libs directory exists before copying
+      mkdir -p boost-source-dev/libs/capy
+
       # Patch Boost
       rm -rf boost-source-dev/libs/capy || true
-      cp -r capy-root boost-source-dev/libs/capy
+      cp -r capy-root/* boost-source-dev/libs/capy/
 
       # Build with CMake (coverage enabled)
       cd capy-root
@@ -247,11 +264,19 @@ tasks:
       sudo apt-get install -y clang-20 build-essential git cmake
 
   - key: build-clang-20
-    use: [clone-capy, clone-boost-develop, install-clang-20]
+    use: [clone-capy, install-clang-20]
     run: |
+      # Clone Boost directly here
+      echo "Cloning Boost develop..."
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
+      echo "Boost cloned"
+
+      # Ensure libs directory exists before copying
+      mkdir -p boost-source-dev/libs/capy
+
       # Patch Boost
       rm -rf boost-source-dev/libs/capy || true
-      cp -r capy-root boost-source-dev/libs/capy
+      cp -r capy-root/* boost-source-dev/libs/capy/
 
       # Build with B2 (multiple C++ standards)
       cd boost-source-dev
@@ -280,11 +305,19 @@ tasks:
       - boost-source-dev/libs/capy/**
 
   - key: build-clang-20-asan-ubsan
-    use: [clone-capy, clone-boost-develop, install-clang-20]
+    use: [clone-capy, install-clang-20]
     run: |
+      # Clone Boost directly here
+      echo "Cloning Boost develop..."
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
+      echo "Boost cloned"
+
+      # Ensure libs directory exists before copying
+      mkdir -p boost-source-dev/libs/capy
+
       # Patch Boost
       rm -rf boost-source-dev/libs/capy || true
-      cp -r capy-root boost-source-dev/libs/capy
+      cp -r capy-root/* boost-source-dev/libs/capy/
 
       # Disable ASLR for sanitizers
       sudo sysctl vm.mmap_rnd_bits=28 || true
@@ -315,11 +348,19 @@ tasks:
       sudo apt-get install -y clang-17 build-essential git cmake
 
   - key: build-clang-17
-    use: [clone-capy, clone-boost-develop, install-clang-17]
+    use: [clone-capy, install-clang-17]
     run: |
+      # Clone Boost directly here
+      echo "Cloning Boost develop..."
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
+      echo "Boost cloned"
+
+      # Ensure libs directory exists before copying
+      mkdir -p boost-source-dev/libs/capy
+
       # Patch Boost
       rm -rf boost-source-dev/libs/capy || true
-      cp -r capy-root boost-source-dev/libs/capy
+      cp -r capy-root/* boost-source-dev/libs/capy/
 
       # Build with B2
       cd boost-source-dev
@@ -347,11 +388,19 @@ tasks:
       sudo apt-get install -y clang-20 build-essential git cmake gcc-multilib g++-multilib
 
   - key: build-clang-20-x86
-    use: [clone-capy, clone-boost-develop, install-clang-20-multilib]
+    use: [clone-capy, install-clang-20-multilib]
     run: |
+      # Clone Boost directly here
+      echo "Cloning Boost develop..."
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
+      echo "Boost cloned"
+
+      # Ensure libs directory exists before copying
+      mkdir -p boost-source-dev/libs/capy
+
       # Patch Boost
       rm -rf boost-source-dev/libs/capy || true
-      cp -r capy-root boost-source-dev/libs/capy
+      cp -r capy-root/* boost-source-dev/libs/capy/
 
       # Build with B2 (32-bit)
       cd boost-source-dev
