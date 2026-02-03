@@ -57,13 +57,21 @@ tasks:
 
   - key: clone-boost-develop
     run: |
-      git clone --depth 1 --branch develop --recurse-submodules --shallow-submodules https://github.com/boostorg/boost.git boost-source-dev
+      echo "Starting Boost develop clone..."
+      git clone --depth 1 --branch develop --recurse-submodules --shallow-submodules https://github.com/boostorg/boost.git boost-source-dev || (echo "Clone failed!" && exit 1)
+      echo "Clone completed. Checking directory..."
+      ls -la boost-source-dev | head -20
+      echo "Boost develop cloned successfully"
     filter:
       - .github/workflows/ci.yml
 
   - key: clone-boost-master
     run: |
-      git clone --depth 1 --branch master --recurse-submodules --shallow-submodules https://github.com/boostorg/boost.git boost-source-master
+      echo "Starting Boost master clone..."
+      git clone --depth 1 --branch master --recurse-submodules --shallow-submodules https://github.com/boostorg/boost.git boost-source-master || (echo "Clone failed!" && exit 1)
+      echo "Clone completed. Checking directory..."
+      ls -la boost-source-master | head -20
+      echo "Boost master cloned successfully"
     filter:
       - .github/workflows/ci.yml
 
@@ -401,6 +409,6 @@ tasks:
       echo ""
       echo "## Commit Activity by Author"
       echo ""
-      git shortlog -sn --no-merges -n 20
+      git shortlog -sn --no-merges | head -20
     filter:
       - capy-root/**
