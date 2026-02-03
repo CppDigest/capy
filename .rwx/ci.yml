@@ -46,7 +46,7 @@ tasks:
     with:
       repository: https://github.com/timon0305/capy.git
       ref: ${{ init.commit-sha }}
-      github-token: ${{ vaults.CppDigest.github-apps.cppdigest-test.token }}
+      github-token: ${{ vaults.default.github-apps.cppdigest-test.token }}
       path: capy-root
     filter:
       - .github/workflows/**
@@ -63,7 +63,7 @@ tasks:
       ref: develop
       path: boost-source-dev
       submodules: true
-      github-token: ${{ vaults.CppDigest.github-apps.cppdigest-test.token }}
+      github-token: ${{ vaults.default.github-apps.cppdigest-test.token }}
     filter:
       - .github/workflows/ci.yml
 
@@ -74,7 +74,7 @@ tasks:
       ref: master
       path: boost-source-master
       submodules: true
-      github-token: ${{ vaults.CppDigest.github-apps.cppdigest-test.token }}
+      github-token: ${{ vaults.default.github-apps.cppdigest-test.token }}
     filter:
       - .github/workflows/ci.yml
 
