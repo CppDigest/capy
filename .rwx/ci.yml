@@ -109,16 +109,14 @@ tasks:
 
       # Build with B2
       cd boost-source-dev
-      ./bootstrap.sh gcc
+      CXX=g++-14 CC=gcc-14 ./bootstrap.sh gcc
       ./b2 \
         --with-capy \
         toolset=gcc \
         variant=debug,release \
         cxxstd=20 \
         address-model=64 \
-        link=shared \
-        cxx=g++-14 \
-        cc=gcc-14
+        link=shared
 
       # Build with CMake
       cd ../capy-root
@@ -153,7 +151,7 @@ tasks:
 
       # Build with B2 (with sanitizers)
       cd boost-source-dev
-      ./bootstrap.sh gcc
+      CXX=g++-14 CC=gcc-14 ./bootstrap.sh gcc
       ./b2 \
         --with-capy \
         toolset=gcc \
@@ -161,8 +159,6 @@ tasks:
         cxxstd=20 \
         address-model=64 \
         link=shared \
-        cxx=g++-14 \
-        cc=gcc-14 \
         cxxflags="-fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -fsanitize=pointer-subtract" \
         linkflags="-fsanitize=address -fsanitize=undefined"
     filter:
@@ -193,16 +189,14 @@ tasks:
 
       # Build with B2
       cd boost-source-dev
-      ./bootstrap.sh gcc
+      CXX=g++-12 CC=gcc-12 ./bootstrap.sh gcc
       ./b2 \
         --with-capy \
         toolset=gcc \
         variant=debug,release \
         cxxstd=20 \
         address-model=64 \
-        link=shared \
-        cxx=g++-12 \
-        cc=gcc-12
+        link=shared
     filter:
       - capy-root/**
       - boost-source-dev/libs/capy/**
@@ -279,16 +273,14 @@ tasks:
 
       # Build with B2 (multiple C++ standards)
       cd boost-source-dev
-      ./bootstrap.sh clang
+      CXX=clang++-20 CC=clang-20 ./bootstrap.sh clang
       ./b2 \
         --with-capy \
         toolset=clang \
         variant=debug,release \
         cxxstd=20,23 \
         address-model=64 \
-        link=shared \
-        cxx=clang++-20 \
-        cc=clang-20
+        link=shared
 
       # Build with CMake
       cd ../capy-root
@@ -323,7 +315,7 @@ tasks:
 
       # Build with B2 (with sanitizers)
       cd boost-source-dev
-      ./bootstrap.sh clang
+      CXX=clang++-20 CC=clang-20 ./bootstrap.sh clang
       ./b2 \
         --with-capy \
         toolset=clang \
@@ -331,8 +323,6 @@ tasks:
         cxxstd=20 \
         address-model=64 \
         link=static \
-        cxx=clang++-20 \
-        cc=clang-20 \
         cxxflags="-fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -fsanitize=pointer-subtract" \
         linkflags="-fsanitize=address -fsanitize=undefined"
     filter:
@@ -363,16 +353,14 @@ tasks:
 
       # Build with B2
       cd boost-source-dev
-      ./bootstrap.sh clang
+      CXX=clang++-17 CC=clang-17 ./bootstrap.sh clang
       ./b2 \
         --with-capy \
         toolset=clang \
         variant=debug,release \
         cxxstd=20 \
         address-model=64 \
-        link=static \
-        cxx=clang++-17 \
-        cc=clang-17
+        link=static
     filter:
       - capy-root/**
       - boost-source-dev/libs/capy/**
@@ -403,16 +391,14 @@ tasks:
 
       # Build with B2 (32-bit)
       cd boost-source-dev
-      ./bootstrap.sh clang
+      CXX=clang++-20 CC=clang-20 ./bootstrap.sh clang
       ./b2 \
         --with-capy \
         toolset=clang \
         variant=debug,release \
         cxxstd=20,23 \
         address-model=32 \
-        link=static \
-        cxx=clang++-20 \
-        cc=clang-20
+        link=static
     filter:
       - capy-root/**
       - boost-source-dev/libs/capy/**
