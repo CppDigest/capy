@@ -35,13 +35,6 @@ on:
 base:
   image: ubuntu:24.04
   config: rwx/base 1.0.0
-  env:
-    GIT_FETCH_JOBS: 8
-    NET_RETRY_COUNT: 5
-    DEFAULT_BUILD_VARIANT: debug,release
-    UBSAN_OPTIONS: print_stacktrace=1
-    DEBIAN_FRONTEND: noninteractive
-    TZ: Europe/London
 
 tasks:
   # ============================================================================
