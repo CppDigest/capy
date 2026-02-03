@@ -89,33 +89,7 @@ tasks:
   - key: build-gcc-15
     use: [clone-capy, install-gcc-15]
     run: |
-      # Check and show current working directory
-      echo "Current directory: $(pwd)"
-      echo "Files in current directory:"
-      ls -la
-
-      # Clone Boost directly here since 'use' isn't merging properly
-      echo "Cloning Boost develop..."
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned, initializing required submodules..."
-      cd boost-source-dev
-      git submodule update --init --depth 1 \
-        tools/build \
-        tools/boostdep \
-        tools/boost_install \
-        libs/config \
-        libs/assert \
-        libs/throw_exception \
-        libs/core \
-        libs/static_assert
-      cd ..
-
-      # Ensure libs directory exists and patch Boost
-      echo "Creating libs/capy directory..."
-      mkdir -p boost-source-dev/libs
-      cp -r capy-root boost-source-dev/libs/capy
-
-      # Build with CMake (B2 disabled - requires full Boost for /boost/headers target)
+      # Build with CMake (standalone, no Boost clone needed)
       cd capy-root
       cmake -B __build__ \
         -DCMAKE_BUILD_TYPE=Release \
@@ -126,47 +100,26 @@ tasks:
       ctest --test-dir __build__
     filter:
       - capy-root/**
-      - boost-source-dev/libs/capy/**
 
   - key: build-gcc-15-asan-ubsan
     use: [clone-capy, install-gcc-15]
     run: |
-      # Clone Boost directly here
-      echo "Cloning Boost develop..."
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned, initializing required submodules..."
-      cd boost-source-dev
-      git submodule update --init --depth 1 \
-        tools/build \
-        tools/boostdep \
-        tools/boost_install \
-        libs/config \
-        libs/assert \
-        libs/throw_exception \
-        libs/core \
-        libs/static_assert
-      cd ..
-
-      # Ensure libs directory exists and patch Boost
-      mkdir -p boost-source-dev/libs
-      cp -r capy-root boost-source-dev/libs/capy
-
       # Disable ASLR for sanitizers
       sudo sysctl vm.mmap_rnd_bits=28 || true
 
-      # Create minimal root Jamfile with /boost/headers alias
-      cd boost-source-dev
-      printf '%s\n' '# Minimal Boost root Jamfile' 'import path ;' 'path-constant BOOST_ROOT : . ;' 'project boost : requirements <include>. ;' 'alias headers ;' 'explicit headers ;' > Jamfile
-
-      # Bootstrap and build with B2
-      CXX=g++-14 CC=gcc-14 ./bootstrap.sh gcc
-      ./b2 headers toolset=gcc
-      ./b2 --with-capy toolset=gcc variant=debug cxxstd=20 address-model=64 link=shared \
-        cxxflags="-fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -fsanitize=pointer-subtract" \
-        linkflags="-fsanitize=address -fsanitize=undefined"
+      # Build with CMake (standalone, no Boost clone needed)
+      cd capy-root
+      cmake -B __build__ \
+        -DCMAKE_BUILD_TYPE=Debug \
+        -DCMAKE_CXX_STANDARD=20 \
+        -DCMAKE_CXX_COMPILER=g++-14 \
+        -DCMAKE_C_COMPILER=gcc-14 \
+        -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -fsanitize=pointer-subtract" \
+        -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address -fsanitize=undefined"
+      cmake --build __build__ --target boost_capy_tests
+      ctest --test-dir __build__
     filter:
       - capy-root/**
-      - boost-source-dev/libs/capy/**
     env:
       ASAN_OPTIONS: detect_invalid_pointer_pairs=2:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
 
@@ -198,17 +151,17 @@ tasks:
       mkdir -p boost-source-dev/libs
       cp -r capy-root boost-source-dev/libs/capy
 
-      # Create minimal root Jamfile with /boost/headers alias
-      cd boost-source-dev
-      printf '%s\n' '# Minimal Boost root Jamfile' 'import path ;' 'path-constant BOOST_ROOT : . ;' 'project boost : requirements <include>. ;' 'alias headers ;' 'explicit headers ;' > Jamfile
-
-      # Bootstrap and build with B2
-      CXX=g++-12 CC=gcc-12 ./bootstrap.sh gcc
-      ./b2 headers toolset=gcc
-      ./b2 --with-capy toolset=gcc variant=debug,release cxxstd=20 address-model=64 link=shared
+      # Build with CMake (B2 requires full Boost repository)
+      cd capy-root
+      cmake -B __build__ \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_CXX_STANDARD=20 \
+        -DCMAKE_CXX_COMPILER=g++-12 \
+        -DCMAKE_C_COMPILER=gcc-12
+      cmake --build __build__ --target boost_capy_tests
+      ctest --test-dir __build__
     filter:
       - capy-root/**
-      - boost-source-dev/libs/capy/**
 
   - key: install-gcc-13-coverage
     run: |
@@ -258,7 +211,6 @@ tasks:
       bash <(curl -s https://codecov.io/bash) -f "__build__/coverage.info"
     filter:
       - capy-root/**
-      - boost-source-dev/libs/capy/**
 
   # ============================================================================
   # Linux Clang Builds (4 configurations)
@@ -296,17 +248,8 @@ tasks:
       mkdir -p boost-source-dev/libs
       cp -r capy-root boost-source-dev/libs/capy
 
-      # Create minimal root Jamfile with /boost/headers alias
-      cd boost-source-dev
-      printf '%s\n' '# Minimal Boost root Jamfile' 'import path ;' 'path-constant BOOST_ROOT : . ;' 'project boost : requirements <include>. ;' 'alias headers ;' 'explicit headers ;' > Jamfile
-
-      # Bootstrap and build with B2
-      CXX=clang++-20 CC=clang-20 ./bootstrap.sh clang
-      ./b2 headers toolset=clang
-      ./b2 --with-capy toolset=clang variant=debug,release cxxstd=20,23 address-model=64 link=shared
-
-      # Build with CMake
-      cd ../capy-root
+      # Build with CMake (B2 requires full Boost repository)
+      cd capy-root
       cmake -B __build__ \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_CXX_STANDARD=23 \
@@ -316,7 +259,6 @@ tasks:
       ctest --test-dir __build__
     filter:
       - capy-root/**
-      - boost-source-dev/libs/capy/**
 
   - key: build-clang-20-asan-ubsan
     use: [clone-capy, install-clang-20]
@@ -344,19 +286,19 @@ tasks:
       # Disable ASLR for sanitizers
       sudo sysctl vm.mmap_rnd_bits=28 || true
 
-      # Create minimal root Jamfile with /boost/headers alias
-      cd boost-source-dev
-      printf '%s\n' '# Minimal Boost root Jamfile' 'import path ;' 'path-constant BOOST_ROOT : . ;' 'project boost : requirements <include>. ;' 'alias headers ;' 'explicit headers ;' > Jamfile
-
-      # Bootstrap and build with B2
-      CXX=clang++-20 CC=clang-20 ./bootstrap.sh clang
-      ./b2 headers toolset=clang
-      ./b2 --with-capy toolset=clang variant=debug cxxstd=20 address-model=64 link=static \
-        cxxflags="-fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -fsanitize=pointer-subtract" \
-        linkflags="-fsanitize=address -fsanitize=undefined"
+      # Build with CMake (B2 requires full Boost repository)
+      cd capy-root
+      cmake -B __build__ \
+        -DCMAKE_BUILD_TYPE=Debug \
+        -DCMAKE_CXX_STANDARD=20 \
+        -DCMAKE_CXX_COMPILER=clang++-20 \
+        -DCMAKE_C_COMPILER=clang-20 \
+        -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -fsanitize=pointer-subtract" \
+        -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address -fsanitize=undefined"
+      cmake --build __build__ --target boost_capy_tests
+      ctest --test-dir __build__
     filter:
       - capy-root/**
-      - boost-source-dev/libs/capy/**
     env:
       ASAN_OPTIONS: detect_invalid_pointer_pairs=0:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
 
@@ -388,17 +330,17 @@ tasks:
       mkdir -p boost-source-dev/libs
       cp -r capy-root boost-source-dev/libs/capy
 
-      # Create minimal root Jamfile with /boost/headers alias
-      cd boost-source-dev
-      printf '%s\n' '# Minimal Boost root Jamfile' 'import path ;' 'path-constant BOOST_ROOT : . ;' 'project boost : requirements <include>. ;' 'alias headers ;' 'explicit headers ;' > Jamfile
-
-      # Bootstrap and build with B2
-      CXX=clang++-17 CC=clang-17 ./bootstrap.sh clang
-      ./b2 headers toolset=clang
-      ./b2 --with-capy toolset=clang variant=debug,release cxxstd=20 address-model=64 link=static
+      # Build with CMake (B2 requires full Boost repository)
+      cd capy-root
+      cmake -B __build__ \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_CXX_STANDARD=20 \
+        -DCMAKE_CXX_COMPILER=clang++-17 \
+        -DCMAKE_C_COMPILER=clang-17
+      cmake --build __build__ --target boost_capy_tests
+      ctest --test-dir __build__
     filter:
       - capy-root/**
-      - boost-source-dev/libs/capy/**
 
   - key: install-clang-20-multilib
     run: |
@@ -432,17 +374,19 @@ tasks:
       mkdir -p boost-source-dev/libs
       cp -r capy-root boost-source-dev/libs/capy
 
-      # Create minimal root Jamfile with /boost/headers alias
-      cd boost-source-dev
-      printf '%s\n' '# Minimal Boost root Jamfile' 'import path ;' 'path-constant BOOST_ROOT : . ;' 'project boost : requirements <include>. ;' 'alias headers ;' 'explicit headers ;' > Jamfile
-
-      # Bootstrap and build with B2
-      CXX=clang++-20 CC=clang-20 ./bootstrap.sh clang
-      ./b2 headers toolset=clang
-      ./b2 --with-capy toolset=clang variant=debug,release cxxstd=20,23 address-model=32 link=static
+      # Build with CMake (B2 requires full Boost repository)
+      cd capy-root
+      cmake -B __build__ \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_CXX_STANDARD=23 \
+        -DCMAKE_CXX_COMPILER=clang++-20 \
+        -DCMAKE_C_COMPILER=clang-20 \
+        -DCMAKE_CXX_FLAGS="-m32" \
+        -DCMAKE_C_FLAGS="-m32"
+      cmake --build __build__ --target boost_capy_tests
+      ctest --test-dir __build__
     filter:
       - capy-root/**
-      - boost-source-dev/libs/capy/**
 
   # ============================================================================
   # Changelog Task (independent)
