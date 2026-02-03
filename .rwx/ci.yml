@@ -97,8 +97,10 @@ tasks:
       # Clone Boost directly here since 'use' isn't merging properly
       echo "Cloning Boost develop..."
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned, checking..."
-      ls -la boost-source-dev | head -10
+      echo "Boost cloned, initializing build tools submodule..."
+      cd boost-source-dev
+      git submodule update --init --depth 1 tools/build tools/boostdep
+      cd ..
 
       # Ensure libs directory exists and patch Boost
       echo "Creating libs/capy directory..."
@@ -137,7 +139,10 @@ tasks:
       # Clone Boost directly here
       echo "Cloning Boost develop..."
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned"
+      echo "Boost cloned, initializing build tools submodule..."
+      cd boost-source-dev
+      git submodule update --init --depth 1 tools/build tools/boostdep
+      cd ..
 
       # Ensure libs directory exists and patch Boost
       mkdir -p boost-source-dev/libs
@@ -177,7 +182,10 @@ tasks:
       # Clone Boost directly here
       echo "Cloning Boost develop..."
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned"
+      echo "Boost cloned, initializing build tools submodule..."
+      cd boost-source-dev
+      git submodule update --init --depth 1 tools/build tools/boostdep
+      cd ..
 
       # Ensure libs directory exists and patch Boost
       mkdir -p boost-source-dev/libs
@@ -210,7 +218,10 @@ tasks:
       # Clone Boost directly here
       echo "Cloning Boost develop..."
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned"
+      echo "Boost cloned, initializing build tools submodule..."
+      cd boost-source-dev
+      git submodule update --init --depth 1 tools/build tools/boostdep
+      cd ..
 
       # Ensure libs directory exists and patch Boost
       mkdir -p boost-source-dev/libs
@@ -257,7 +268,10 @@ tasks:
       # Clone Boost directly here
       echo "Cloning Boost develop..."
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned"
+      echo "Boost cloned, initializing build tools submodule..."
+      cd boost-source-dev
+      git submodule update --init --depth 1 tools/build tools/boostdep
+      cd ..
 
       # Ensure libs directory exists and patch Boost
       mkdir -p boost-source-dev/libs
@@ -295,7 +309,10 @@ tasks:
       # Clone Boost directly here
       echo "Cloning Boost develop..."
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned"
+      echo "Boost cloned, initializing build tools submodule..."
+      cd boost-source-dev
+      git submodule update --init --depth 1 tools/build tools/boostdep
+      cd ..
 
       # Ensure libs directory exists and patch Boost
       mkdir -p boost-source-dev/libs
@@ -335,7 +352,10 @@ tasks:
       # Clone Boost directly here
       echo "Cloning Boost develop..."
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned"
+      echo "Boost cloned, initializing build tools submodule..."
+      cd boost-source-dev
+      git submodule update --init --depth 1 tools/build tools/boostdep
+      cd ..
 
       # Ensure libs directory exists and patch Boost
       mkdir -p boost-source-dev/libs
@@ -372,7 +392,10 @@ tasks:
       # Clone Boost directly here
       echo "Cloning Boost develop..."
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
-      echo "Boost cloned"
+      echo "Boost cloned, initializing build tools submodule..."
+      cd boost-source-dev
+      git submodule update --init --depth 1 tools/build tools/boostdep
+      cd ..
 
       # Ensure libs directory exists and patch Boost
       mkdir -p boost-source-dev/libs
