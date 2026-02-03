@@ -73,21 +73,17 @@ tasks:
         tools/boostdep \
         tools/boost_install
 
-      # Use boostdep to scan and initialize all dependencies for capy
-      cd ..
-      python3 boost-source/tools/boostdep/depinst/depinst.py \
-        --git_args "--depth 1" \
-        --scan capy-root \
-        boost-source
+      # Copy capy into boost-source so boostdep can scan it
+      cp -r ../capy-root libs/capy
 
-      # Remove the placeholder capy module from boost-source
-      rm -rf boost-source/libs/capy || true
+      # Use boostdep to determine capy's dependencies and install them
+      cd ..
+      cd boost-source
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      cd ..
 
       # Copy boost-source to boost-root (working tree)
       cp -rL boost-source boost-root
-
-      # Patch boost-root with the actual capy being tested
-      cp -r capy-root boost-root/libs/capy
 
       # Bootstrap B2 build system
       cd boost-root
