@@ -51,7 +51,7 @@ tasks:
   - key: clone-capy
     call: git/clone 2.0.0
     with:
-      repository: https://github.com/CppDigest/capy.git
+      repository: https://github.com/timon0305/capy.git
       ref: ${{ init.commit-sha }}
       github-token: ${{ vaults.CppDigest.github-apps.cppdigest-test.token }}
       path: capy-root
