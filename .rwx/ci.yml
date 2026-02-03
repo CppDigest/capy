@@ -118,6 +118,10 @@ tasks:
       # Build with B2
       cd boost-source-dev
       CXX=g++-14 CC=gcc-14 ./bootstrap.sh gcc
+
+      # Generate Boost headers first (required by capy)
+      ./b2 headers
+
       ./b2 \
         --with-capy \
         toolset=gcc \
@@ -168,6 +172,10 @@ tasks:
       # Build with B2 (with sanitizers)
       cd boost-source-dev
       CXX=g++-14 CC=gcc-14 ./bootstrap.sh gcc
+
+      # Generate Boost headers first (required by capy)
+      ./b2 headers
+
       ./b2 \
         --with-capy \
         toolset=gcc \
@@ -214,6 +222,10 @@ tasks:
       # Build with B2
       cd boost-source-dev
       CXX=g++-12 CC=gcc-12 ./bootstrap.sh gcc
+
+      # Generate Boost headers first (required by capy)
+      ./b2 headers
+
       ./b2 \
         --with-capy \
         toolset=gcc \
@@ -314,6 +326,10 @@ tasks:
       # Build with B2 (multiple C++ standards)
       cd boost-source-dev
       CXX=clang++-20 CC=clang-20 ./bootstrap.sh clang
+
+      # Generate Boost headers first (required by capy)
+      ./b2 headers
+
       ./b2 \
         --with-capy \
         toolset=clang \
@@ -364,6 +380,10 @@ tasks:
       # Build with B2 (with sanitizers)
       cd boost-source-dev
       CXX=clang++-20 CC=clang-20 ./bootstrap.sh clang
+
+      # Generate Boost headers first (required by capy)
+      ./b2 headers
+
       ./b2 \
         --with-capy \
         toolset=clang \
@@ -410,6 +430,10 @@ tasks:
       # Build with B2
       cd boost-source-dev
       CXX=clang++-17 CC=clang-17 ./bootstrap.sh clang
+
+      # Generate Boost headers first (required by capy)
+      ./b2 headers
+
       ./b2 \
         --with-capy \
         toolset=clang \
@@ -456,6 +480,10 @@ tasks:
       # Build with B2 (32-bit)
       cd boost-source-dev
       CXX=clang++-20 CC=clang-20 ./bootstrap.sh clang
+
+      # Generate Boost headers first (required by capy)
+      ./b2 headers
+
       ./b2 \
         --with-capy \
         toolset=clang \
