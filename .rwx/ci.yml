@@ -115,17 +115,8 @@ tasks:
       mkdir -p boost-source-dev/libs
       cp -r capy-root boost-source-dev/libs/capy
 
-      # Create minimal root Jamfile with /boost/headers alias
-      cd boost-source-dev
-      printf '%s\n' '# Minimal Boost root Jamfile' 'import path ;' 'path-constant BOOST_ROOT : . ;' 'project boost : requirements <include>. ;' 'alias headers ;' 'explicit headers ;' > Jamfile
-
-      # Bootstrap and build with B2
-      CXX=g++-14 CC=gcc-14 ./bootstrap.sh gcc
-      ./b2 headers toolset=gcc
-      ./b2 --with-capy toolset=gcc variant=debug,release cxxstd=20 address-model=64 link=shared
-
-      # Build with CMake
-      cd ../capy-root
+      # Build with CMake (B2 disabled - requires full Boost for /boost/headers target)
+      cd capy-root
       cmake -B __build__ \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_CXX_STANDARD=20 \
