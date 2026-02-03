@@ -34,7 +34,7 @@ on:
 # Base configuration applied to all tasks
 base:
   image: ubuntu:24.04
-  user: root
+  config: rwx/base 1.0.0
 
 tasks:
   # ============================================================================
@@ -103,6 +103,10 @@ tasks:
 
   - key: install-gcc-15
     run: |
+      whoami
+      id
+      ls -la /var/lib/apt/lists/ || echo "Directory doesn't exist"
+      mkdir -p /var/lib/apt/lists/partial || echo "Cannot create directory"
       apt-get update
       apt-get install -y software-properties-common
       add-apt-repository -y ppa:ubuntu-toolchain-r/test
