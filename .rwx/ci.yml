@@ -86,7 +86,7 @@ tasks:
       sudo apt-get update
       sudo apt-get install -y gcc-14 g++-14 build-essential git cmake
 
-  # GCC 15: All 3 build methods (B2 + CMake standalone + CMake from boost-root)
+  # GCC 15: Both B2 and CMake builds (matches build-cmake: true in GitHub Actions)
   - key: build-gcc-15-b2
     use: [clone-capy, install-gcc-15]
     run: |
@@ -112,34 +112,10 @@ tasks:
     filter:
       - capy-root/**
 
-  - key: build-gcc-15-cmake-standalone
+  - key: build-gcc-15-cmake
     use: [clone-capy, install-gcc-15]
     run: |
       cd capy-root
-      cmake -B __build__ \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_CXX_STANDARD=20 \
-        -DCMAKE_CXX_COMPILER=g++-14 \
-        -DCMAKE_C_COMPILER=gcc-14
-      cmake --build __build__ --target boost_capy_tests
-      ctest --test-dir __build__
-    filter:
-      - capy-root/**
-
-  - key: build-gcc-15-cmake-boost-tree
-    use: [clone-capy, install-gcc-15]
-    run: |
-      # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
-      cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      cd ..
-
-      # Run CMake build from boost-root
-      cd boost-source
       cmake -B __build__ \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_CXX_STANDARD=20 \
@@ -256,7 +232,7 @@ tasks:
       sudo apt-get update
       sudo apt-get install -y clang-20 build-essential git cmake
 
-  # Clang 20: All 3 build methods (B2 + CMake standalone + CMake from boost-root)
+  # Clang 20: Both B2 and CMake builds (matches build-cmake: true in GitHub Actions)
   - key: build-clang-20-b2
     use: [clone-capy, install-clang-20]
     run: |
@@ -282,34 +258,10 @@ tasks:
     filter:
       - capy-root/**
 
-  - key: build-clang-20-cmake-standalone
+  - key: build-clang-20-cmake
     use: [clone-capy, install-clang-20]
     run: |
       cd capy-root
-      cmake -B __build__ \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_CXX_STANDARD=23 \
-        -DCMAKE_CXX_COMPILER=clang++-20 \
-        -DCMAKE_C_COMPILER=clang-20
-      cmake --build __build__ --target boost_capy_tests
-      ctest --test-dir __build__
-    filter:
-      - capy-root/**
-
-  - key: build-clang-20-cmake-boost-tree
-    use: [clone-capy, install-clang-20]
-    run: |
-      # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
-      cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      cd ..
-
-      # Run CMake build from boost-root
-      cd boost-source
       cmake -B __build__ \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_CXX_STANDARD=23 \
