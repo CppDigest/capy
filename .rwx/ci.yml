@@ -55,45 +55,6 @@ tasks:
       - CMakeLists.txt
       - Jamfile
 
-  # Clone and prepare full Boost tree with capy integrated for B2 builds
-  - key: setup-boost-tree
-    use: [clone-capy]
-    run: |
-      # Install Python for boostdep
-      sudo apt-get update
-      sudo apt-get install -y python3 python-is-python3
-
-      # Clone Boost (develop branch to match GitHub Actions default)
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
-      cd boost-source
-
-      # Initialize essential build tools and boostdep for dependency scanning
-      git submodule update --init --depth 1 \
-        tools/build \
-        tools/boostdep \
-        tools/boost_install
-
-      # Copy capy into boost-source so boostdep can scan it
-      cp -r ../capy-root libs/capy
-
-      # Use boostdep to determine capy's dependencies and install them
-      cd ..
-      cd boost-source
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      cd ..
-
-      # Copy boost-source to boost-root (working tree)
-      cp -rL boost-source boost-root
-
-      # Bootstrap B2 build system
-      cd boost-root
-      chmod +x bootstrap.sh
-      ./bootstrap.sh --with-toolset=gcc
-
-      echo "Boost tree prepared with capy at boost-root/libs/capy"
-    filter:
-      - capy-root/**
-
   # ============================================================================
   # Windows and macOS Builds
   # ============================================================================
@@ -127,9 +88,20 @@ tasks:
 
   # GCC 15: All 3 build methods (B2 + CMake standalone + CMake from boost-root)
   - key: build-gcc-15-b2
-    use: [setup-boost-tree, install-gcc-15]
+    use: [clone-capy, install-gcc-15]
     run: |
-      cd boost-root
+      # Setup Boost tree with capy integrated
+      sudo apt-get install -y python3 python-is-python3
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      cd boost-source
+      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      ./bootstrap.sh --with-toolset=gcc
+      cd ..
+
+      # Run B2 build
+      cd boost-source
       ./b2 \
         toolset=gcc-14 \
         cxxstd=20 \
@@ -155,9 +127,19 @@ tasks:
       - capy-root/**
 
   - key: build-gcc-15-cmake-boost-tree
-    use: [setup-boost-tree, install-gcc-15]
+    use: [clone-capy, install-gcc-15]
     run: |
-      cd boost-root
+      # Setup Boost tree with capy integrated
+      sudo apt-get install -y python3 python-is-python3
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      cd boost-source
+      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      cd ..
+
+      # Run CMake build from boost-root
+      cd boost-source
       cmake -B __build__ \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_CXX_STANDARD=20 \
@@ -170,12 +152,23 @@ tasks:
 
   # GCC 15 asan+ubsan: B2 build only (no build-cmake flag in GitHub Actions)
   - key: build-gcc-15-asan-ubsan
-    use: [setup-boost-tree, install-gcc-15]
+    use: [clone-capy, install-gcc-15]
     run: |
+      # Setup Boost tree with capy integrated
+      sudo apt-get install -y python3 python-is-python3
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      cd boost-source
+      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      ./bootstrap.sh --with-toolset=gcc
+      cd ..
+
       # Disable ASLR for sanitizers
       sudo sysctl vm.mmap_rnd_bits=28 || true
 
-      cd boost-root
+      # Run B2 build
+      cd boost-source
       ./b2 \
         toolset=gcc-14 \
         cxxstd=20 \
@@ -197,9 +190,20 @@ tasks:
 
   # GCC 12: B2 build only
   - key: build-gcc-12
-    use: [setup-boost-tree, install-gcc-12]
+    use: [clone-capy, install-gcc-12]
     run: |
-      cd boost-root
+      # Setup Boost tree with capy integrated
+      sudo apt-get install -y python3 python-is-python3
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      cd boost-source
+      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      ./bootstrap.sh --with-toolset=gcc
+      cd ..
+
+      # Run B2 build
+      cd boost-source
       ./b2 \
         toolset=gcc-12 \
         cxxstd=20 \
@@ -254,9 +258,20 @@ tasks:
 
   # Clang 20: All 3 build methods (B2 + CMake standalone + CMake from boost-root)
   - key: build-clang-20-b2
-    use: [setup-boost-tree, install-clang-20]
+    use: [clone-capy, install-clang-20]
     run: |
-      cd boost-root
+      # Setup Boost tree with capy integrated
+      sudo apt-get install -y python3 python-is-python3
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      cd boost-source
+      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      ./bootstrap.sh --with-toolset=gcc
+      cd ..
+
+      # Run B2 build
+      cd boost-source
       ./b2 \
         toolset=clang-20 \
         cxxstd=20,23 \
@@ -282,9 +297,19 @@ tasks:
       - capy-root/**
 
   - key: build-clang-20-cmake-boost-tree
-    use: [setup-boost-tree, install-clang-20]
+    use: [clone-capy, install-clang-20]
     run: |
-      cd boost-root
+      # Setup Boost tree with capy integrated
+      sudo apt-get install -y python3 python-is-python3
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      cd boost-source
+      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      cd ..
+
+      # Run CMake build from boost-root
+      cd boost-source
       cmake -B __build__ \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_CXX_STANDARD=23 \
@@ -297,12 +322,23 @@ tasks:
 
   # Clang 20 asan+ubsan: B2 build only
   - key: build-clang-20-asan-ubsan
-    use: [setup-boost-tree, install-clang-20]
+    use: [clone-capy, install-clang-20]
     run: |
+      # Setup Boost tree with capy integrated
+      sudo apt-get install -y python3 python-is-python3
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      cd boost-source
+      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      ./bootstrap.sh --with-toolset=gcc
+      cd ..
+
       # Disable ASLR for sanitizers
       sudo sysctl vm.mmap_rnd_bits=28 || true
 
-      cd boost-root
+      # Run B2 build
+      cd boost-source
       ./b2 \
         toolset=clang-20 \
         cxxstd=20 \
@@ -324,9 +360,20 @@ tasks:
 
   # Clang 17: B2 build only
   - key: build-clang-17
-    use: [setup-boost-tree, install-clang-17]
+    use: [clone-capy, install-clang-17]
     run: |
-      cd boost-root
+      # Setup Boost tree with capy integrated
+      sudo apt-get install -y python3 python-is-python3
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      cd boost-source
+      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      ./bootstrap.sh --with-toolset=gcc
+      cd ..
+
+      # Run B2 build
+      cd boost-source
       ./b2 \
         toolset=clang-17 \
         cxxstd=20 \
@@ -348,9 +395,20 @@ tasks:
 
   # Clang 20 x86 (32-bit): B2 build only
   - key: build-clang-20-x86
-    use: [setup-boost-tree, install-clang-20-multilib]
+    use: [clone-capy, install-clang-20-multilib]
     run: |
-      cd boost-root
+      # Setup Boost tree with capy integrated
+      sudo apt-get install -y python3 python-is-python3
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      cd boost-source
+      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      ./bootstrap.sh --with-toolset=gcc
+      cd ..
+
+      # Run B2 build
+      cd boost-source
       ./b2 \
         toolset=clang-20 \
         cxxstd=20,23 \
