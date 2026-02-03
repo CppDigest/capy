@@ -100,13 +100,10 @@ tasks:
       echo "Boost cloned, checking..."
       ls -la boost-source-dev | head -10
 
-      # Ensure libs directory exists before copying
+      # Ensure libs directory exists and patch Boost
       echo "Creating libs/capy directory..."
-      mkdir -p boost-source-dev/libs/capy
-
-      # Patch Boost
-      rm -rf boost-source-dev/libs/capy || true
-      cp -r capy-root/* boost-source-dev/libs/capy/
+      mkdir -p boost-source-dev/libs
+      cp -r capy-root boost-source-dev/libs/capy
 
       # Build with B2
       cd boost-source-dev
@@ -142,12 +139,9 @@ tasks:
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
       echo "Boost cloned"
 
-      # Ensure libs directory exists before copying
-      mkdir -p boost-source-dev/libs/capy
-
-      # Patch Boost
-      rm -rf boost-source-dev/libs/capy || true
-      cp -r capy-root/* boost-source-dev/libs/capy/
+      # Ensure libs directory exists and patch Boost
+      mkdir -p boost-source-dev/libs
+      cp -r capy-root boost-source-dev/libs/capy
 
       # Disable ASLR for sanitizers
       sudo sysctl vm.mmap_rnd_bits=28 || true
@@ -185,12 +179,9 @@ tasks:
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
       echo "Boost cloned"
 
-      # Ensure libs directory exists before copying
-      mkdir -p boost-source-dev/libs/capy
-
-      # Patch Boost
-      rm -rf boost-source-dev/libs/capy || true
-      cp -r capy-root/* boost-source-dev/libs/capy/
+      # Ensure libs directory exists and patch Boost
+      mkdir -p boost-source-dev/libs
+      cp -r capy-root boost-source-dev/libs/capy
 
       # Build with B2
       cd boost-source-dev
@@ -221,12 +212,9 @@ tasks:
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
       echo "Boost cloned"
 
-      # Ensure libs directory exists before copying
-      mkdir -p boost-source-dev/libs/capy
-
-      # Patch Boost
-      rm -rf boost-source-dev/libs/capy || true
-      cp -r capy-root/* boost-source-dev/libs/capy/
+      # Ensure libs directory exists and patch Boost
+      mkdir -p boost-source-dev/libs
+      cp -r capy-root boost-source-dev/libs/capy
 
       # Build with CMake (coverage enabled)
       cd capy-root
@@ -271,12 +259,9 @@ tasks:
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
       echo "Boost cloned"
 
-      # Ensure libs directory exists before copying
-      mkdir -p boost-source-dev/libs/capy
-
-      # Patch Boost
-      rm -rf boost-source-dev/libs/capy || true
-      cp -r capy-root/* boost-source-dev/libs/capy/
+      # Ensure libs directory exists and patch Boost
+      mkdir -p boost-source-dev/libs
+      cp -r capy-root boost-source-dev/libs/capy
 
       # Build with B2 (multiple C++ standards)
       cd boost-source-dev
@@ -312,12 +297,9 @@ tasks:
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
       echo "Boost cloned"
 
-      # Ensure libs directory exists before copying
-      mkdir -p boost-source-dev/libs/capy
-
-      # Patch Boost
-      rm -rf boost-source-dev/libs/capy || true
-      cp -r capy-root/* boost-source-dev/libs/capy/
+      # Ensure libs directory exists and patch Boost
+      mkdir -p boost-source-dev/libs
+      cp -r capy-root boost-source-dev/libs/capy
 
       # Disable ASLR for sanitizers
       sudo sysctl vm.mmap_rnd_bits=28 || true
@@ -355,12 +337,9 @@ tasks:
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
       echo "Boost cloned"
 
-      # Ensure libs directory exists before copying
-      mkdir -p boost-source-dev/libs/capy
-
-      # Patch Boost
-      rm -rf boost-source-dev/libs/capy || true
-      cp -r capy-root/* boost-source-dev/libs/capy/
+      # Ensure libs directory exists and patch Boost
+      mkdir -p boost-source-dev/libs
+      cp -r capy-root boost-source-dev/libs/capy
 
       # Build with B2
       cd boost-source-dev
@@ -395,12 +374,9 @@ tasks:
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source-dev
       echo "Boost cloned"
 
-      # Ensure libs directory exists before copying
-      mkdir -p boost-source-dev/libs/capy
-
-      # Patch Boost
-      rm -rf boost-source-dev/libs/capy || true
-      cp -r capy-root/* boost-source-dev/libs/capy/
+      # Ensure libs directory exists and patch Boost
+      mkdir -p boost-source-dev/libs
+      cp -r capy-root boost-source-dev/libs/capy
 
       # Build with B2 (32-bit)
       cd boost-source-dev
