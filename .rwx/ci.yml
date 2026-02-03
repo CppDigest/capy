@@ -1,0 +1,418 @@
+#
+# RWX CI Configuration for Boost.Capy
+# Migrated from GitHub Actions workflow
+#
+# This configuration uses RWX's DAG-based execution with content-based caching
+# to optimize the build matrix for faster CI turnaround.
+#
+# PREREQUISITES:
+# 1. RWX account setup with organization created
+# 2. GitHub App created in RWX Vault named 'CppDigest' with app slug 'cppdigest-test'
+#    - Vault name: CppDigest
+#    - GitHub App slug: cppdigest-test
+#    - Required permissions: Contents (Read & Write), Pull Requests (Read & Write)
+# 3. GitHub App installed on CppDigest/capy repository
+#
+# CURRENT STATUS:
+# - Linux builds (8 configurations): GCC 12/13/15, Clang 17/20 with variants
+# - Windows/macOS builds (4 configurations): Require platform-specific runner setup
+#
+# USAGE:
+# - Test locally: rwx run .rwx/ci.yml --init commit-sha=HEAD
+# - Auto-triggers on push/PR once committed to default branch
+#
+
+on:
+  github:
+    push:
+      init:
+        commit-sha: ${{ event.git.sha }}
+    pull_request:
+      init:
+        commit-sha: ${{ event.git.sha }}
+
+# Base configuration applied to all tasks
+base:
+  image: ubuntu:24.04
+  config: rwx/base 1.0.0
+  env:
+    GIT_FETCH_JOBS: 8
+    NET_RETRY_COUNT: 5
+    DEFAULT_BUILD_VARIANT: debug,release
+    UBSAN_OPTIONS: print_stacktrace=1
+    DEBIAN_FRONTEND: noninteractive
+    TZ: Europe/London
+
+tasks:
+  # ============================================================================
+  # Base Setup Tasks (shared dependencies)
+  # ============================================================================
+
+  - key: clone-capy
+    call: git/clone 2.0.0
+    with:
+      repository: https://github.com/CppDigest/capy.git
+      ref: ${{ init.commit-sha }}
+      github-token: ${{ vaults.CppDigest.github-apps.cppdigest-test.token }}
+      path: capy-root
+    filter:
+      - .github/workflows/**
+      - include/**
+      - src/**
+      - test/**
+      - CMakeLists.txt
+      - Jamfile
+
+  - key: clone-boost-develop
+    call: git/clone 2.0.0
+    with:
+      repository: https://github.com/boostorg/boost.git
+      ref: develop
+      path: boost-source-dev
+      submodules: true
+      github-token: ${{ vaults.CppDigest.github-apps.cppdigest-test.token }}
+    filter:
+      - .github/workflows/ci.yml
+
+  - key: clone-boost-master
+    call: git/clone 2.0.0
+    with:
+      repository: https://github.com/boostorg/boost.git
+      ref: master
+      path: boost-source-master
+      submodules: true
+      github-token: ${{ vaults.CppDigest.github-apps.cppdigest-test.token }}
+    filter:
+      - .github/workflows/ci.yml
+
+  # ============================================================================
+  # Windows and macOS Builds
+  # ============================================================================
+  # NOTE: Windows and macOS builds require platform-specific runner configuration
+  # in RWX. These can be handled via:
+  # 1. Hybrid approach: Keep these builds in GitHub Actions while using RWX for Linux
+  # 2. RWX platform-specific agents: Configure self-hosted Windows/macOS agents
+  # 3. Cloud providers: Use AWS EC2 Mac instances or Windows VMs with RWX agents
+  #
+  # For initial migration, focus on Linux builds (8/12 configurations) which
+  # demonstrate RWX's intelligent caching. Windows/macOS can be added later.
+  #
+  # Original matrix includes:
+  # - MSVC 14.42 (windows-2022)
+  # - MSVC 14.34 shared (windows-2022)
+  # - MinGW (windows-2022)
+  # - Apple Clang with asan+ubsan (macos-latest)
+  # ============================================================================
+
+  # ============================================================================
+  # Linux GCC Builds (4 configurations)
+  # ============================================================================
+
+  - key: install-gcc-15
+    run: |
+      apt-get update
+      apt-get install -y software-properties-common
+      add-apt-repository -y ppa:ubuntu-toolchain-r/test
+      apt-get update
+      apt-get install -y gcc-15 g++-15 build-essential git cmake
+    filter:
+      - .github/workflows/ci.yml
+
+  - key: build-gcc-15
+    use: [clone-capy, clone-boost-develop, install-gcc-15]
+    run: |
+      # Patch Boost
+      rm -rf boost-source-dev/libs/capy || true
+      cp -r capy-root boost-source-dev/libs/capy
+
+      # Build with B2
+      cd boost-source-dev
+      ./bootstrap.sh gcc
+      ./b2 \
+        --with-capy \
+        toolset=gcc \
+        variant=debug,release \
+        cxxstd=20 \
+        address-model=64 \
+        link=shared \
+        cxx=g++-15 \
+        cc=gcc-15
+
+      # Build with CMake
+      cd ../capy-root
+      cmake -B __build__ \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_CXX_STANDARD=20 \
+        -DCMAKE_CXX_COMPILER=g++-15 \
+        -DCMAKE_C_COMPILER=gcc-15
+      cmake --build __build__ --target boost_capy_tests
+      ctest --test-dir __build__
+    filter:
+      - capy-root/**
+      - boost-source-dev/libs/capy/**
+
+  - key: build-gcc-15-asan-ubsan
+    use: [clone-capy, clone-boost-develop, install-gcc-15]
+    run: |
+      # Patch Boost
+      rm -rf boost-source-dev/libs/capy || true
+      cp -r capy-root boost-source-dev/libs/capy
+
+      # Disable ASLR for sanitizers
+      sysctl vm.mmap_rnd_bits=28 || true
+
+      # Build with B2 (with sanitizers)
+      cd boost-source-dev
+      ./bootstrap.sh gcc
+      ./b2 \
+        --with-capy \
+        toolset=gcc \
+        variant=debug \
+        cxxstd=20 \
+        address-model=64 \
+        link=shared \
+        cxx=g++-15 \
+        cc=gcc-15 \
+        cxxflags="-fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -fsanitize=pointer-subtract" \
+        linkflags="-fsanitize=address -fsanitize=undefined"
+    filter:
+      - capy-root/**
+      - boost-source-dev/libs/capy/**
+    env:
+      ASAN_OPTIONS: detect_invalid_pointer_pairs=2:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
+
+  - key: install-gcc-12
+    run: |
+      apt-get update
+      apt-get install -y gcc-12 g++-12 build-essential git cmake
+    filter:
+      - .github/workflows/ci.yml
+
+  - key: build-gcc-12
+    use: [clone-capy, clone-boost-develop, install-gcc-12]
+    run: |
+      # Patch Boost
+      rm -rf boost-source-dev/libs/capy || true
+      cp -r capy-root boost-source-dev/libs/capy
+
+      # Build with B2
+      cd boost-source-dev
+      ./bootstrap.sh gcc
+      ./b2 \
+        --with-capy \
+        toolset=gcc \
+        variant=debug,release \
+        cxxstd=20 \
+        address-model=64 \
+        link=shared \
+        cxx=g++-12 \
+        cc=gcc-12
+    filter:
+      - capy-root/**
+      - boost-source-dev/libs/capy/**
+
+  - key: install-gcc-13-coverage
+    run: |
+      apt-get update
+      apt-get install -y gcc-13 g++-13 build-essential git cmake lcov wget unzip
+    filter:
+      - .github/workflows/ci.yml
+
+  - key: build-gcc-13-coverage
+    use: [clone-capy, clone-boost-develop, install-gcc-13-coverage]
+    run: |
+      # Patch Boost
+      rm -rf boost-source-dev/libs/capy || true
+      cp -r capy-root boost-source-dev/libs/capy
+
+      # Build with CMake (coverage enabled)
+      cd capy-root
+      cmake -B __build__ \
+        -DCMAKE_BUILD_TYPE=Debug \
+        -DCMAKE_CXX_STANDARD=20 \
+        -DCMAKE_CXX_COMPILER=g++-13 \
+        -DCMAKE_C_COMPILER=gcc-13 \
+        -DCMAKE_CXX_FLAGS="--coverage -fprofile-arcs -ftest-coverage" \
+        -DCMAKE_C_FLAGS="--coverage -fprofile-arcs -ftest-coverage"
+      cmake --build __build__ --target boost_capy_tests
+      ctest --test-dir __build__
+
+      # Generate coverage report
+      lcov -c -q -o "__build__/coverage.info" -d "__build__" \
+        --include "$(pwd)/*" --gcov-tool gcov-13
+
+      # Upload to codecov
+      bash <(curl -s https://codecov.io/bash) -f "__build__/coverage.info"
+    filter:
+      - capy-root/**
+      - boost-source-dev/libs/capy/**
+
+  # ============================================================================
+  # Linux Clang Builds (4 configurations)
+  # ============================================================================
+
+  - key: install-clang-20
+    run: |
+      apt-get update
+      apt-get install -y wget gnupg software-properties-common
+      wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+      add-apt-repository "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main"
+      apt-get update
+      apt-get install -y clang-20 build-essential git cmake
+    filter:
+      - .github/workflows/ci.yml
+
+  - key: build-clang-20
+    use: [clone-capy, clone-boost-develop, install-clang-20]
+    run: |
+      # Patch Boost
+      rm -rf boost-source-dev/libs/capy || true
+      cp -r capy-root boost-source-dev/libs/capy
+
+      # Build with B2 (multiple C++ standards)
+      cd boost-source-dev
+      ./bootstrap.sh clang
+      ./b2 \
+        --with-capy \
+        toolset=clang \
+        variant=debug,release \
+        cxxstd=20,23 \
+        address-model=64 \
+        link=shared \
+        cxx=clang++-20 \
+        cc=clang-20
+
+      # Build with CMake
+      cd ../capy-root
+      cmake -B __build__ \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_CXX_STANDARD=23 \
+        -DCMAKE_CXX_COMPILER=clang++-20 \
+        -DCMAKE_C_COMPILER=clang-20
+      cmake --build __build__ --target boost_capy_tests
+      ctest --test-dir __build__
+    filter:
+      - capy-root/**
+      - boost-source-dev/libs/capy/**
+
+  - key: build-clang-20-asan-ubsan
+    use: [clone-capy, clone-boost-develop, install-clang-20]
+    run: |
+      # Patch Boost
+      rm -rf boost-source-dev/libs/capy || true
+      cp -r capy-root boost-source-dev/libs/capy
+
+      # Disable ASLR for sanitizers
+      sysctl vm.mmap_rnd_bits=28 || true
+
+      # Build with B2 (with sanitizers)
+      cd boost-source-dev
+      ./bootstrap.sh clang
+      ./b2 \
+        --with-capy \
+        toolset=clang \
+        variant=debug \
+        cxxstd=20 \
+        address-model=64 \
+        link=static \
+        cxx=clang++-20 \
+        cc=clang-20 \
+        cxxflags="-fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -fsanitize=pointer-subtract" \
+        linkflags="-fsanitize=address -fsanitize=undefined"
+    filter:
+      - capy-root/**
+      - boost-source-dev/libs/capy/**
+    env:
+      ASAN_OPTIONS: detect_invalid_pointer_pairs=0:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
+
+  - key: install-clang-17
+    run: |
+      apt-get update
+      apt-get install -y clang-17 build-essential git cmake
+    filter:
+      - .github/workflows/ci.yml
+
+  - key: build-clang-17
+    use: [clone-capy, clone-boost-develop, install-clang-17]
+    run: |
+      # Patch Boost
+      rm -rf boost-source-dev/libs/capy || true
+      cp -r capy-root boost-source-dev/libs/capy
+
+      # Build with B2
+      cd boost-source-dev
+      ./bootstrap.sh clang
+      ./b2 \
+        --with-capy \
+        toolset=clang \
+        variant=debug,release \
+        cxxstd=20 \
+        address-model=64 \
+        link=static \
+        cxx=clang++-17 \
+        cc=clang-17
+    filter:
+      - capy-root/**
+      - boost-source-dev/libs/capy/**
+
+  - key: install-clang-20-multilib
+    run: |
+      apt-get update
+      apt-get install -y wget gnupg software-properties-common
+      wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+      add-apt-repository "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main"
+      apt-get update
+      apt-get install -y clang-20 build-essential git cmake gcc-multilib g++-multilib
+    filter:
+      - .github/workflows/ci.yml
+
+  - key: build-clang-20-x86
+    use: [clone-capy, clone-boost-develop, install-clang-20-multilib]
+    run: |
+      # Patch Boost
+      rm -rf boost-source-dev/libs/capy || true
+      cp -r capy-root boost-source-dev/libs/capy
+
+      # Build with B2 (32-bit)
+      cd boost-source-dev
+      ./bootstrap.sh clang
+      ./b2 \
+        --with-capy \
+        toolset=clang \
+        variant=debug,release \
+        cxxstd=20,23 \
+        address-model=32 \
+        link=static \
+        cxx=clang++-20 \
+        cc=clang-20
+    filter:
+      - capy-root/**
+      - boost-source-dev/libs/capy/**
+
+  # ============================================================================
+  # Changelog Task (independent)
+  # ============================================================================
+
+  - key: changelog
+    use: [clone-capy]
+    run: |
+      cd capy-root
+
+      # Generate changelog summary
+      echo "# Changelog Summary"
+      echo ""
+      echo "## Recent Commits (Last 20)"
+      echo ""
+      git log --pretty=format:"- %h - %s (%an, %ar)" -n 20
+      echo ""
+      echo ""
+      echo "## Contributors"
+      echo ""
+      git log --pretty=format:"%an" -n 100 | sort -u
+      echo ""
+      echo ""
+      echo "## Commit Activity by Author"
+      echo ""
+      git shortlog -sn --no-merges -n 20
+    filter:
+      - capy-root/**
