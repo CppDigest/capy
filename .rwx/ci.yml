@@ -117,7 +117,9 @@ tasks:
   #     git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
   #     cp -r ../capy-root libs/capy
   #     python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-  #     ./bootstrap.sh gcc --cxx=g++-15
+  #     export CXX=g++-15
+  #     export CC=gcc-15
+  #     ./bootstrap.sh --with-toolset=gcc
   #     cd ..
   #
   #     # Run B2 build
@@ -158,7 +160,9 @@ tasks:
   #     git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
   #     cp -r ../capy-root libs/capy
   #     python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-  #     ./bootstrap.sh gcc --cxx=g++-15
+  #     export CXX=g++-15
+  #     export CC=gcc-15
+  #     ./bootstrap.sh --with-toolset=gcc
   #     cd ..
   #
   #     # Disable ASLR for sanitizers
@@ -196,7 +200,9 @@ tasks:
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      ./bootstrap.sh gcc --cxx=g++-12
+      export CXX=g++-12
+      export CC=gcc-12
+      ./bootstrap.sh --with-toolset=gcc
       cd ..
 
       # Run B2 build
@@ -264,7 +270,9 @@ tasks:
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      ./bootstrap.sh clang --cxx=clang++-20
+      export CXX=clang++-20
+      export CC=clang-20
+      ./bootstrap.sh --with-toolset=clang
       cd ..
 
       # Run B2 build
@@ -304,7 +312,9 @@ tasks:
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      ./bootstrap.sh clang --cxx=clang++-20
+      export CXX=clang++-20
+      export CC=clang-20
+      ./bootstrap.sh --with-toolset=clang
       cd ..
 
       # Disable ASLR for sanitizers
@@ -342,7 +352,9 @@ tasks:
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      ./bootstrap.sh clang --cxx=clang++-17
+      export CXX=clang++-17
+      export CC=clang-17
+      ./bootstrap.sh --with-toolset=clang
       cd ..
 
       # Run B2 build
@@ -377,7 +389,9 @@ tasks:
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      ./bootstrap.sh clang --cxx=clang++-20
+      export CXX=clang++-20
+      export CC=clang-20
+      ./bootstrap.sh --with-toolset=clang
       cd ..
 
       # Run B2 build (32-bit x86)
