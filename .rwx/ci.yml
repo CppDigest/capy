@@ -47,7 +47,7 @@ tasks:
 
   - key: clone-capy
     run: |
-      git clone --depth 1 https://github.com/timon0305/capy.git capy-root
+      git clone --depth 1 https://github.com/${{ event.repository.full_name }}.git capy-root
       cd capy-root
       git fetch origin ${{ init.commit-sha }}
       git checkout ${{ init.commit-sha }}
@@ -88,7 +88,7 @@ tasks:
       sudo apt-get install -y software-properties-common
       sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
       sudo apt-get update
-      sudo apt-get install -y gcc-14 g++-14 build-essential git cmake
+      sudo apt-get install -y gcc-15 g++-15 build-essential git cmake
 
   # GCC 15: Both B2 and CMake builds (matches build-cmake: true in GitHub Actions)
   - key: build-gcc-15-b2
@@ -107,7 +107,7 @@ tasks:
       # Run B2 build
       cd boost-source
       ./b2 \
-        toolset=gcc-14 \
+        toolset=gcc-15 \
         cxxstd=20 \
         variant=release \
         address-model=64 \
@@ -123,8 +123,8 @@ tasks:
       cmake -B __build__ \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_CXX_STANDARD=20 \
-        -DCMAKE_CXX_COMPILER=g++-14 \
-        -DCMAKE_C_COMPILER=gcc-14
+        -DCMAKE_CXX_COMPILER=g++-15 \
+        -DCMAKE_C_COMPILER=gcc-15
       cmake --build __build__ --target boost_capy_tests
       ctest --test-dir __build__
     filter:
@@ -150,7 +150,7 @@ tasks:
       # Run B2 build
       cd boost-source
       ./b2 \
-        toolset=gcc-14 \
+        toolset=gcc-15 \
         cxxstd=20 \
         variant=debug \
         address-model=64 \
@@ -168,18 +168,29 @@ tasks:
       sudo apt-get update
       sudo apt-get install -y gcc-12 g++-12 build-essential git cmake
 
-  # GCC 12: CMake build only (optimized for speed)
+  # GCC 12: B2 build only (matches original workflow)
   - key: build-gcc-12
     use: [clone-capy, install-gcc-12]
     run: |
-      cd capy-root
-      cmake -B __build__ \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_CXX_STANDARD=20 \
-        -DCMAKE_CXX_COMPILER=g++-12 \
-        -DCMAKE_C_COMPILER=gcc-12
-      cmake --build __build__ --target boost_capy_tests
-      ctest --test-dir __build__
+      # Setup Boost tree with capy integrated
+      sudo apt-get install -y python3 python-is-python3
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      cd boost-source
+      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      ./bootstrap.sh --with-toolset=gcc
+      cd ..
+
+      # Run B2 build
+      cd boost-source
+      ./b2 \
+        toolset=gcc-12 \
+        cxxstd=20 \
+        variant=release \
+        address-model=64 \
+        link=shared \
+        libs/capy/test
     filter:
       - capy-root/**
 
@@ -303,18 +314,29 @@ tasks:
       sudo apt-get update
       sudo apt-get install -y clang-17 build-essential git cmake
 
-  # Clang 17: CMake build only (optimized for speed)
+  # Clang 17: B2 build only (matches original workflow)
   - key: build-clang-17
     use: [clone-capy, install-clang-17]
     run: |
-      cd capy-root
-      cmake -B __build__ \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_CXX_STANDARD=20 \
-        -DCMAKE_CXX_COMPILER=clang++-17 \
-        -DCMAKE_C_COMPILER=clang-17
-      cmake --build __build__ --target boost_capy_tests
-      ctest --test-dir __build__
+      # Setup Boost tree with capy integrated
+      sudo apt-get install -y python3 python-is-python3
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      cd boost-source
+      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      ./bootstrap.sh --with-toolset=clang
+      cd ..
+
+      # Run B2 build
+      cd boost-source
+      ./b2 \
+        toolset=clang-17 \
+        cxxstd=20 \
+        variant=release \
+        address-model=64 \
+        link=static \
+        libs/capy/test
     filter:
       - capy-root/**
 
@@ -328,19 +350,29 @@ tasks:
       sudo apt-get install -y clang-20 build-essential git cmake gcc-multilib g++-multilib
 
   # Clang 20 x86 (32-bit): CMake build only (optimized for speed)
+  # Clang 20 x86: B2 build only (matches original workflow)
   - key: build-clang-20-x86
     use: [clone-capy, install-clang-20-multilib]
     run: |
-      cd capy-root
-      cmake -B __build__ \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_CXX_STANDARD=20 \
-        -DCMAKE_CXX_COMPILER=clang++-20 \
-        -DCMAKE_C_COMPILER=clang-20 \
-        -DCMAKE_CXX_FLAGS="-m32" \
-        -DCMAKE_C_FLAGS="-m32"
-      cmake --build __build__ --target boost_capy_tests
-      ctest --test-dir __build__
+      # Setup Boost tree with capy integrated
+      sudo apt-get install -y python3 python-is-python3
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      cd boost-source
+      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      ./bootstrap.sh --with-toolset=clang
+      cd ..
+
+      # Run B2 build (32-bit x86)
+      cd boost-source
+      ./b2 \
+        toolset=clang-20 \
+        cxxstd=20,23 \
+        variant=release \
+        address-model=32 \
+        link=static \
+        libs/capy/test
     filter:
       - capy-root/**
 
