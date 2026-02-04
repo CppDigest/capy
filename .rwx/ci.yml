@@ -39,7 +39,7 @@ on:
 
 # Base configuration applied to all tasks
 base:
-  image: ubuntu:24.04
+  image: ubuntu:25.04
   config: rwx/base 1.0.0
 
 tasks:
@@ -85,16 +85,12 @@ tasks:
   # ============================================================================
 
   - key: install-gcc-15
-    docker:
-      image: ubuntu:25.04
     run: |
       sudo apt-get update
       sudo apt-get install -y gcc-15 g++-15 build-essential git cmake
 
   # GCC 15: Both B2 and CMake builds (matches build-cmake: true in GitHub Actions)
   - key: build-gcc-15-b2
-    docker:
-      image: ubuntu:25.04
     use: [clone-capy, install-gcc-15]
     run: |
       # Setup Boost tree with capy integrated
@@ -120,8 +116,6 @@ tasks:
       - capy-root/**
 
   - key: build-gcc-15-cmake
-    docker:
-      image: ubuntu:25.04
     use: [clone-capy, install-gcc-15]
     run: |
       cd capy-root
@@ -137,8 +131,6 @@ tasks:
 
   # GCC 15 asan+ubsan: B2 build only (no build-cmake flag in GitHub Actions)
   - key: build-gcc-15-asan-ubsan
-    docker:
-      image: ubuntu:25.04
     use: [clone-capy, install-gcc-15]
     run: |
       # Setup Boost tree with capy integrated
