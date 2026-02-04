@@ -31,9 +31,11 @@ on:
     push:
       init:
         commit-sha: ${{ event.git.sha }}
+        repository-full-name: ${{ event.repository.full_name }}
     pull_request:
       init:
         commit-sha: ${{ event.git.sha }}
+        repository-full-name: ${{ event.repository.full_name }}
 
 # Base configuration applied to all tasks
 base:
@@ -47,7 +49,7 @@ tasks:
 
   - key: clone-capy
     run: |
-      git clone --depth 1 https://github.com/${{ event.repository.full_name }}.git capy-root
+      git clone --depth 1 https://github.com/${{ init.repository-full-name }}.git capy-root
       cd capy-root
       git fetch origin ${{ init.commit-sha }}
       git checkout ${{ init.commit-sha }}
@@ -83,15 +85,14 @@ tasks:
   # ============================================================================
 
   - key: install-gcc-15
+    image: ubuntu:25.04
     run: |
-      sudo apt-get update
-      sudo apt-get install -y software-properties-common
-      sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
       sudo apt-get update
       sudo apt-get install -y gcc-15 g++-15 build-essential git cmake
 
   # GCC 15: Both B2 and CMake builds (matches build-cmake: true in GitHub Actions)
   - key: build-gcc-15-b2
+    image: ubuntu:25.04
     use: [clone-capy, install-gcc-15]
     run: |
       # Setup Boost tree with capy integrated
@@ -117,6 +118,7 @@ tasks:
       - capy-root/**
 
   - key: build-gcc-15-cmake
+    image: ubuntu:25.04
     use: [clone-capy, install-gcc-15]
     run: |
       cd capy-root
@@ -132,6 +134,7 @@ tasks:
 
   # GCC 15 asan+ubsan: B2 build only (no build-cmake flag in GitHub Actions)
   - key: build-gcc-15-asan-ubsan
+    image: ubuntu:25.04
     use: [clone-capy, install-gcc-15]
     run: |
       # Setup Boost tree with capy integrated
@@ -349,7 +352,6 @@ tasks:
       sudo apt-get update
       sudo apt-get install -y clang-20 build-essential git cmake gcc-multilib g++-multilib
 
-  # Clang 20 x86 (32-bit): CMake build only (optimized for speed)
   # Clang 20 x86: B2 build only (matches original workflow)
   - key: build-clang-20-x86
     use: [clone-capy, install-clang-20-multilib]
