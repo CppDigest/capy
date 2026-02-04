@@ -14,12 +14,15 @@
 # 3. GitHub App installed on CppDigest/capy repository
 #
 # CURRENT STATUS:
-# - Linux builds (8 configurations): GCC 12/13/15, Clang 17/20 with variants
-#   - Method 1 - B2 builds (4): GCC 15, GCC 15 asan, Clang 20, Clang 20 asan
-#   - Method 2 - CMake from capy-root (7): All configs have standalone CMake build
-#   - Matches GitHub Actions workflow exactly (only 2 build methods)
+# - Linux builds (5 configurations): GCC 12/13, Clang 17/20 with variants
+#   - GCC 12 (B2), GCC 13 coverage (CMake), Clang 17 (B2), Clang 20 (B2+CMake), Clang 20 x86 (B2)
 #   - Target time: 5-10 minutes with RWX caching for B2 builds
+# - GCC 15 builds (3 configurations): Remain in GitHub Actions (require Ubuntu 25.04)
 # - Windows/macOS builds (4 configurations): Require platform-specific runner setup
+#
+# HYBRID CI APPROACH:
+# - RWX CI: Handles Ubuntu 24.04-compatible builds (5 Linux configurations)
+# - GitHub Actions: Handles GCC 15 (Ubuntu 25.04), Windows, macOS builds
 #
 # USAGE:
 # - Test locally: rwx run .rwx/ci.yml --init commit-sha=HEAD
@@ -81,89 +84,101 @@ tasks:
   # ============================================================================
 
   # ============================================================================
-  # Linux GCC Builds (4 configurations)
+  # Linux GCC Builds (2 configurations: GCC 12, GCC 13)
+  # ============================================================================
+  #
+  # NOTE: GCC 15 builds (3 configurations) are NOT included in RWX CI because
+  # GCC 15 requires Ubuntu 25.04, which is not supported by rwx/base.
+  # These builds remain in GitHub Actions workflow (.github/workflows/ci.yml)
+  # which uses container: "ubuntu:25.04" for GCC 15 configurations.
+  #
+  # Hybrid CI Strategy:
+  # - RWX CI: GCC 12, 13; Clang 17, 20 (Ubuntu 24.04 compatible)
+  # - GitHub Actions: GCC 15 (requires Ubuntu 25.04), Windows, macOS
   # ============================================================================
 
-  - key: install-gcc-15
-    run: |
-      sudo apt-get update
-      sudo apt-get install -y software-properties-common
-      sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-      sudo apt-get update
-      sudo apt-get install -y gcc-15 g++-15 build-essential git cmake
+  # - key: install-gcc-15
+  #   run: |
+  #     sudo apt-get update
+  #     sudo apt-get install -y software-properties-common
+  #     sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  #     sudo apt-get update
+  #     sudo apt-get install -y gcc-15 g++-15 build-essential git cmake
 
   # GCC 15: Both B2 and CMake builds (matches build-cmake: true in GitHub Actions)
-  - key: build-gcc-15-b2
-    use: [clone-capy, install-gcc-15]
-    run: |
-      # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
-      cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      CXX=g++-15 CC=gcc-15 ./bootstrap.sh --with-toolset=gcc
-      cd ..
+  # DISABLED: GCC 15 requires Ubuntu 25.04, which is not supported by rwx/base
+  # - key: build-gcc-15-b2
+  #   use: [clone-capy, install-gcc-15]
+  #   run: |
+  #     # Setup Boost tree with capy integrated
+  #     sudo apt-get install -y python3 python-is-python3
+  #     git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+  #     cd boost-source
+  #     git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+  #     cp -r ../capy-root libs/capy
+  #     python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+  #     CXX=g++-15 CC=gcc-15 ./bootstrap.sh --with-toolset=gcc
+  #     cd ..
+  #
+  #     # Run B2 build
+  #     cd boost-source
+  #     ./b2 \
+  #       toolset=gcc-15 \
+  #       cxxstd=20 \
+  #       variant=release \
+  #       address-model=64 \
+  #       link=shared \
+  #       libs/capy/test
+  #   filter:
+  #     - capy-root/**
 
-      # Run B2 build
-      cd boost-source
-      ./b2 \
-        toolset=gcc-15 \
-        cxxstd=20 \
-        variant=release \
-        address-model=64 \
-        link=shared \
-        libs/capy/test
-    filter:
-      - capy-root/**
-
-  - key: build-gcc-15-cmake
-    use: [clone-capy, install-gcc-15]
-    run: |
-      cd capy-root
-      cmake -B __build__ \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_CXX_STANDARD=20 \
-        -DCMAKE_CXX_COMPILER=g++-15 \
-        -DCMAKE_C_COMPILER=gcc-15
-      cmake --build __build__ --target boost_capy_tests
-      ctest --test-dir __build__
-    filter:
-      - capy-root/**
+  # - key: build-gcc-15-cmake
+  #   use: [clone-capy, install-gcc-15]
+  #   run: |
+  #     cd capy-root
+  #     cmake -B __build__ \
+  #       -DCMAKE_BUILD_TYPE=Release \
+  #       -DCMAKE_CXX_STANDARD=20 \
+  #       -DCMAKE_CXX_COMPILER=g++-15 \
+  #       -DCMAKE_C_COMPILER=gcc-15
+  #     cmake --build __build__ --target boost_capy_tests
+  #     ctest --test-dir __build__
+  #   filter:
+  #     - capy-root/**
 
   # GCC 15 asan+ubsan: B2 build only (no build-cmake flag in GitHub Actions)
-  - key: build-gcc-15-asan-ubsan
-    use: [clone-capy, install-gcc-15]
-    run: |
-      # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
-      cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      CXX=g++-15 CC=gcc-15 ./bootstrap.sh --with-toolset=gcc
-      cd ..
-
-      # Disable ASLR for sanitizers
-      sudo sysctl vm.mmap_rnd_bits=28 || true
-
-      # Run B2 build
-      cd boost-source
-      ./b2 \
-        toolset=gcc-15 \
-        cxxstd=20 \
-        variant=debug \
-        address-model=64 \
-        link=shared \
-        cxxflags="-fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -fsanitize=pointer-subtract" \
-        linkflags="-fsanitize=address -fsanitize=undefined" \
-        libs/capy/test
-    filter:
-      - capy-root/**
-    env:
-      ASAN_OPTIONS: detect_invalid_pointer_pairs=2:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
+  # DISABLED: GCC 15 requires Ubuntu 25.04, which is not supported by rwx/base
+  # - key: build-gcc-15-asan-ubsan
+  #   use: [clone-capy, install-gcc-15]
+  #   run: |
+  #     # Setup Boost tree with capy integrated
+  #     sudo apt-get install -y python3 python-is-python3
+  #     git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+  #     cd boost-source
+  #     git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+  #     cp -r ../capy-root libs/capy
+  #     python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+  #     CXX=g++-15 CC=gcc-15 ./bootstrap.sh --with-toolset=gcc
+  #     cd ..
+  #
+  #     # Disable ASLR for sanitizers
+  #     sudo sysctl vm.mmap_rnd_bits=28 || true
+  #
+  #     # Run B2 build
+  #     cd boost-source
+  #     ./b2 \
+  #       toolset=gcc-15 \
+  #       cxxstd=20 \
+  #       variant=debug \
+  #       address-model=64 \
+  #       link=shared \
+  #       cxxflags="-fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -fsanitize=pointer-subtract" \
+  #       linkflags="-fsanitize=address -fsanitize=undefined" \
+  #       libs/capy/test
+  #   filter:
+  #     - capy-root/**
+  #   env:
+  #     ASAN_OPTIONS: detect_invalid_pointer_pairs=2:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
 
   - key: install-gcc-12
     run: |
@@ -226,7 +241,7 @@ tasks:
       - capy-root/**
 
   # ============================================================================
-  # Linux Clang Builds (4 configurations)
+  # Linux Clang Builds (5 configurations: Clang 17, Clang 20 variants, Clang 20 x86)
   # ============================================================================
 
   - key: install-clang-20
