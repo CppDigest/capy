@@ -50,7 +50,7 @@ tasks:
   - key: setup-base
     run: |
       apt-get update
-      apt-get install -y git ca-certificates sudo
+      apt-get install -y git ca-certificates
 
   - key: clone-capy
     use: [setup-base]
@@ -92,15 +92,15 @@ tasks:
 
   - key: install-gcc-15
     run: |
-      sudo apt-get update
-      sudo apt-get install -y gcc-15 g++-15 build-essential git cmake
+      apt-get update
+      apt-get install -y gcc-15 g++-15 build-essential git cmake
 
   # GCC 15: Both B2 and CMake builds (matches build-cmake: true in GitHub Actions)
   - key: build-gcc-15-b2
     use: [clone-capy, install-gcc-15]
     run: |
       # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
+      apt-get install -y python3 python-is-python3
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
@@ -140,7 +140,7 @@ tasks:
     use: [clone-capy, install-gcc-15]
     run: |
       # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
+      apt-get install -y python3 python-is-python3
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
@@ -150,7 +150,7 @@ tasks:
       cd ..
 
       # Disable ASLR for sanitizers
-      sudo sysctl vm.mmap_rnd_bits=28 || true
+      sysctl vm.mmap_rnd_bits=28 || true
 
       # Run B2 build
       cd boost-source
@@ -170,15 +170,15 @@ tasks:
 
   - key: install-gcc-12
     run: |
-      sudo apt-get update
-      sudo apt-get install -y gcc-12 g++-12 build-essential git cmake
+      apt-get update
+      apt-get install -y gcc-12 g++-12 build-essential git cmake
 
   # GCC 12: B2 build only (matches original workflow)
   - key: build-gcc-12
     use: [clone-capy, install-gcc-12]
     run: |
       # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
+      apt-get install -y python3 python-is-python3
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
@@ -201,8 +201,8 @@ tasks:
 
   - key: install-gcc-13-coverage
     run: |
-      sudo apt-get update
-      sudo apt-get install -y gcc-13 g++-13 build-essential git cmake lcov wget unzip
+      apt-get update
+      apt-get install -y gcc-13 g++-13 build-essential git cmake lcov wget unzip
 
   # GCC 13 coverage: CMake build only (coverage flag disables B2 in GitHub Actions)
   - key: build-gcc-13-coverage
@@ -234,19 +234,19 @@ tasks:
 
   - key: install-clang-20
     run: |
-      sudo apt-get update
-      sudo apt-get install -y wget gnupg software-properties-common
-      wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-      sudo add-apt-repository "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main"
-      sudo apt-get update
-      sudo apt-get install -y clang-20 build-essential git cmake
+      apt-get update
+      apt-get install -y wget gnupg software-properties-common
+      wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+      add-apt-repository "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main"
+      apt-get update
+      apt-get install -y clang-20 build-essential git cmake
 
   # Clang 20: Both B2 and CMake builds (matches build-cmake: true in GitHub Actions)
   - key: build-clang-20-b2
     use: [clone-capy, install-clang-20]
     run: |
       # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
+      apt-get install -y python3 python-is-python3
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
@@ -286,7 +286,7 @@ tasks:
     use: [clone-capy, install-clang-20]
     run: |
       # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
+      apt-get install -y python3 python-is-python3
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
@@ -296,7 +296,7 @@ tasks:
       cd ..
 
       # Disable ASLR for sanitizers
-      sudo sysctl vm.mmap_rnd_bits=28 || true
+      sysctl vm.mmap_rnd_bits=28 || true
 
       # Run B2 build
       cd boost-source
@@ -316,15 +316,15 @@ tasks:
 
   - key: install-clang-17
     run: |
-      sudo apt-get update
-      sudo apt-get install -y clang-17 build-essential git cmake
+      apt-get update
+      apt-get install -y clang-17 build-essential git cmake
 
   # Clang 17: B2 build only (matches original workflow)
   - key: build-clang-17
     use: [clone-capy, install-clang-17]
     run: |
       # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
+      apt-get install -y python3 python-is-python3
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
@@ -347,19 +347,19 @@ tasks:
 
   - key: install-clang-20-multilib
     run: |
-      sudo apt-get update
-      sudo apt-get install -y wget gnupg software-properties-common
-      wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-      sudo add-apt-repository "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main"
-      sudo apt-get update
-      sudo apt-get install -y clang-20 build-essential git cmake gcc-multilib g++-multilib
+      apt-get update
+      apt-get install -y wget gnupg software-properties-common
+      wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+      add-apt-repository "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main"
+      apt-get update
+      apt-get install -y clang-20 build-essential git cmake gcc-multilib g++-multilib
 
   # Clang 20 x86: B2 build only (matches original workflow)
   - key: build-clang-20-x86
     use: [clone-capy, install-clang-20-multilib]
     run: |
       # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
+      apt-get install -y python3 python-is-python3
       git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
