@@ -47,7 +47,13 @@ tasks:
   # Base Setup Tasks (shared dependencies)
   # ============================================================================
 
+  - key: setup-base
+    run: |
+      apt-get update
+      apt-get install -y git ca-certificates sudo
+
   - key: clone-capy
+    use: [setup-base]
     run: |
       git clone --depth 1 ${{ init.clone-url }} capy-root
       cd capy-root
