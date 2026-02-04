@@ -117,7 +117,7 @@ tasks:
   #     git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
   #     cp -r ../capy-root libs/capy
   #     python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-  #     CXX=g++-15 CC=gcc-15 ./bootstrap.sh --with-toolset=gcc
+  #     ./bootstrap.sh gcc --cxx=g++-15
   #     cd ..
   #
   #     # Run B2 build
@@ -158,7 +158,7 @@ tasks:
   #     git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
   #     cp -r ../capy-root libs/capy
   #     python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-  #     CXX=g++-15 CC=gcc-15 ./bootstrap.sh --with-toolset=gcc
+  #     ./bootstrap.sh gcc --cxx=g++-15
   #     cd ..
   #
   #     # Disable ASLR for sanitizers
@@ -196,7 +196,7 @@ tasks:
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      CXX=g++-12 CC=gcc-12 ./bootstrap.sh --with-toolset=gcc
+      ./bootstrap.sh gcc --cxx=g++-12
       cd ..
 
       # Run B2 build
@@ -264,7 +264,7 @@ tasks:
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      CXX=clang++-20 CC=clang-20 ./bootstrap.sh --with-toolset=clang
+      ./bootstrap.sh clang --cxx=clang++-20
       cd ..
 
       # Run B2 build
@@ -304,7 +304,7 @@ tasks:
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      CXX=clang++-20 CC=clang-20 ./bootstrap.sh --with-toolset=clang
+      ./bootstrap.sh clang --cxx=clang++-20
       cd ..
 
       # Disable ASLR for sanitizers
@@ -342,7 +342,7 @@ tasks:
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      CXX=clang++-17 CC=clang-17 ./bootstrap.sh --with-toolset=clang
+      ./bootstrap.sh clang --cxx=clang++-17
       cd ..
 
       # Run B2 build
@@ -377,7 +377,7 @@ tasks:
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      CXX=clang++-20 CC=clang-20 ./bootstrap.sh --with-toolset=clang
+      ./bootstrap.sh clang --cxx=clang++-20
       cd ..
 
       # Run B2 build (32-bit x86)
