@@ -17,10 +17,8 @@
 # - Linux builds (8 configurations): GCC 12/13/15, Clang 17/20 with variants
 #   - Method 1 - B2 builds (4): GCC 15, GCC 15 asan, Clang 20, Clang 20 asan
 #   - Method 2 - CMake from capy-root (7): All configs have standalone CMake build
-#   - Method 3 - CMake from boost-root (2): GCC 15, Clang 20 (optimized with Ninja)
-#   - ALL 3 METHODS integrated for configs with build-cmake: true flag
-#   - OPTIMIZED: Method 3 uses Ninja, skips dependency tests, parallel builds
-#   - Target time: 10-15 minutes with RWX caching (2 boost-root builds)
+#   - Matches GitHub Actions workflow exactly (only 2 build methods)
+#   - Target time: 5-10 minutes with RWX caching for B2 builds
 # - Windows/macOS builds (4 configurations): Require platform-specific runner setup
 #
 # USAGE:
@@ -131,37 +129,6 @@ tasks:
       ctest --test-dir __build__
     filter:
       - capy-root/**
-
-  # GCC 15: CMake build from boost-root (builds entire Boost including capy)
-  # OPTIMIZED: Uses Ninja, skips dependency tests, parallel build
-  - key: build-gcc-15-cmake-boost-root
-    use: [clone-capy, install-gcc-15]
-    run: |
-      # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3 ninja-build
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
-      cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      cd ..
-
-      # Run optimized CMake build from boost-root
-      cd boost-source
-      cmake -B __build__ -G Ninja \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_CXX_STANDARD=20 \
-        -DCMAKE_CXX_COMPILER=g++-14 \
-        -DCMAKE_C_COMPILER=gcc-14 \
-        -DBOOST_INCLUDE_LIBRARIES=capy \
-        -DBUILD_TESTING=OFF \
-        -DBOOST_ENABLE_DOCS=OFF
-      cmake --build __build__ --target boost_capy_tests --parallel
-      ctest --test-dir __build__
-    filter:
-      - capy-root/**
-      - CMakeLists.txt
-      - Jamfile
 
   # GCC 15 asan+ubsan: B2 build only (no build-cmake flag in GitHub Actions)
   - key: build-gcc-15-asan-ubsan
@@ -297,37 +264,6 @@ tasks:
       ctest --test-dir __build__
     filter:
       - capy-root/**
-
-  # Clang 20: CMake build from boost-root (builds entire Boost including capy)
-  # OPTIMIZED: Uses Ninja, skips dependency tests, parallel build
-  - key: build-clang-20-cmake-boost-root
-    use: [clone-capy, install-clang-20]
-    run: |
-      # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3 ninja-build
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
-      cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      cd ..
-
-      # Run optimized CMake build from boost-root
-      cd boost-source
-      cmake -B __build__ -G Ninja \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_CXX_STANDARD=23 \
-        -DCMAKE_CXX_COMPILER=clang++-20 \
-        -DCMAKE_C_COMPILER=clang-20 \
-        -DBOOST_INCLUDE_LIBRARIES=capy \
-        -DBUILD_TESTING=OFF \
-        -DBOOST_ENABLE_DOCS=OFF
-      cmake --build __build__ --target boost_capy_tests --parallel
-      ctest --test-dir __build__
-    filter:
-      - capy-root/**
-      - CMakeLists.txt
-      - Jamfile
 
   # Clang 20 asan+ubsan: B2 build only
   - key: build-clang-20-asan-ubsan
