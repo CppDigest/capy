@@ -1,0 +1,480 @@
+# =============================================================================
+# Harness CI Pipeline — Matrix (capy)
+# =============================================================================
+#
+# WHAT THIS PIPELINE DOES
+# -----------------------
+# This pipeline builds and tests the capy C++ library (CMake target
+# boost_capy_tests) across multiple compiler and OS combinations. It runs
+# several CI stages in parallel: two matrix-based stages (many compiler×OS
+# combinations) and several single-config stages for specific compiler/version
+# and image choices. Each stage: clone → install deps → CMake configure →
+# build boost_capy_tests → ctest. Some stages enable sanitizers (ASan/UBSan)
+# or coverage (GCC 13 + lcov); others are plain Release/Debug.
+#
+# CURRENT STATE
+# -------------
+# This YAML is an export/snapshot of the pipeline as configured in Harness.
+# It is stored in Harness-CI-evaluation-report for documentation and
+# comparison (e.g. vs GitHub Actions). It is not necessarily the live
+# pipeline running in Harness; apply changes in the Harness UI or via their
+# API if you need to update the actual pipeline.
+#
+# Last updated by Harness AI: 2026-02-04 01:49:36 UTC (Chen Shen).
+# Tag: ai_generated: "true".
+#
+# STRUCTURE
+# ---------
+# - pipeline.properties.ci.codebase: source connector (GitHubCppDigest) and
+#   build expression (<+input>) for branch/tag/PR.
+# - stages: one "parallel" block containing multiple stages. All run in
+#   parallel. No explicit ordering between them.
+# - Matrix stages (Matrix_Build, Ubuntu22gcc14): use strategy.matrix with
+#   compiler × os; Harness fans out into multiple jobs (maxConcurrency: 4).
+# - Single-config stages: one image, one compiler, fixed CMake options (e.g.
+#   Ubuntu24.04-gcc12, Ubuntu24.04-clang20, Ubuntu24.04-gcc13 coverage, etc.).
+#
+# IDENTIFIERS / NAMING
+# --------------------
+# - identifier "Matrix" = pipeline id.
+# - projectIdentifier: default_project, orgIdentifier: default.
+# - Stage identifiers: Matrix_Build, f, Ubuntu2404clang20, Ubuntu2404gcc13,
+#   Ubuntu2404clang17, Ubuntu22gcc14, Ubuntu22gcc12, Ubuntu22gcc13 (see names
+#   for human-readable descriptions).
+#
+# =============================================================================
+
+pipeline:
+  name: Matrix
+  identifier: Matrix
+  projectIdentifier: default_project
+  orgIdentifier: default
+  tags:
+    ai_generated: "true"
+  properties:
+    # Codebase: which repo and which ref to build (branch/tag/PR via <+input>).
+    ci:
+      codebase:
+        connectorRef: GitHubCppDigest
+        build: <+input>
+  stages:
+    # --- Parallel stage group: all stages below run in parallel ---
+    - parallel:
+        # --- Matrix stage: runs 12 jobs (4 compilers × 3 os values, maxConcurrency 4) ---
+        - stage:
+            name: Ubuntu 24.04-gcc14
+            identifier: Matrix_Build
+            description: Matrix strategy CI stage for testing different compiler and OS combinations
+            type: CI
+            spec:
+              cloneCodebase: true
+              caching:
+                enabled: true
+                paths: []
+              buildIntelligence:
+                enabled: true
+              platform:
+                os: Linux
+                arch: Amd64
+              runtime:
+                type: Cloud
+                spec:
+                  imageSpec:
+                    imageName: ubuntu-24
+              strategy:
+                matrix:
+                  compiler:
+                    - gcc-12
+                    - gcc-14
+                    - clang-17
+                    - clang-20
+                  os:
+                    - ubuntu-22.04
+                    - ubuntu-24.04
+                    - alpine
+                  maxConcurrency: 4
+              execution:
+                steps:
+                  - stepGroup:
+                      name: Build Test
+                      identifier: Build_Test
+                      steps:
+                        - step:
+                            type: Run
+                            name: Install dependencies
+                            identifier: Install_dependencies
+                            spec:
+                              shell: Sh
+                              command: |-
+                                apt-get update
+                                apt-get install -y gcc-14 g++-14 build-essential git cmake
+                        - step:
+                            type: Run
+                            name: Build
+                            identifier: Build
+                            spec:
+                              shell: Sh
+                              command: |-
+                                cmake -B __build__ \
+                                  -DCMAKE_BUILD_TYPE=Debug \
+                                  -DCMAKE_CXX_STANDARD=20 \
+                                  -DCMAKE_CXX_COMPILER=g++-14 \
+                                  -DCMAKE_C_COMPILER=gcc-14 \
+                                  -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -fsanitize=pointer-subtract" \
+                                  -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address -fsanitize=undefined"
+                                cmake --build __build__ --target boost_capy_tests
+                        - step:
+                            type: Run
+                            name: Test
+                            identifier: Test
+                            spec:
+                              shell: Sh
+                              command: ctest --test-dir __build__
+        # --- Single config: Ubuntu 24, GCC 12, Release ---
+        - stage:
+            name: Ubuntu24.04-gcc12
+            identifier: f
+            description: ""
+            type: CI
+            spec:
+              cloneCodebase: true
+              caching:
+                enabled: true
+                override: true
+                paths: []
+              buildIntelligence:
+                enabled: true
+              platform:
+                os: Linux
+                arch: Amd64
+              runtime:
+                type: Cloud
+                spec:
+                  imageSpec:
+                    imageName: ubuntu-24
+              execution:
+                steps:
+                  - stepGroup:
+                      name: Build Test
+                      identifier: Build_Test
+                      steps:
+                        - step:
+                            type: Run
+                            name: Install dependencies
+                            identifier: Install_dependencies
+                            spec:
+                              shell: Sh
+                              command: |-
+                                apt-get update
+                                apt-get install -y gcc-12 g++-12 build-essential git cmake
+                        - step:
+                            type: Run
+                            name: Build
+                            identifier: Build
+                            spec:
+                              shell: Sh
+                              command: |-
+                                cmake -B __build__ \
+                                  -DCMAKE_BUILD_TYPE=Release \
+                                  -DCMAKE_CXX_STANDARD=20 \
+                                  -DCMAKE_CXX_COMPILER=g++-12 \
+                                  -DCMAKE_C_COMPILER=gcc-12
+                                cmake --build __build__ --target boost_capy_tests
+                        - step:
+                            type: Run
+                            name: Test
+                            identifier: Test
+                            spec:
+                              shell: Sh
+                              command: ctest --test-dir __build__
+        # --- Single config: Ubuntu 24, Clang 20, C++23 ---
+        - stage:
+            name: Ubuntu24.04-clang20
+            identifier: Ubuntu2404clang20
+            description: ""
+            type: CI
+            spec:
+              cloneCodebase: true
+              caching:
+                enabled: true
+                override: true
+                paths: []
+              buildIntelligence:
+                enabled: true
+              platform:
+                os: Linux
+                arch: Amd64
+              runtime:
+                type: Cloud
+                spec:
+                  imageSpec:
+                    imageName: ubuntu-24
+              execution:
+                steps:
+                  - stepGroup:
+                      name: Build Test
+                      identifier: Build_Test
+                      steps:
+                        - step:
+                            type: Run
+                            name: Install dependencies
+                            identifier: Install_dependencies
+                            spec:
+                              shell: Sh
+                              command: |-
+                                apt-get update
+                                apt-get install -y wget gnupg software-properties-common
+                                wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+                                add-apt-repository "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main"
+                                apt-get update
+                                apt-get install -y clang-20 build-essential git cmake
+                        - step:
+                            type: Run
+                            name: Build
+                            identifier: Build
+                            spec:
+                              shell: Sh
+                              command: |-
+                                cmake -B __build__ \
+                                  -DCMAKE_BUILD_TYPE=Release \
+                                  -DCMAKE_CXX_STANDARD=23 \
+                                  -DCMAKE_CXX_COMPILER=clang++-20 \
+                                  -DCMAKE_C_COMPILER=clang-20
+                                cmake --build __build__ --target boost_capy_tests
+                        - step:
+                            type: Run
+                            name: Test
+                            identifier: Test
+                            spec:
+                              shell: Sh
+                              command: ctest --test-dir __build__
+        # --- Single config: Ubuntu 24, GCC 13, coverage (lcov) ---
+        - stage:
+            name: Ubuntu24.04-gcc13
+            identifier: Ubuntu2404gcc13
+            description: ""
+            type: CI
+            spec:
+              cloneCodebase: true
+              caching:
+                enabled: true
+                override: true
+              buildIntelligence:
+                enabled: true
+              platform:
+                os: Linux
+                arch: Amd64
+              runtime:
+                type: Cloud
+                spec:
+                  imageSpec:
+                    imageName: ubuntu-24
+              execution:
+                steps:
+                  - stepGroup:
+                      name: Build Test
+                      identifier: Build_Test
+                      steps:
+                        - step:
+                            type: Run
+                            name: Install dependencies
+                            identifier: Install_dependencies
+                            spec:
+                              shell: Sh
+                              command: |-
+                                apt-get update
+                                apt-get install -y gcc-13 g++-13 build-essential git cmake lcov wget unzip
+                        - step:
+                            type: Run
+                            name: Build
+                            identifier: Build
+                            spec:
+                              shell: Sh
+                              command: |-
+                                cmake -B __build__ \
+                                  -DCMAKE_BUILD_TYPE=Debug \
+                                  -DCMAKE_CXX_STANDARD=20 \
+                                  -DCMAKE_CXX_COMPILER=g++-13 \
+                                  -DCMAKE_C_COMPILER=gcc-13 \
+                                  -DCMAKE_CXX_FLAGS="--coverage -fprofile-arcs -ftest-coverage" \
+                                  -DCMAKE_C_FLAGS="--coverage -fprofile-arcs -ftest-coverage"
+                                cmake --build __build__ --target boost_capy_tests
+                        - step:
+                            type: Run
+                            name: Test
+                            identifier: Test
+                            spec:
+                              shell: Sh
+                              command: ctest --test-dir __build__
+        # --- Single config: Ubuntu 24, Clang 17 ---
+        - stage:
+            name: Ubuntu24.04-clang17
+            identifier: Ubuntu2404clang17
+            description: ""
+            type: CI
+            spec:
+              cloneCodebase: true
+              caching:
+                enabled: true
+                override: true
+              buildIntelligence:
+                enabled: true
+              platform:
+                os: Linux
+                arch: Amd64
+              runtime:
+                type: Cloud
+                spec:
+                  imageSpec:
+                    imageName: ubuntu-24
+              execution:
+                steps:
+                  - stepGroup:
+                      name: Build Test
+                      identifier: Build_Test
+                      steps:
+                        - step:
+                            type: Run
+                            name: Install dependencies
+                            identifier: Install_dependencies
+                            spec:
+                              shell: Sh
+                              command: |-
+                                apt-get update
+                                apt-get install -y clang-17 build-essential git cmake
+                        - step:
+                            type: Run
+                            name: Build
+                            identifier: Build
+                            spec:
+                              shell: Sh
+                              command: |-
+                                cmake -B __build__ \
+                                  -DCMAKE_BUILD_TYPE=Release \
+                                  -DCMAKE_CXX_STANDARD=20 \
+                                  -DCMAKE_CXX_COMPILER=clang++-17 \
+                                  -DCMAKE_C_COMPILER=clang-17
+                                cmake --build __build__ --target boost_capy_tests
+                        - step:
+                            type: Run
+                            name: Test
+                            identifier: Test
+                            spec:
+                              shell: Sh
+                              command: ctest --test-dir __build__
+        # --- Single config: Ubuntu 22, GCC 12 ---
+        - stage:
+            name: Ubuntu22.04-gcc12
+            identifier: Ubuntu22gcc12
+            description: ""
+            type: CI
+            spec:
+              cloneCodebase: true
+              caching:
+                enabled: true
+                override: true
+                paths: []
+              buildIntelligence:
+                enabled: true
+              platform:
+                os: Linux
+                arch: Amd64
+              runtime:
+                type: Cloud
+                spec:
+                  imageSpec:
+                    imageName: ubuntu-22
+              execution:
+                steps:
+                  - stepGroup:
+                      name: Build Test
+                      identifier: Build_Test
+                      steps:
+                        - step:
+                            type: Run
+                            name: Install dependencies
+                            identifier: Install_dependencies
+                            spec:
+                              shell: Sh
+                              command: |-
+                                apt-get update
+                                apt-get install -y gcc-12 g++-12 build-essential git cmake
+                        - step:
+                            type: Run
+                            name: Build
+                            identifier: Build
+                            spec:
+                              shell: Sh
+                              command: |-
+                                cmake -B __build__ \
+                                  -DCMAKE_BUILD_TYPE=Release \
+                                  -DCMAKE_CXX_STANDARD=20 \
+                                  -DCMAKE_CXX_COMPILER=g++-12 \
+                                  -DCMAKE_C_COMPILER=gcc-12
+                                cmake --build __build__ --target boost_capy_tests
+                        - step:
+                            type: Run
+                            name: Test
+                            identifier: Test
+                            spec:
+                              shell: Sh
+                              command: ctest --test-dir __build__
+        # --- Single config: Ubuntu 22, GCC 13, coverage ---
+        - stage:
+            name: Ubuntu22.04-gcc13
+            identifier: Ubuntu22gcc13
+            description: ""
+            type: CI
+            spec:
+              cloneCodebase: true
+              caching:
+                enabled: true
+                override: true
+              buildIntelligence:
+                enabled: true
+              platform:
+                os: Linux
+                arch: Amd64
+              runtime:
+                type: Cloud
+                spec:
+                  imageSpec:
+                    imageName: ubuntu-22
+              execution:
+                steps:
+                  - stepGroup:
+                      name: Build Test
+                      identifier: Build_Test
+                      steps:
+                        - step:
+                            type: Run
+                            name: Install dependencies
+                            identifier: Install_dependencies
+                            spec:
+                              shell: Sh
+                              command: |-
+                                apt-get update
+                                apt-get install -y gcc-13 g++-13 build-essential git cmake lcov wget unzip
+                        - step:
+                            type: Run
+                            name: Build
+                            identifier: Build
+                            spec:
+                              shell: Sh
+                              command: |-
+                                cmake -B __build__ \
+                                  -DCMAKE_BUILD_TYPE=Debug \
+                                  -DCMAKE_CXX_STANDARD=20 \
+                                  -DCMAKE_CXX_COMPILER=g++-13 \
+                                  -DCMAKE_C_COMPILER=gcc-13 \
+                                  -DCMAKE_CXX_FLAGS="--coverage -fprofile-arcs -ftest-coverage" \
+                                  -DCMAKE_C_FLAGS="--coverage -fprofile-arcs -ftest-coverage"
+                                cmake --build __build__ --target boost_capy_tests
+                        - step:
+                            type: Run
+                            name: Test
+                            identifier: Test
+                            spec:
+                              shell: Sh
+                              command: ctest --test-dir __build__
+  description: This pipeline was updated by Harness AI on 2026-02-04 01:49:36 UTC by Chen Shen.
