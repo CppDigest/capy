@@ -28,7 +28,7 @@ This PR adds the Harness CI evaluation report and pipeline snapshot for the Capy
 - **Harness-CI-evaluation-report/pipeline.yml** 
 
 ## Related
-- Issue: Research: Migrate cppdigest/capy GitHub workflow to RWX for faster CI turnaround #2
+- Issue: Research: Migrate cppdigest/capy GitHub workflow to Harness for faster CI turnaround #1
 - **Author:** Chen Shen  
 - **Date:** 2026-02-03  
 - **Project:** Boost.Capy (capy)  
