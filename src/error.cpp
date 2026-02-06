@@ -27,7 +27,7 @@ message(int code) const
 {
     switch(static_cast<error>(code))
     {
-    case error::eof: return "end of file";
+    case error::eof: return "eof";
     case error::canceled: return "operation canceled";
     case error::test_failure: return "test failure";
     case error::stream_truncated: return "stream truncated";

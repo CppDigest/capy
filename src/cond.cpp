@@ -30,7 +30,7 @@ message(int code) const
     switch(static_cast<cond>(code))
     {
     case cond::eof: return "end of file";
-    case cond::canceled: return "operation was canceled";
+    case cond::canceled: return "operation canceled";
     case cond::stream_truncated: return "stream truncated";
     case cond::not_found: return "not found";
     default:
