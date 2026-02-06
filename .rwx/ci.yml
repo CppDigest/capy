@@ -57,21 +57,21 @@ tasks:
       git fetch origin ${{ init.commit-sha }}
       git checkout ${{ init.commit-sha }}
     filter:
-      - .github/workflows/**
-      - include/**
-      - src/**
-      - test/**
-      - bench/**
-      - extra/**
-      - CMakeLists.txt
-      - test/CMakeLists.txt
-      - bench/CMakeLists.txt
-      - test/cmake_test/CMakeLists.txt
-      - test/unit/CMakeLists.txt
-      - extra/test_suite/CMakeLists.txt
-      - Jamfile
-      - test/Jamfile
-      - test/unit/Jamfile
+      - capy-root/.github/workflows/**
+      - capy-root/include/**
+      - capy-root/src/**
+      - capy-root/test/**
+      - capy-root/bench/**
+      - capy-root/extra/**
+      - capy-root/CMakeLists.txt
+      - capy-root/test/CMakeLists.txt
+      - capy-root/bench/CMakeLists.txt
+      - capy-root/test/cmake_test/CMakeLists.txt
+      - capy-root/test/unit/CMakeLists.txt
+      - capy-root/extra/test_suite/CMakeLists.txt
+      - capy-root/Jamfile
+      - capy-root/test/Jamfile
+      - capy-root/test/unit/Jamfile
 
   # Shared Boost tree setup with capy integrated (cached across all B2 builds)
   # This task clones Boost, integrates capy, runs depinst, and caches everything.
