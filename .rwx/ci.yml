@@ -304,7 +304,11 @@ tasks:
       echo "${TASK_DURATION}|build-gcc-12|SUCCESS" >> /tmp/timing-logs/tasks.log
     cache: true
     filter:
-      - capy-root/**
+      - capy-root/**/*.cpp
+      - capy-root/**/*.hpp
+      - capy-root/**/*.h
+      - capy-root/CMakeLists.txt
+      - capy-root/Jamfile
 
   - key: install-gcc-13-coverage
     run: |
@@ -384,7 +388,11 @@ tasks:
       echo "${TASK_DURATION}|build-gcc-13-coverage|SUCCESS" >> /tmp/timing-logs/tasks.log
     cache: true
     filter:
-      - capy-root/**
+      - capy-root/**/*.cpp
+      - capy-root/**/*.hpp
+      - capy-root/**/*.h
+      - capy-root/CMakeLists.txt
+      - capy-root/Jamfile
 
   # ============================================================================
   # Linux Clang Builds (5 configurations: Clang 17, Clang 20 variants, Clang 20 x86)
@@ -457,7 +465,11 @@ tasks:
       echo "$((TASK_END - TASK_START))|build-clang-20-b2|SUCCESS" >> /tmp/timing-logs/tasks.log
     cache: true
     filter:
-      - capy-root/**
+      - capy-root/**/*.cpp
+      - capy-root/**/*.hpp
+      - capy-root/**/*.h
+      - capy-root/CMakeLists.txt
+      - capy-root/Jamfile
 
   - key: build-clang-20-cmake
     use: [clone-capy, install-sccache, install-clang-20]
@@ -519,7 +531,11 @@ tasks:
       echo "${TASK_DURATION}|build-clang-20-cmake|SUCCESS" >> /tmp/timing-logs/tasks.log
     cache: true
     filter:
-      - capy-root/**
+      - capy-root/**/*.cpp
+      - capy-root/**/*.hpp
+      - capy-root/**/*.h
+      - capy-root/CMakeLists.txt
+      - capy-root/Jamfile
 
   # Clang 20 asan+ubsan: B2 build only
   - key: build-clang-20-asan-ubsan
@@ -577,7 +593,11 @@ tasks:
       echo "$((TASK_END - TASK_START))|build-clang-20-asan-ubsan|SUCCESS" >> /tmp/timing-logs/tasks.log
     cache: true
     filter:
-      - capy-root/**
+      - capy-root/**/*.cpp
+      - capy-root/**/*.hpp
+      - capy-root/**/*.h
+      - capy-root/CMakeLists.txt
+      - capy-root/Jamfile
 
   - key: install-clang-17
     run: |
@@ -634,7 +654,11 @@ tasks:
       echo "$((TASK_END - TASK_START))|build-clang-17|SUCCESS" >> /tmp/timing-logs/tasks.log
     cache: true
     filter:
-      - capy-root/**
+      - capy-root/**/*.cpp
+      - capy-root/**/*.hpp
+      - capy-root/**/*.h
+      - capy-root/CMakeLists.txt
+      - capy-root/Jamfile
 
   - key: install-clang-20-multilib
     run: |
@@ -695,7 +719,11 @@ tasks:
       echo "$((TASK_END - TASK_START))|build-clang-20-x86|SUCCESS" >> /tmp/timing-logs/tasks.log
     cache: true
     filter:
-      - capy-root/**
+      - capy-root/**/*.cpp
+      - capy-root/**/*.hpp
+      - capy-root/**/*.h
+      - capy-root/CMakeLists.txt
+      - capy-root/Jamfile
 
   # ============================================================================
   # Changelog Task (independent)
