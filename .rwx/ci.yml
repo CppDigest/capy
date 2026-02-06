@@ -90,6 +90,12 @@ tasks:
 
       # Integrate capy into Boost tree and install dependencies (cached!)
       cp -r ../capy-root libs/capy
+
+      # Create root Jamfile for B2 to find the project structure
+      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
+      echo "build-project build ;" >> libs/capy/Jamfile
+      echo "build-project test ;" >> libs/capy/Jamfile
+
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
     cache: true
     filter:
@@ -233,7 +239,7 @@ tasks:
 
   # GCC 12: B2 build only (matches original workflow)
   - key: build-gcc-12
-    use: [clone-capy, install-sccache, install-gcc-12]
+    use: [setup-boost-tree, install-sccache, install-gcc-12]
     env:
       SCCACHE_DIR: /tmp/sccache-gcc12-b2
       SCCACHE_CACHE_SIZE: 1G
@@ -273,21 +279,9 @@ tasks:
       fi
       cd ..
 
-      # Setup Boost tree with capy integrated (sccache will cache compilation)
+      # Use cached Boost tree with capy integrated (sccache will cache compilation)
       BUILD_START=$(date +%s)
-      sudo apt-get install -y python3 python-is-python3
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-
-      # Create root Jamfile for B2 to find the project structure
-      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
-      echo "build-project build ;" >> libs/capy/Jamfile
-      echo "build-project test ;" >> libs/capy/Jamfile
-
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      ./bootstrap.sh gcc
 
       # Run B2 build (sccache caches object files, custom cache stores final binaries)
       ./b2 \
@@ -444,11 +438,15 @@ tasks:
 
   # Clang 20: Both B2 and CMake builds (matches build-cmake: true in GitHub Actions)
   - key: build-clang-20-b2
-    use: [clone-capy, install-sccache, install-clang-20]
+    use: [setup-boost-tree, install-sccache, install-clang-20]
     env:
       SCCACHE_DIR: /tmp/sccache-clang20-b2
       SCCACHE_CACHE_SIZE: 1G
     run: |
+      # ===== TIMING START =====
+      TASK_START=$(date +%s)
+      echo "▶ TASK: build-clang-20-b2 STARTED at $(date -Iseconds)"
+
       # Configure sccache
       sccache --show-stats
 
@@ -462,32 +460,11 @@ tasks:
       chmod +x /tmp/cc-wrapper/clang++-20
       export PATH=/tmp/cc-wrapper:$PATH
 
-      # ===== TIMING & CACHING START =====
-      TASK_START=$(date +%s)
-      echo "▶ build-clang-20-b2 STARTED"
-
-      cd capy-root
-      CONTENT_HASH=$(find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) 2>/dev/null | sort | xargs cat 2>/dev/null | sha256sum | cut -d' ' -f1)
-      echo "📦 Hash: $CONTENT_HASH"
-      cd ..
-
-      # Setup Boost tree
+      # Use cached Boost tree with capy integrated (sccache will cache compilation)
       BUILD_START=$(date +%s)
-      sudo apt-get install -y python3 python-is-python3
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
 
-      # Create root Jamfile for B2 to find the project structure
-      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
-      echo "build-project build ;" >> libs/capy/Jamfile
-      echo "build-project test ;" >> libs/capy/Jamfile
-
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      ./bootstrap.sh gcc
-
-      # Run B2 build
+      # Run B2 build (sccache caches object files)
       ./b2 \
         toolset=clang-20 \
         cxxstd=20,23 \
@@ -495,15 +472,21 @@ tasks:
         address-model=64 \
         link=shared \
         libs/capy/test
-      BUILD_END=$(date +%s)
 
+      BUILD_END=$(date +%s)
+      BUILD_TIME=$((BUILD_END - BUILD_START))
+
+      # Show sccache statistics
       sccache --show-stats
 
       # ===== TIMING END =====
       TASK_END=$(date +%s)
-      echo "⏱ Completed in $((TASK_END - TASK_START))s (build: $((BUILD_END - BUILD_START))s)"
+      TASK_DURATION=$((TASK_END - TASK_START))
+      echo "⏱ TASK: build-clang-20-b2 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
+
+      # Log timing for summary
       mkdir -p /tmp/timing-logs
-      echo "$((TASK_END - TASK_START))|build-clang-20-b2|SUCCESS" >> /tmp/timing-logs/tasks.log
+      echo "${TASK_DURATION}|build-clang-20-b2|SUCCESS" >> /tmp/timing-logs/tasks.log
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -598,14 +581,15 @@ tasks:
 
   # Clang 20 asan+ubsan: B2 build only
   - key: build-clang-20-asan-ubsan
-    use: [clone-capy, install-sccache, install-clang-20]
+    use: [setup-boost-tree, install-sccache, install-clang-20]
     env:
       SCCACHE_DIR: /tmp/sccache-clang20-asan
       SCCACHE_CACHE_SIZE: 1G
       ASAN_OPTIONS: detect_invalid_pointer_pairs=0:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
     run: |
+      # ===== TIMING START =====
       TASK_START=$(date +%s)
-      echo "▶ build-clang-20-asan-ubsan STARTED"
+      echo "▶ TASK: build-clang-20-asan-ubsan STARTED at $(date -Iseconds)"
 
       # Configure sccache
       sccache --show-stats
@@ -620,20 +604,9 @@ tasks:
       chmod +x /tmp/cc-wrapper/clang++-20
       export PATH=/tmp/cc-wrapper:$PATH
 
-      # Setup Boost tree with capy integrated (sccache will cache compilation)
-      sudo apt-get install -y python3 python-is-python3
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      # Use cached Boost tree with capy integrated (sccache will cache compilation)
+      BUILD_START=$(date +%s)
       cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-
-      # Create root Jamfile for B2 to find the project structure
-      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
-      echo "build-project build ;" >> libs/capy/Jamfile
-      echo "build-project test ;" >> libs/capy/Jamfile
-
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      ./bootstrap.sh gcc
 
       # Disable ASLR for sanitizers
       sudo sysctl vm.mmap_rnd_bits=28 || true
@@ -649,13 +622,20 @@ tasks:
         linkflags="-fsanitize=address -fsanitize=undefined" \
         libs/capy/test
 
+      BUILD_END=$(date +%s)
+      BUILD_TIME=$((BUILD_END - BUILD_START))
+
       # Show sccache statistics
       sccache --show-stats
 
+      # ===== TIMING END =====
       TASK_END=$(date +%s)
-      echo "⏱ Completed in $((TASK_END - TASK_START))s"
+      TASK_DURATION=$((TASK_END - TASK_START))
+      echo "⏱ TASK: build-clang-20-asan-ubsan completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
+
+      # Log timing for summary
       mkdir -p /tmp/timing-logs
-      echo "$((TASK_END - TASK_START))|build-clang-20-asan-ubsan|SUCCESS" >> /tmp/timing-logs/tasks.log
+      echo "${TASK_DURATION}|build-clang-20-asan-ubsan|SUCCESS" >> /tmp/timing-logs/tasks.log
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -680,13 +660,14 @@ tasks:
 
   # Clang 17: B2 build only (matches original workflow)
   - key: build-clang-17
-    use: [clone-capy, install-sccache, install-clang-17]
+    use: [setup-boost-tree, install-sccache, install-clang-17]
     env:
       SCCACHE_DIR: /tmp/sccache-clang17-b2
       SCCACHE_CACHE_SIZE: 1G
     run: |
+      # ===== TIMING START =====
       TASK_START=$(date +%s)
-      echo "▶ build-clang-17 STARTED"
+      echo "▶ TASK: build-clang-17 STARTED at $(date -Iseconds)"
 
       # Configure sccache
       sccache --show-stats
@@ -701,20 +682,9 @@ tasks:
       chmod +x /tmp/cc-wrapper/clang++-17
       export PATH=/tmp/cc-wrapper:$PATH
 
-      # Setup Boost tree with capy integrated (sccache will cache compilation)
-      sudo apt-get install -y python3 python-is-python3
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      # Use cached Boost tree with capy integrated (sccache will cache compilation)
+      BUILD_START=$(date +%s)
       cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-
-      # Create root Jamfile for B2 to find the project structure
-      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
-      echo "build-project build ;" >> libs/capy/Jamfile
-      echo "build-project test ;" >> libs/capy/Jamfile
-
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      ./bootstrap.sh gcc
 
       # Run B2 build (sccache caches object files)
       ./b2 \
@@ -725,13 +695,20 @@ tasks:
         link=static \
         libs/capy/test
 
+      BUILD_END=$(date +%s)
+      BUILD_TIME=$((BUILD_END - BUILD_START))
+
       # Show sccache statistics
       sccache --show-stats
 
+      # ===== TIMING END =====
       TASK_END=$(date +%s)
-      echo "⏱ Completed in $((TASK_END - TASK_START))s"
+      TASK_DURATION=$((TASK_END - TASK_START))
+      echo "⏱ TASK: build-clang-17 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
+
+      # Log timing for summary
       mkdir -p /tmp/timing-logs
-      echo "$((TASK_END - TASK_START))|build-clang-17|SUCCESS" >> /tmp/timing-logs/tasks.log
+      echo "${TASK_DURATION}|build-clang-17|SUCCESS" >> /tmp/timing-logs/tasks.log
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -760,13 +737,14 @@ tasks:
 
   # Clang 20 x86: B2 build only (matches original workflow)
   - key: build-clang-20-x86
-    use: [clone-capy, install-sccache, install-clang-20-multilib]
+    use: [setup-boost-tree, install-sccache, install-clang-20-multilib]
     env:
       SCCACHE_DIR: /tmp/sccache-clang20-x86
       SCCACHE_CACHE_SIZE: 1G
     run: |
+      # ===== TIMING START =====
       TASK_START=$(date +%s)
-      echo "▶ build-clang-20-x86 STARTED"
+      echo "▶ TASK: build-clang-20-x86 STARTED at $(date -Iseconds)"
 
       # Configure sccache
       sccache --show-stats
@@ -781,20 +759,9 @@ tasks:
       chmod +x /tmp/cc-wrapper/clang++-20
       export PATH=/tmp/cc-wrapper:$PATH
 
-      # Setup Boost tree with capy integrated (sccache will cache compilation)
-      sudo apt-get install -y python3 python-is-python3
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      # Use cached Boost tree with capy integrated (sccache will cache compilation)
+      BUILD_START=$(date +%s)
       cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-
-      # Create root Jamfile for B2 to find the project structure
-      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
-      echo "build-project build ;" >> libs/capy/Jamfile
-      echo "build-project test ;" >> libs/capy/Jamfile
-
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      ./bootstrap.sh gcc
 
       # Run B2 build (32-bit x86, sccache caches object files)
       ./b2 \
@@ -805,13 +772,20 @@ tasks:
         link=static \
         libs/capy/test
 
+      BUILD_END=$(date +%s)
+      BUILD_TIME=$((BUILD_END - BUILD_START))
+
       # Show sccache statistics
       sccache --show-stats
 
+      # ===== TIMING END =====
       TASK_END=$(date +%s)
-      echo "⏱ Completed in $((TASK_END - TASK_START))s"
+      TASK_DURATION=$((TASK_END - TASK_START))
+      echo "⏱ TASK: build-clang-20-x86 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
+
+      # Log timing for summary
       mkdir -p /tmp/timing-logs
-      echo "$((TASK_END - TASK_START))|build-clang-20-x86|SUCCESS" >> /tmp/timing-logs/tasks.log
+      echo "${TASK_DURATION}|build-clang-20-x86|SUCCESS" >> /tmp/timing-logs/tasks.log
     cache: true
     filter:
       - capy-root/**/*.cpp
