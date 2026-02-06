@@ -80,7 +80,7 @@ tasks:
       # Integrate capy into Boost tree and install dependencies (cached!)
       cp -r ../capy-root libs/capy
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-    cache: boost-source/
+    cache: true
     filter:
       - .rwx/ci.yml
       - capy-root/**
@@ -95,7 +95,7 @@ tasks:
       sudo mv sccache-v0.8.2-x86_64-unknown-linux-musl/sccache /usr/local/bin/
       chmod +x /usr/local/bin/sccache
       sccache --version
-    cache: /usr/local/bin/sccache
+    cache: true
     filter:
       - .rwx/ci.yml
 
@@ -155,7 +155,7 @@ tasks:
 
       chmod +x /usr/local/bin/build-cache-helper.sh
       cat /usr/local/bin/build-cache-helper.sh
-    cache: /usr/local/bin/build-cache-helper.sh
+    cache: true
     filter:
       - .rwx/ci.yml
 
