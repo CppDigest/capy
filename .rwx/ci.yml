@@ -80,8 +80,7 @@ tasks:
       # Integrate capy into Boost tree and install dependencies (cached!)
       cp -r ../capy-root libs/capy
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-    cache:
-      - boost-source/
+    cache: boost-source/
     filter:
       - .rwx/ci.yml
       - capy-root/**
@@ -96,8 +95,7 @@ tasks:
       sudo mv sccache-v0.8.2-x86_64-unknown-linux-musl/sccache /usr/local/bin/
       chmod +x /usr/local/bin/sccache
       sccache --version
-    cache:
-      - /usr/local/bin/sccache
+    cache: /usr/local/bin/sccache
     filter:
       - .rwx/ci.yml
 
@@ -157,8 +155,7 @@ tasks:
 
       chmod +x /usr/local/bin/build-cache-helper.sh
       cat /usr/local/bin/build-cache-helper.sh
-    cache:
-      - /usr/local/bin/build-cache-helper.sh
+    cache: /usr/local/bin/build-cache-helper.sh
     filter:
       - .rwx/ci.yml
 
@@ -224,9 +221,7 @@ tasks:
       SUMMARY_EOF
 
       chmod +x /usr/local/bin/show-timing-summary.sh
-    cache:
-      - /usr/local/bin/measure-task.sh
-      - /usr/local/bin/show-timing-summary.sh
+    cache: true
     filter:
       - .rwx/ci.yml
 
@@ -389,10 +384,7 @@ tasks:
 
       # Show sccache statistics
       sccache --show-stats
-    cache:
-      - /tmp/sccache-gcc12-b2
-      - /tmp/build-artifacts-cache-gcc12-b2
-      - /tmp/timing-logs
+    cache: true
     filter:
       - capy-root/**
 
@@ -440,10 +432,7 @@ tasks:
 
       # Upload to codecov
       bash <(curl -s https://codecov.io/bash) -f "__build__/coverage.info"
-    cache:
-      - /tmp/sccache-gcc13-coverage
-      - /tmp/build-artifacts-cache-gcc13
-      - /tmp/timing-logs
+    cache: true
     filter:
       - capy-root/**
 
@@ -494,8 +483,7 @@ tasks:
 
       # Show sccache statistics
       sccache --show-stats
-    cache:
-      - /tmp/sccache-clang20-b2
+    cache: true
     filter:
       - capy-root/**
 
@@ -523,8 +511,7 @@ tasks:
 
       # Show sccache statistics
       sccache --show-stats
-    cache:
-      - /tmp/sccache-clang20-cmake
+    cache: true
     filter:
       - capy-root/**
 
@@ -568,8 +555,7 @@ tasks:
 
       # Show sccache statistics
       sccache --show-stats
-    cache:
-      - /tmp/sccache-clang20-asan
+    cache: true
     filter:
       - capy-root/**
 
@@ -612,8 +598,7 @@ tasks:
 
       # Show sccache statistics
       sccache --show-stats
-    cache:
-      - /tmp/sccache-clang17-b2
+    cache: true
     filter:
       - capy-root/**
 
@@ -660,8 +645,7 @@ tasks:
 
       # Show sccache statistics
       sccache --show-stats
-    cache:
-      - /tmp/sccache-clang20-x86
+    cache: true
     filter:
       - capy-root/**
 
