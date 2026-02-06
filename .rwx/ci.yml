@@ -84,11 +84,11 @@ tasks:
       sudo apt-get update
       sudo apt-get install -y python3 python-is-python3 git
 
-      # Optimized shallow clone with sparse checkout to reduce clone time ~1min → ~20s
-      git clone --depth 1 --filter=blob:none --sparse --branch develop https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with submodules
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git sparse-checkout set tools/build tools/boostdep tools/boost_install libs/
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      git submodule init
+      git submodule update --depth 1 tools/build tools/boostdep tools/boost_install
       ./bootstrap.sh gcc
 
       # Integrate capy into Boost tree and install dependencies (cached!)
@@ -286,11 +286,11 @@ tasks:
       BUILD_START=$(date +%s)
       sudo apt-get install -y python3 python-is-python3
 
-      # Optimized shallow clone with sparse checkout to reduce clone time ~1min → ~20s
-      git clone --depth 1 --filter=blob:none --sparse --branch develop https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with submodules
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git sparse-checkout set tools/build tools/boostdep tools/boost_install libs/
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      git submodule init
+      git submodule update --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 to find the project structure
@@ -483,11 +483,11 @@ tasks:
       BUILD_START=$(date +%s)
       sudo apt-get install -y python3 python-is-python3
 
-      # Optimized shallow clone with sparse checkout to reduce clone time ~1min → ~20s
-      git clone --depth 1 --filter=blob:none --sparse --branch develop https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with submodules
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git sparse-checkout set tools/build tools/boostdep tools/boost_install libs/
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      git submodule init
+      git submodule update --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 to find the project structure
@@ -565,11 +565,11 @@ tasks:
       BUILD_START=$(date +%s)
       sudo apt-get install -y python3 python-is-python3
 
-      # Optimized shallow clone with sparse checkout to reduce clone time ~1min → ~20s
-      git clone --depth 1 --filter=blob:none --sparse --branch develop https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with submodules
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git sparse-checkout set tools/build tools/boostdep tools/boost_install libs/
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      git submodule init
+      git submodule update --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 to find the project structure
@@ -723,11 +723,11 @@ tasks:
       # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
       sudo apt-get install -y python3 python-is-python3
 
-      # Optimized shallow clone with sparse checkout to reduce clone time ~1min → ~20s
-      git clone --depth 1 --filter=blob:none --sparse --branch develop https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with submodules
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git sparse-checkout set tools/build tools/boostdep tools/boost_install libs/
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      git submodule init
+      git submodule update --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 to find the project structure
@@ -816,11 +816,11 @@ tasks:
       # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
       sudo apt-get install -y python3 python-is-python3
 
-      # Optimized shallow clone with sparse checkout to reduce clone time ~1min → ~20s
-      git clone --depth 1 --filter=blob:none --sparse --branch develop https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with submodules
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git sparse-checkout set tools/build tools/boostdep tools/boost_install libs/
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      git submodule init
+      git submodule update --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 to find the project structure
@@ -909,11 +909,11 @@ tasks:
       # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
       sudo apt-get install -y python3 python-is-python3
 
-      # Optimized shallow clone with sparse checkout to reduce clone time ~1min → ~20s
-      git clone --depth 1 --filter=blob:none --sparse --branch develop https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with submodules
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git sparse-checkout set tools/build tools/boostdep tools/boost_install libs/
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      git submodule init
+      git submodule update --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 to find the project structure
@@ -991,11 +991,11 @@ tasks:
       # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
       sudo apt-get install -y python3 python-is-python3
 
-      # Optimized shallow clone with sparse checkout to reduce clone time ~1min → ~20s
-      git clone --depth 1 --filter=blob:none --sparse --branch develop https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with submodules
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git sparse-checkout set tools/build tools/boostdep tools/boost_install libs/
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      git submodule init
+      git submodule update --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 to find the project structure
