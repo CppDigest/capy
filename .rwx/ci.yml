@@ -64,6 +64,172 @@ tasks:
       - CMakeLists.txt
       - Jamfile
 
+  # Shared Boost tree setup with capy integrated (cached across all B2 builds)
+  # This task clones Boost, integrates capy, runs depinst, and caches everything.
+  # This eliminates 10-60s of depinst overhead from each individual build.
+  - key: setup-boost-tree
+    use: [clone-capy]
+    run: |
+      sudo apt-get update
+      sudo apt-get install -y python3 python-is-python3 git
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      cd boost-source
+      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      ./bootstrap.sh gcc
+
+      # Integrate capy into Boost tree and install dependencies (cached!)
+      cp -r ../capy-root libs/capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+    cache:
+      - boost-source/
+    filter:
+      - .rwx/ci.yml
+      - capy-root/**
+
+  # Shared sccache installation (distributed compiler cache)
+  # sccache supports local disk cache (default) or cloud backends (S3, GCS, Redis)
+  # For distributed caching, set: SCCACHE_BUCKET, SCCACHE_REGION, AWS credentials
+  - key: install-sccache
+    run: |
+      wget https://github.com/mozilla/sccache/releases/download/v0.8.2/sccache-v0.8.2-x86_64-unknown-linux-musl.tar.gz
+      tar xzf sccache-v0.8.2-x86_64-unknown-linux-musl.tar.gz
+      sudo mv sccache-v0.8.2-x86_64-unknown-linux-musl/sccache /usr/local/bin/
+      chmod +x /usr/local/bin/sccache
+      sccache --version
+    cache:
+      - /usr/local/bin/sccache
+    filter:
+      - .rwx/ci.yml
+
+  # Custom content-hash based build artifact caching helper
+  # This provides hand-made caching layer on top of sccache for full build outputs
+  - key: install-build-cache-helper
+    run: |
+      mkdir -p /usr/local/bin
+      cat > /usr/local/bin/build-cache-helper.sh << 'CACHE_HELPER_EOF'
+      #!/bin/bash
+      # Content-hash based build artifact caching (not mtime-based)
+      # Usage: build-cache-helper.sh <cache-dir> <source-dir> <build-dir> <build-command>
+
+      CACHE_ROOT="$1"
+      SOURCE_DIR="$2"
+      BUILD_DIR="$3"
+      shift 3
+      BUILD_CMD="$@"
+
+      # Compute content hash of source files (deterministic, not mtime)
+      echo "Computing content hash of source files..."
+      CONTENT_HASH=$(find "$SOURCE_DIR" -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" -o -name "*.c" -o -name "*.cc" -o -name "CMakeLists.txt" -o -name "Jamfile*" \) -exec sha256sum {} \; | sort | sha256sum | cut -d' ' -f1)
+      echo "Content hash: $CONTENT_HASH"
+
+      CACHE_PATH="$CACHE_ROOT/$CONTENT_HASH"
+
+      # Check if cached build exists
+      if [ -d "$CACHE_PATH" ]; then
+        echo "✓ Cache HIT! Restoring build artifacts from cache..."
+        mkdir -p "$BUILD_DIR"
+        cp -r "$CACHE_PATH"/* "$BUILD_DIR/" 2>/dev/null || true
+        echo "✓ Build artifacts restored. Build time: 0s (cache hit)"
+        exit 0
+      fi
+
+      echo "✗ Cache MISS. Building from source..."
+      START_TIME=$(date +%s)
+
+      # Run the actual build
+      eval "$BUILD_CMD"
+      BUILD_EXIT=$?
+
+      END_TIME=$(date +%s)
+      BUILD_TIME=$((END_TIME - START_TIME))
+
+      if [ $BUILD_EXIT -eq 0 ] && [ -d "$BUILD_DIR" ]; then
+        echo "✓ Build succeeded. Caching artifacts..."
+        mkdir -p "$CACHE_PATH"
+        cp -r "$BUILD_DIR"/* "$CACHE_PATH/" 2>/dev/null || true
+        echo "✓ Artifacts cached. Build time: ${BUILD_TIME}s"
+      else
+        echo "✗ Build failed or no build dir. Not caching."
+      fi
+
+      exit $BUILD_EXIT
+      CACHE_HELPER_EOF
+
+      chmod +x /usr/local/bin/build-cache-helper.sh
+      cat /usr/local/bin/build-cache-helper.sh
+    cache:
+      - /usr/local/bin/build-cache-helper.sh
+    filter:
+      - .rwx/ci.yml
+
+  # Task timing and optimization iteration helper
+  # Measures task execution times and identifies longest tasks for optimization
+  - key: install-timing-helper
+    run: |
+      mkdir -p /usr/local/bin
+      cat > /usr/local/bin/measure-task.sh << 'TIMING_EOF'
+      #!/bin/bash
+      # Measures and logs task execution time
+      # Usage: measure-task.sh <task-name> <command...>
+
+      TASK_NAME="$1"
+      shift
+      COMMAND="$@"
+
+      echo "=========================================="
+      echo "TASK: $TASK_NAME"
+      echo "START: $(date -Iseconds)"
+      echo "=========================================="
+
+      START_TIME=$(date +%s)
+      eval "$COMMAND"
+      EXIT_CODE=$?
+      END_TIME=$(date +%s)
+
+      DURATION=$((END_TIME - START_TIME))
+      MINUTES=$((DURATION / 60))
+      SECONDS=$((DURATION % 60))
+
+      echo "=========================================="
+      echo "TASK: $TASK_NAME"
+      echo "END: $(date -Iseconds)"
+      echo "DURATION: ${MINUTES}m ${SECONDS}s (${DURATION}s total)"
+      echo "STATUS: $([ $EXIT_CODE -eq 0 ] && echo 'SUCCESS' || echo 'FAILED')"
+      echo "=========================================="
+
+      # Log to timing summary file
+      mkdir -p /tmp/timing-logs
+      echo "${DURATION}s | ${TASK_NAME} | $([ $EXIT_CODE -eq 0 ] && echo 'SUCCESS' || echo 'FAILED')" >> /tmp/timing-logs/task-times.log
+
+      exit $EXIT_CODE
+      TIMING_EOF
+
+      chmod +x /usr/local/bin/measure-task.sh
+
+      # Create summary script
+      cat > /usr/local/bin/show-timing-summary.sh << 'SUMMARY_EOF'
+      #!/bin/bash
+      # Shows timing summary sorted by duration (longest first)
+      echo "=========================================="
+      echo "TIMING SUMMARY (sorted by duration)"
+      echo "=========================================="
+      if [ -f /tmp/timing-logs/task-times.log ]; then
+        sort -rn /tmp/timing-logs/task-times.log | head -20
+        echo "=========================================="
+        echo "LONGEST TASK: $(sort -rn /tmp/timing-logs/task-times.log | head -1 | cut -d'|' -f2)"
+        echo "=========================================="
+      else
+        echo "No timing data available"
+      fi
+      SUMMARY_EOF
+
+      chmod +x /usr/local/bin/show-timing-summary.sh
+    cache:
+      - /usr/local/bin/measure-task.sh
+      - /usr/local/bin/show-timing-summary.sh
+    filter:
+      - .rwx/ci.yml
+
   # ============================================================================
   # Windows and macOS Builds
   # ============================================================================
@@ -187,27 +353,46 @@ tasks:
 
   # GCC 12: B2 build only (matches original workflow)
   - key: build-gcc-12
-    use: [clone-capy, install-gcc-12]
+    use: [clone-capy, setup-boost-tree, install-sccache, install-build-cache-helper, install-timing-helper, install-gcc-12]
+    env:
+      SCCACHE_DIR: /tmp/sccache-gcc12-b2
+      SCCACHE_CACHE_SIZE: 1G
     run: |
-      # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
-      cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      ./bootstrap.sh gcc
-      cd ..
+      # Configure sccache
+      sccache --show-stats
 
-      # Run B2 build
+      # Create sccache wrapper for B2
+      mkdir -p /tmp/cc-wrapper
+      echo '#!/bin/bash' > /tmp/cc-wrapper/gcc-12
+      echo 'exec sccache /usr/bin/gcc-12 "$@"' >> /tmp/cc-wrapper/gcc-12
+      chmod +x /tmp/cc-wrapper/gcc-12
+      echo '#!/bin/bash' > /tmp/cc-wrapper/g++-12
+      echo 'exec sccache /usr/bin/g++-12 "$@"' >> /tmp/cc-wrapper/g++-12
+      chmod +x /tmp/cc-wrapper/g++-12
+      export PATH=/tmp/cc-wrapper:$PATH
+
+      # Use cached Boost tree with capy already integrated (depinst already done!)
       cd boost-source
-      ./b2 \
-        toolset=gcc-12 \
-        cxxstd=20 \
-        variant=release \
-        address-model=64 \
-        link=shared \
-        libs/capy/test
+
+      # Use custom content-hash build cache + timing measurement
+      measure-task.sh "build-gcc-12-b2" "
+        build-cache-helper.sh /tmp/build-artifacts-cache-gcc12-b2 libs/capy ../bin.v2 '
+          ./b2 \
+            toolset=gcc-12 \
+            cxxstd=20 \
+            variant=release \
+            address-model=64 \
+            link=shared \
+            libs/capy/test
+        '
+      "
+
+      # Show sccache statistics
+      sccache --show-stats
+    cache:
+      - /tmp/sccache-gcc12-b2
+      - /tmp/build-artifacts-cache-gcc12-b2
+      - /tmp/timing-logs
     filter:
       - capy-root/**
 
@@ -218,18 +403,36 @@ tasks:
 
   # GCC 13 coverage: CMake build only (coverage flag disables B2 in GitHub Actions)
   - key: build-gcc-13-coverage
-    use: [clone-capy, install-gcc-13-coverage]
+    use: [clone-capy, install-sccache, install-build-cache-helper, install-timing-helper, install-gcc-13-coverage]
+    env:
+      SCCACHE_DIR: /tmp/sccache-gcc13-coverage
+      SCCACHE_CACHE_SIZE: 1G
     run: |
+      # Configure sccache
+      export CC="sccache gcc-13"
+      export CXX="sccache g++-13"
+      sccache --show-stats
+
+      # Use custom content-hash build cache + timing measurement
       cd capy-root
-      cmake -B __build__ \
-        -DCMAKE_BUILD_TYPE=Debug \
-        -DCMAKE_CXX_STANDARD=20 \
-        -DCMAKE_CXX_COMPILER=g++-13 \
-        -DCMAKE_C_COMPILER=gcc-13 \
-        -DCMAKE_CXX_FLAGS="--coverage -fprofile-arcs -ftest-coverage" \
-        -DCMAKE_C_FLAGS="--coverage -fprofile-arcs -ftest-coverage"
-      cmake --build __build__ --target boost_capy_tests
-      ctest --test-dir __build__
+      measure-task.sh "build-gcc-13-coverage" "
+        build-cache-helper.sh /tmp/build-artifacts-cache-gcc13 . __build__ '
+          cmake -B __build__ \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_STANDARD=20 \
+            -DCMAKE_CXX_COMPILER=g++-13 \
+            -DCMAKE_C_COMPILER=gcc-13 \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
+            -DCMAKE_C_COMPILER_LAUNCHER=sccache \
+            -DCMAKE_CXX_FLAGS=\"--coverage -fprofile-arcs -ftest-coverage\" \
+            -DCMAKE_C_FLAGS=\"--coverage -fprofile-arcs -ftest-coverage\" &&
+          cmake --build __build__ --target boost_capy_tests &&
+          ctest --test-dir __build__
+        '
+      "
+
+      # Show sccache statistics
+      sccache --show-stats
 
       # Generate coverage report
       lcov -c -q -o "__build__/coverage.info" -d "__build__" \
@@ -237,6 +440,10 @@ tasks:
 
       # Upload to codecov
       bash <(curl -s https://codecov.io/bash) -f "__build__/coverage.info"
+    cache:
+      - /tmp/sccache-gcc13-coverage
+      - /tmp/build-artifacts-cache-gcc13
+      - /tmp/timing-logs
     filter:
       - capy-root/**
 
@@ -255,20 +462,28 @@ tasks:
 
   # Clang 20: Both B2 and CMake builds (matches build-cmake: true in GitHub Actions)
   - key: build-clang-20-b2
-    use: [clone-capy, install-clang-20]
+    use: [clone-capy, setup-boost-tree, install-sccache, install-clang-20]
+    env:
+      SCCACHE_DIR: /tmp/sccache-clang20-b2
+      SCCACHE_CACHE_SIZE: 1G
     run: |
-      # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      # Configure sccache
+      sccache --show-stats
+
+      # Create sccache wrapper for B2
+      mkdir -p /tmp/cc-wrapper
+      echo '#!/bin/bash' > /tmp/cc-wrapper/clang-20
+      echo 'exec sccache /usr/bin/clang-20 "$@"' >> /tmp/cc-wrapper/clang-20
+      chmod +x /tmp/cc-wrapper/clang-20
+      echo '#!/bin/bash' > /tmp/cc-wrapper/clang++-20
+      echo 'exec sccache /usr/bin/clang++-20 "$@"' >> /tmp/cc-wrapper/clang++-20
+      chmod +x /tmp/cc-wrapper/clang++-20
+      export PATH=/tmp/cc-wrapper:$PATH
+
+      # Use cached Boost tree with capy already integrated (depinst already done!)
       cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      ./bootstrap.sh gcc
-      cd ..
 
       # Run B2 build
-      cd boost-source
       ./b2 \
         toolset=clang-20 \
         cxxstd=20,23 \
@@ -276,42 +491,71 @@ tasks:
         address-model=64 \
         link=shared \
         libs/capy/test
+
+      # Show sccache statistics
+      sccache --show-stats
+    cache:
+      - /tmp/sccache-clang20-b2
     filter:
       - capy-root/**
 
   - key: build-clang-20-cmake
-    use: [clone-capy, install-clang-20]
+    use: [clone-capy, install-sccache, install-clang-20]
+    env:
+      SCCACHE_DIR: /tmp/sccache-clang20-cmake
+      SCCACHE_CACHE_SIZE: 1G
     run: |
+      # Configure sccache
+      export CC="sccache clang-20"
+      export CXX="sccache clang++-20"
+      sccache --show-stats
+
       cd capy-root
       cmake -B __build__ \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_CXX_STANDARD=23 \
         -DCMAKE_CXX_COMPILER=clang++-20 \
-        -DCMAKE_C_COMPILER=clang-20
+        -DCMAKE_C_COMPILER=clang-20 \
+        -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
+        -DCMAKE_C_COMPILER_LAUNCHER=sccache
       cmake --build __build__ --target boost_capy_tests
       ctest --test-dir __build__
+
+      # Show sccache statistics
+      sccache --show-stats
+    cache:
+      - /tmp/sccache-clang20-cmake
     filter:
       - capy-root/**
 
   # Clang 20 asan+ubsan: B2 build only
   - key: build-clang-20-asan-ubsan
-    use: [clone-capy, install-clang-20]
+    use: [clone-capy, setup-boost-tree, install-sccache, install-clang-20]
+    env:
+      SCCACHE_DIR: /tmp/sccache-clang20-asan
+      SCCACHE_CACHE_SIZE: 1G
+      ASAN_OPTIONS: detect_invalid_pointer_pairs=0:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
     run: |
-      # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      # Configure sccache
+      sccache --show-stats
+
+      # Create sccache wrapper for B2
+      mkdir -p /tmp/cc-wrapper
+      echo '#!/bin/bash' > /tmp/cc-wrapper/clang-20
+      echo 'exec sccache /usr/bin/clang-20 "$@"' >> /tmp/cc-wrapper/clang-20
+      chmod +x /tmp/cc-wrapper/clang-20
+      echo '#!/bin/bash' > /tmp/cc-wrapper/clang++-20
+      echo 'exec sccache /usr/bin/clang++-20 "$@"' >> /tmp/cc-wrapper/clang++-20
+      chmod +x /tmp/cc-wrapper/clang++-20
+      export PATH=/tmp/cc-wrapper:$PATH
+
+      # Use cached Boost tree with capy already integrated (depinst already done!)
       cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      ./bootstrap.sh gcc
-      cd ..
 
       # Disable ASLR for sanitizers
       sudo sysctl vm.mmap_rnd_bits=28 || true
 
       # Run B2 build
-      cd boost-source
       ./b2 \
         toolset=clang-20 \
         cxxstd=20 \
@@ -321,10 +565,13 @@ tasks:
         cxxflags="-fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -fsanitize=pointer-subtract" \
         linkflags="-fsanitize=address -fsanitize=undefined" \
         libs/capy/test
+
+      # Show sccache statistics
+      sccache --show-stats
+    cache:
+      - /tmp/sccache-clang20-asan
     filter:
       - capy-root/**
-    env:
-      ASAN_OPTIONS: detect_invalid_pointer_pairs=0:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
 
   - key: install-clang-17
     run: |
@@ -333,20 +580,28 @@ tasks:
 
   # Clang 17: B2 build only (matches original workflow)
   - key: build-clang-17
-    use: [clone-capy, install-clang-17]
+    use: [clone-capy, setup-boost-tree, install-sccache, install-clang-17]
+    env:
+      SCCACHE_DIR: /tmp/sccache-clang17-b2
+      SCCACHE_CACHE_SIZE: 1G
     run: |
-      # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      # Configure sccache
+      sccache --show-stats
+
+      # Create sccache wrapper for B2
+      mkdir -p /tmp/cc-wrapper
+      echo '#!/bin/bash' > /tmp/cc-wrapper/clang-17
+      echo 'exec sccache /usr/bin/clang-17 "$@"' >> /tmp/cc-wrapper/clang-17
+      chmod +x /tmp/cc-wrapper/clang-17
+      echo '#!/bin/bash' > /tmp/cc-wrapper/clang++-17
+      echo 'exec sccache /usr/bin/clang++-17 "$@"' >> /tmp/cc-wrapper/clang++-17
+      chmod +x /tmp/cc-wrapper/clang++-17
+      export PATH=/tmp/cc-wrapper:$PATH
+
+      # Use cached Boost tree with capy already integrated (depinst already done!)
       cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      ./bootstrap.sh gcc
-      cd ..
 
       # Run B2 build
-      cd boost-source
       ./b2 \
         toolset=clang-17 \
         cxxstd=20 \
@@ -354,6 +609,11 @@ tasks:
         address-model=64 \
         link=static \
         libs/capy/test
+
+      # Show sccache statistics
+      sccache --show-stats
+    cache:
+      - /tmp/sccache-clang17-b2
     filter:
       - capy-root/**
 
@@ -368,20 +628,28 @@ tasks:
 
   # Clang 20 x86: B2 build only (matches original workflow)
   - key: build-clang-20-x86
-    use: [clone-capy, install-clang-20-multilib]
+    use: [clone-capy, setup-boost-tree, install-sccache, install-clang-20-multilib]
+    env:
+      SCCACHE_DIR: /tmp/sccache-clang20-x86
+      SCCACHE_CACHE_SIZE: 1G
     run: |
-      # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      # Configure sccache
+      sccache --show-stats
+
+      # Create sccache wrapper for B2
+      mkdir -p /tmp/cc-wrapper
+      echo '#!/bin/bash' > /tmp/cc-wrapper/clang-20
+      echo 'exec sccache /usr/bin/clang-20 "$@"' >> /tmp/cc-wrapper/clang-20
+      chmod +x /tmp/cc-wrapper/clang-20
+      echo '#!/bin/bash' > /tmp/cc-wrapper/clang++-20
+      echo 'exec sccache /usr/bin/clang++-20 "$@"' >> /tmp/cc-wrapper/clang++-20
+      chmod +x /tmp/cc-wrapper/clang++-20
+      export PATH=/tmp/cc-wrapper:$PATH
+
+      # Use cached Boost tree with capy already integrated (depinst already done!)
       cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      ./bootstrap.sh gcc
-      cd ..
 
       # Run B2 build (32-bit x86)
-      cd boost-source
       ./b2 \
         toolset=clang-20 \
         cxxstd=20,23 \
@@ -389,6 +657,11 @@ tasks:
         address-model=32 \
         link=static \
         libs/capy/test
+
+      # Show sccache statistics
+      sccache --show-stats
+    cache:
+      - /tmp/sccache-clang20-x86
     filter:
       - capy-root/**
 
@@ -419,3 +692,46 @@ tasks:
       git shortlog -sn --no-merges | head -20
     filter:
       - capy-root/**
+
+  # ============================================================================
+  # Optimization Analysis - Timing Summary (for iteration)
+  # ============================================================================
+  # This task runs after all builds and shows timing data to identify
+  # the longest tasks for optimization. Use this to iterate on optimization:
+  # 1. Run builds and check timing summary
+  # 2. Identify longest task
+  # 3. Optimize that specific task
+  # 4. Repeat until target <2min is achieved
+
+  - key: optimization-summary
+    use: [install-timing-helper, build-gcc-12, build-gcc-13-coverage, build-clang-20-b2, build-clang-20-cmake, build-clang-20-asan-ubsan, build-clang-17, build-clang-20-x86]
+    run: |
+      echo ""
+      echo "############################################################"
+      echo "#  OPTIMIZATION ANALYSIS - TIMING SUMMARY                  #"
+      echo "############################################################"
+      echo ""
+
+      /usr/local/bin/show-timing-summary.sh
+
+      echo ""
+      echo "############################################################"
+      echo "#  OPTIMIZATION ITERATION GUIDE                            #"
+      echo "############################################################"
+      echo ""
+      echo "TARGET: All builds < 2 minutes (120s)"
+      echo ""
+      echo "NEXT STEPS:"
+      echo "1. Identify the longest task above"
+      echo "2. Analyze why it's slow (check logs)"
+      echo "3. Add optimizations for that specific task:"
+      echo "   - Increase cache size"
+      echo "   - Enable distributed sccache (S3/GCS)"
+      echo "   - Add custom caching for that task"
+      echo "   - Parallelize sub-steps if possible"
+      echo "4. Re-run and measure again"
+      echo "5. Repeat until all tasks < 2min"
+      echo ""
+      echo "############################################################"
+    filter:
+      - .rwx/ci.yml
