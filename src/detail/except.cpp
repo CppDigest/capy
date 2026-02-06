@@ -33,7 +33,7 @@ void
 throw_invalid_argument()
 {
     throw std::invalid_argument(
-        "invalid argument");
+        "invalid argument provided");
 }
 
 void
@@ -67,7 +67,7 @@ throw_logic_error()
 void
 throw_out_of_range()
 {
-    throw std::out_of_range("out of range");
+    throw std::out_of_range("value out of range");
 }
 
 void
