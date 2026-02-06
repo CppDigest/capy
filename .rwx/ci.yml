@@ -348,7 +348,7 @@ tasks:
 
   # GCC 12: B2 build only (matches original workflow)
   - key: build-gcc-12
-    use: [clone-capy, setup-boost-tree, install-sccache, install-build-cache-helper, install-timing-helper, install-gcc-12]
+    use: [clone-capy, install-sccache, install-gcc-12]
     env:
       SCCACHE_DIR: /tmp/sccache-gcc12-b2
       SCCACHE_CACHE_SIZE: 1G
@@ -366,21 +366,23 @@ tasks:
       chmod +x /tmp/cc-wrapper/g++-12
       export PATH=/tmp/cc-wrapper:$PATH
 
-      # Use cached Boost tree with capy already integrated (depinst already done!)
+      # Setup Boost tree with capy integrated (sccache will cache compilation)
+      sudo apt-get install -y python3 python-is-python3
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
+      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      ./bootstrap.sh gcc
 
-      # Use custom content-hash build cache + timing measurement
-      measure-task.sh "build-gcc-12-b2" "
-        build-cache-helper.sh /tmp/build-artifacts-cache-gcc12-b2 libs/capy ../bin.v2 '
-          ./b2 \
-            toolset=gcc-12 \
-            cxxstd=20 \
-            variant=release \
-            address-model=64 \
-            link=shared \
-            libs/capy/test
-        '
-      "
+      # Run B2 build (sccache caches object files)
+      ./b2 \
+        toolset=gcc-12 \
+        cxxstd=20 \
+        variant=release \
+        address-model=64 \
+        link=shared \
+        libs/capy/test
 
       # Show sccache statistics
       sccache --show-stats
@@ -451,7 +453,7 @@ tasks:
 
   # Clang 20: Both B2 and CMake builds (matches build-cmake: true in GitHub Actions)
   - key: build-clang-20-b2
-    use: [clone-capy, setup-boost-tree, install-sccache, install-clang-20]
+    use: [clone-capy, install-sccache, install-clang-20]
     env:
       SCCACHE_DIR: /tmp/sccache-clang20-b2
       SCCACHE_CACHE_SIZE: 1G
@@ -469,10 +471,16 @@ tasks:
       chmod +x /tmp/cc-wrapper/clang++-20
       export PATH=/tmp/cc-wrapper:$PATH
 
-      # Use cached Boost tree with capy already integrated (depinst already done!)
+      # Setup Boost tree with capy integrated (sccache will cache compilation)
+      sudo apt-get install -y python3 python-is-python3
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
+      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      ./bootstrap.sh gcc
 
-      # Run B2 build
+      # Run B2 build (sccache caches object files)
       ./b2 \
         toolset=clang-20 \
         cxxstd=20,23 \
@@ -517,7 +525,7 @@ tasks:
 
   # Clang 20 asan+ubsan: B2 build only
   - key: build-clang-20-asan-ubsan
-    use: [clone-capy, setup-boost-tree, install-sccache, install-clang-20]
+    use: [clone-capy, install-sccache, install-clang-20]
     env:
       SCCACHE_DIR: /tmp/sccache-clang20-asan
       SCCACHE_CACHE_SIZE: 1G
@@ -536,13 +544,19 @@ tasks:
       chmod +x /tmp/cc-wrapper/clang++-20
       export PATH=/tmp/cc-wrapper:$PATH
 
-      # Use cached Boost tree with capy already integrated (depinst already done!)
+      # Setup Boost tree with capy integrated (sccache will cache compilation)
+      sudo apt-get install -y python3 python-is-python3
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
+      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      ./bootstrap.sh gcc
 
       # Disable ASLR for sanitizers
       sudo sysctl vm.mmap_rnd_bits=28 || true
 
-      # Run B2 build
+      # Run B2 build (sccache caches object files)
       ./b2 \
         toolset=clang-20 \
         cxxstd=20 \
@@ -566,7 +580,7 @@ tasks:
 
   # Clang 17: B2 build only (matches original workflow)
   - key: build-clang-17
-    use: [clone-capy, setup-boost-tree, install-sccache, install-clang-17]
+    use: [clone-capy, install-sccache, install-clang-17]
     env:
       SCCACHE_DIR: /tmp/sccache-clang17-b2
       SCCACHE_CACHE_SIZE: 1G
@@ -584,10 +598,16 @@ tasks:
       chmod +x /tmp/cc-wrapper/clang++-17
       export PATH=/tmp/cc-wrapper:$PATH
 
-      # Use cached Boost tree with capy already integrated (depinst already done!)
+      # Setup Boost tree with capy integrated (sccache will cache compilation)
+      sudo apt-get install -y python3 python-is-python3
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
+      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      ./bootstrap.sh gcc
 
-      # Run B2 build
+      # Run B2 build (sccache caches object files)
       ./b2 \
         toolset=clang-17 \
         cxxstd=20 \
@@ -613,7 +633,7 @@ tasks:
 
   # Clang 20 x86: B2 build only (matches original workflow)
   - key: build-clang-20-x86
-    use: [clone-capy, setup-boost-tree, install-sccache, install-clang-20-multilib]
+    use: [clone-capy, install-sccache, install-clang-20-multilib]
     env:
       SCCACHE_DIR: /tmp/sccache-clang20-x86
       SCCACHE_CACHE_SIZE: 1G
@@ -631,10 +651,16 @@ tasks:
       chmod +x /tmp/cc-wrapper/clang++-20
       export PATH=/tmp/cc-wrapper:$PATH
 
-      # Use cached Boost tree with capy already integrated (depinst already done!)
+      # Setup Boost tree with capy integrated (sccache will cache compilation)
+      sudo apt-get install -y python3 python-is-python3
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
+      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      ./bootstrap.sh gcc
 
-      # Run B2 build (32-bit x86)
+      # Run B2 build (32-bit x86, sccache caches object files)
       ./b2 \
         toolset=clang-20 \
         cxxstd=20,23 \
