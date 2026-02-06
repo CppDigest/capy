@@ -246,7 +246,7 @@ tasks:
 
       # ===== CUSTOM CONTENT-HASH CACHING =====
       # Compute hash of capy source files (content-based, not mtime)
-      cd ../capy-root
+      cd capy-root
       CONTENT_HASH=$(find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) 2>/dev/null | sort | xargs cat 2>/dev/null | sha256sum | cut -d' ' -f1)
       CACHE_DIR="/tmp/build-cache-gcc12/$CONTENT_HASH"
       echo "📦 Content hash: $CONTENT_HASH"
@@ -423,7 +423,7 @@ tasks:
       TASK_START=$(date +%s)
       echo "▶ build-clang-20-b2 STARTED"
 
-      cd ../capy-root
+      cd capy-root
       CONTENT_HASH=$(find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) 2>/dev/null | sort | xargs cat 2>/dev/null | sha256sum | cut -d' ' -f1)
       echo "📦 Hash: $CONTENT_HASH"
       cd ..
