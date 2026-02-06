@@ -146,6 +146,3 @@ make_service_impl(factory& f)
 
 } // namespace capy
 } // namespace boost
-
-
-

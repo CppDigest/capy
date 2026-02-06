@@ -92,6 +92,3 @@ cond_cat_type cond_cat;
 
 } // capy
 } // boost
-
-
-
