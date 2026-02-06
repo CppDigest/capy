@@ -100,3 +100,6 @@ set_current_thread_name(char const* name) noexcept
 } // detail
 } // capy
 } // boost
+
+
+

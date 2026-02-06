@@ -10,3 +10,6 @@
 // This file is now empty - all exception functions are defined in
 // src/detail/except.cpp. This file is kept for backward compatibility
 // with build systems that may reference it.
+
+
+
