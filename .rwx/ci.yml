@@ -103,6 +103,7 @@ tasks:
     filter:
       - .rwx/ci.yml
       - capy-root/**
+      - boost-source/**
 
   # Shared sccache installation (distributed compiler cache)
   # sccache supports local disk cache (default) or cloud backends (S3, GCS, Redis)
