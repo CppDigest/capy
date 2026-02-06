@@ -23,6 +23,8 @@ name() const noexcept
     return "boost.capy";
 }
 
+
+
 std::string
 cond_cat_type::
 message(int code) const
