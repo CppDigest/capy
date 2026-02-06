@@ -317,7 +317,14 @@ tasks:
       - capy-root/**/*.hpp
       - capy-root/**/*.h
       - capy-root/CMakeLists.txt
+      - capy-root/test/CMakeLists.txt
+      - capy-root/bench/CMakeLists.txt
+      - capy-root/test/cmake_test/CMakeLists.txt
+      - capy-root/test/unit/CMakeLists.txt
+      - capy-root/extra/test_suite/CMakeLists.txt
       - capy-root/Jamfile
+      - capy-root/test/Jamfile
+      - capy-root/test/unit/Jamfile
 
   - key: install-gcc-13-coverage
     run: |
@@ -401,7 +408,14 @@ tasks:
       - capy-root/**/*.hpp
       - capy-root/**/*.h
       - capy-root/CMakeLists.txt
+      - capy-root/test/CMakeLists.txt
+      - capy-root/bench/CMakeLists.txt
+      - capy-root/test/cmake_test/CMakeLists.txt
+      - capy-root/test/unit/CMakeLists.txt
+      - capy-root/extra/test_suite/CMakeLists.txt
       - capy-root/Jamfile
+      - capy-root/test/Jamfile
+      - capy-root/test/unit/Jamfile
 
   # ============================================================================
   # Linux Clang Builds (5 configurations: Clang 17, Clang 20 variants, Clang 20 x86)
@@ -478,7 +492,14 @@ tasks:
       - capy-root/**/*.hpp
       - capy-root/**/*.h
       - capy-root/CMakeLists.txt
+      - capy-root/test/CMakeLists.txt
+      - capy-root/bench/CMakeLists.txt
+      - capy-root/test/cmake_test/CMakeLists.txt
+      - capy-root/test/unit/CMakeLists.txt
+      - capy-root/extra/test_suite/CMakeLists.txt
       - capy-root/Jamfile
+      - capy-root/test/Jamfile
+      - capy-root/test/unit/Jamfile
 
   - key: build-clang-20-cmake
     use: [clone-capy, install-sccache, install-clang-20]
@@ -544,7 +565,14 @@ tasks:
       - capy-root/**/*.hpp
       - capy-root/**/*.h
       - capy-root/CMakeLists.txt
+      - capy-root/test/CMakeLists.txt
+      - capy-root/bench/CMakeLists.txt
+      - capy-root/test/cmake_test/CMakeLists.txt
+      - capy-root/test/unit/CMakeLists.txt
+      - capy-root/extra/test_suite/CMakeLists.txt
       - capy-root/Jamfile
+      - capy-root/test/Jamfile
+      - capy-root/test/unit/Jamfile
 
   # Clang 20 asan+ubsan: B2 build only
   - key: build-clang-20-asan-ubsan
@@ -606,7 +634,14 @@ tasks:
       - capy-root/**/*.hpp
       - capy-root/**/*.h
       - capy-root/CMakeLists.txt
+      - capy-root/test/CMakeLists.txt
+      - capy-root/bench/CMakeLists.txt
+      - capy-root/test/cmake_test/CMakeLists.txt
+      - capy-root/test/unit/CMakeLists.txt
+      - capy-root/extra/test_suite/CMakeLists.txt
       - capy-root/Jamfile
+      - capy-root/test/Jamfile
+      - capy-root/test/unit/Jamfile
 
   - key: install-clang-17
     run: |
@@ -667,7 +702,14 @@ tasks:
       - capy-root/**/*.hpp
       - capy-root/**/*.h
       - capy-root/CMakeLists.txt
+      - capy-root/test/CMakeLists.txt
+      - capy-root/bench/CMakeLists.txt
+      - capy-root/test/cmake_test/CMakeLists.txt
+      - capy-root/test/unit/CMakeLists.txt
+      - capy-root/extra/test_suite/CMakeLists.txt
       - capy-root/Jamfile
+      - capy-root/test/Jamfile
+      - capy-root/test/unit/Jamfile
 
   - key: install-clang-20-multilib
     run: |
@@ -732,7 +774,14 @@ tasks:
       - capy-root/**/*.hpp
       - capy-root/**/*.h
       - capy-root/CMakeLists.txt
+      - capy-root/test/CMakeLists.txt
+      - capy-root/bench/CMakeLists.txt
+      - capy-root/test/cmake_test/CMakeLists.txt
+      - capy-root/test/unit/CMakeLists.txt
+      - capy-root/extra/test_suite/CMakeLists.txt
       - capy-root/Jamfile
+      - capy-root/test/Jamfile
+      - capy-root/test/unit/Jamfile
 
   # ============================================================================
   # Changelog Task (independent)
