@@ -62,8 +62,16 @@ tasks:
       - src/**
       - test/**
       - bench/**
+      - extra/**
       - CMakeLists.txt
+      - test/CMakeLists.txt
+      - bench/CMakeLists.txt
+      - test/cmake_test/CMakeLists.txt
+      - test/unit/CMakeLists.txt
+      - extra/test_suite/CMakeLists.txt
       - Jamfile
+      - test/Jamfile
+      - test/unit/Jamfile
 
   # Shared Boost tree setup with capy integrated (cached across all B2 builds)
   # This task clones Boost, integrates capy, runs depinst, and caches everything.
