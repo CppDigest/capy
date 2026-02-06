@@ -282,11 +282,9 @@ tasks:
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 to find the project structure
-      cat > libs/capy/Jamfile <<'EOF'
-use-project /boost/capy : build ;
-build-project build ;
-build-project test ;
-EOF
+      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
+      echo "build-project build ;" >> libs/capy/Jamfile
+      echo "build-project test ;" >> libs/capy/Jamfile
 
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
@@ -482,11 +480,9 @@ EOF
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 to find the project structure
-      cat > libs/capy/Jamfile <<'EOF'
-use-project /boost/capy : build ;
-build-project build ;
-build-project test ;
-EOF
+      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
+      echo "build-project build ;" >> libs/capy/Jamfile
+      echo "build-project test ;" >> libs/capy/Jamfile
 
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
@@ -632,11 +628,9 @@ EOF
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 to find the project structure
-      cat > libs/capy/Jamfile <<'EOF'
-use-project /boost/capy : build ;
-build-project build ;
-build-project test ;
-EOF
+      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
+      echo "build-project build ;" >> libs/capy/Jamfile
+      echo "build-project test ;" >> libs/capy/Jamfile
 
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
@@ -715,11 +709,9 @@ EOF
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 to find the project structure
-      cat > libs/capy/Jamfile <<'EOF'
-use-project /boost/capy : build ;
-build-project build ;
-build-project test ;
-EOF
+      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
+      echo "build-project build ;" >> libs/capy/Jamfile
+      echo "build-project test ;" >> libs/capy/Jamfile
 
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
@@ -797,11 +789,9 @@ EOF
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 to find the project structure
-      cat > libs/capy/Jamfile <<'EOF'
-use-project /boost/capy : build ;
-build-project build ;
-build-project test ;
-EOF
+      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
+      echo "build-project build ;" >> libs/capy/Jamfile
+      echo "build-project test ;" >> libs/capy/Jamfile
 
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
