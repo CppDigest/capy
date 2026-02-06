@@ -69,7 +69,9 @@ tasks:
       - capy-root/test/cmake_test/CMakeLists.txt
       - capy-root/test/unit/CMakeLists.txt
       - capy-root/extra/test_suite/CMakeLists.txt
-      - capy-root/Jamfile
+      - capy-root/extra/test_suite/DiscoverTests.cmake
+      - capy-root/extra/test_suite/DiscoverAndWriteTestsScripts.cmake
+      - capy-root/build/Jamfile
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
 
@@ -278,6 +280,14 @@ tasks:
       cd boost-source
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
+
+      # Create root Jamfile for B2 to find the project structure
+      cat > libs/capy/Jamfile <<'EOF'
+use-project /boost/capy : build ;
+build-project build ;
+build-project test ;
+EOF
+
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
 
@@ -322,7 +332,9 @@ tasks:
       - capy-root/test/cmake_test/CMakeLists.txt
       - capy-root/test/unit/CMakeLists.txt
       - capy-root/extra/test_suite/CMakeLists.txt
-      - capy-root/Jamfile
+      - capy-root/extra/test_suite/DiscoverTests.cmake
+      - capy-root/extra/test_suite/DiscoverAndWriteTestsScripts.cmake
+      - capy-root/build/Jamfile
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
 
@@ -413,7 +425,9 @@ tasks:
       - capy-root/test/cmake_test/CMakeLists.txt
       - capy-root/test/unit/CMakeLists.txt
       - capy-root/extra/test_suite/CMakeLists.txt
-      - capy-root/Jamfile
+      - capy-root/extra/test_suite/DiscoverTests.cmake
+      - capy-root/extra/test_suite/DiscoverAndWriteTestsScripts.cmake
+      - capy-root/build/Jamfile
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
 
@@ -466,6 +480,14 @@ tasks:
       cd boost-source
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
+
+      # Create root Jamfile for B2 to find the project structure
+      cat > libs/capy/Jamfile <<'EOF'
+use-project /boost/capy : build ;
+build-project build ;
+build-project test ;
+EOF
+
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
 
@@ -497,7 +519,9 @@ tasks:
       - capy-root/test/cmake_test/CMakeLists.txt
       - capy-root/test/unit/CMakeLists.txt
       - capy-root/extra/test_suite/CMakeLists.txt
-      - capy-root/Jamfile
+      - capy-root/extra/test_suite/DiscoverTests.cmake
+      - capy-root/extra/test_suite/DiscoverAndWriteTestsScripts.cmake
+      - capy-root/build/Jamfile
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
 
@@ -570,7 +594,9 @@ tasks:
       - capy-root/test/cmake_test/CMakeLists.txt
       - capy-root/test/unit/CMakeLists.txt
       - capy-root/extra/test_suite/CMakeLists.txt
-      - capy-root/Jamfile
+      - capy-root/extra/test_suite/DiscoverTests.cmake
+      - capy-root/extra/test_suite/DiscoverAndWriteTestsScripts.cmake
+      - capy-root/build/Jamfile
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
 
@@ -604,6 +630,14 @@ tasks:
       cd boost-source
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
+
+      # Create root Jamfile for B2 to find the project structure
+      cat > libs/capy/Jamfile <<'EOF'
+use-project /boost/capy : build ;
+build-project build ;
+build-project test ;
+EOF
+
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
 
@@ -639,7 +673,9 @@ tasks:
       - capy-root/test/cmake_test/CMakeLists.txt
       - capy-root/test/unit/CMakeLists.txt
       - capy-root/extra/test_suite/CMakeLists.txt
-      - capy-root/Jamfile
+      - capy-root/extra/test_suite/DiscoverTests.cmake
+      - capy-root/extra/test_suite/DiscoverAndWriteTestsScripts.cmake
+      - capy-root/build/Jamfile
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
 
@@ -677,6 +713,14 @@ tasks:
       cd boost-source
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
+
+      # Create root Jamfile for B2 to find the project structure
+      cat > libs/capy/Jamfile <<'EOF'
+use-project /boost/capy : build ;
+build-project build ;
+build-project test ;
+EOF
+
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
 
@@ -707,7 +751,9 @@ tasks:
       - capy-root/test/cmake_test/CMakeLists.txt
       - capy-root/test/unit/CMakeLists.txt
       - capy-root/extra/test_suite/CMakeLists.txt
-      - capy-root/Jamfile
+      - capy-root/extra/test_suite/DiscoverTests.cmake
+      - capy-root/extra/test_suite/DiscoverAndWriteTestsScripts.cmake
+      - capy-root/build/Jamfile
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
 
@@ -749,6 +795,14 @@ tasks:
       cd boost-source
       git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
+
+      # Create root Jamfile for B2 to find the project structure
+      cat > libs/capy/Jamfile <<'EOF'
+use-project /boost/capy : build ;
+build-project build ;
+build-project test ;
+EOF
+
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
 
@@ -779,7 +833,9 @@ tasks:
       - capy-root/test/cmake_test/CMakeLists.txt
       - capy-root/test/unit/CMakeLists.txt
       - capy-root/extra/test_suite/CMakeLists.txt
-      - capy-root/Jamfile
+      - capy-root/extra/test_suite/DiscoverTests.cmake
+      - capy-root/extra/test_suite/DiscoverAndWriteTestsScripts.cmake
+      - capy-root/build/Jamfile
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
 
