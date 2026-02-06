@@ -23,8 +23,6 @@ throw_bad_typeid()
     throw std::bad_typeid();
 }
 
-
-
 void
 throw_bad_alloc()
 {

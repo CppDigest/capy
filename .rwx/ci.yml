@@ -449,15 +449,16 @@ tasks:
       sudo apt-get install -y clang-20 build-essential git cmake
 
   # Clang 20: Both B2 and CMake builds (matches build-cmake: true in GitHub Actions)
-  - key: build-clang-20-b2
+  # Split into C++20 and C++23 builds to keep each task <2min
+  - key: build-clang-20-b2-cxx20
     use: [clone-capy, install-sccache, install-clang-20]
     env:
-      SCCACHE_DIR: /tmp/sccache-clang20-b2
+      SCCACHE_DIR: /tmp/sccache-clang20-b2-cxx20
       SCCACHE_CACHE_SIZE: 1G
     run: |
       # ===== TIMING START =====
       TASK_START=$(date +%s)
-      echo "▶ TASK: build-clang-20-b2 STARTED at $(date -Iseconds)"
+      echo "▶ TASK: build-clang-20-b2-cxx20 STARTED at $(date -Iseconds)"
 
       # Configure sccache
       sccache --show-stats
@@ -488,10 +489,10 @@ tasks:
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
 
-      # Run B2 build (sccache caches object files)
+      # Run B2 build for C++20 only (sccache caches object files)
       ./b2 \
         toolset=clang-20 \
-        cxxstd=20,23 \
+        cxxstd=20 \
         variant=release \
         address-model=64 \
         link=shared \
@@ -506,11 +507,90 @@ tasks:
       # ===== TIMING END =====
       TASK_END=$(date +%s)
       TASK_DURATION=$((TASK_END - TASK_START))
-      echo "⏱ TASK: build-clang-20-b2 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
+      echo "⏱ TASK: build-clang-20-b2-cxx20 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
 
       # Log timing for summary
       mkdir -p /tmp/timing-logs
-      echo "${TASK_DURATION}|build-clang-20-b2|SUCCESS" >> /tmp/timing-logs/tasks.log
+      echo "${TASK_DURATION}|build-clang-20-b2-cxx20|SUCCESS" >> /tmp/timing-logs/tasks.log
+    cache: true
+    filter:
+      - capy-root/**/*.cpp
+      - capy-root/**/*.hpp
+      - capy-root/**/*.h
+      - capy-root/CMakeLists.txt
+      - capy-root/test/CMakeLists.txt
+      - capy-root/bench/CMakeLists.txt
+      - capy-root/test/cmake_test/CMakeLists.txt
+      - capy-root/test/unit/CMakeLists.txt
+      - capy-root/extra/test_suite/CMakeLists.txt
+      - capy-root/extra/test_suite/DiscoverTests.cmake
+      - capy-root/extra/test_suite/DiscoverAndWriteTestsScripts.cmake
+      - capy-root/build/Jamfile
+      - capy-root/test/Jamfile
+      - capy-root/test/unit/Jamfile
+
+  - key: build-clang-20-b2-cxx23
+    use: [clone-capy, install-sccache, install-clang-20]
+    env:
+      SCCACHE_DIR: /tmp/sccache-clang20-b2-cxx23
+      SCCACHE_CACHE_SIZE: 1G
+    run: |
+      # ===== TIMING START =====
+      TASK_START=$(date +%s)
+      echo "▶ TASK: build-clang-20-b2-cxx23 STARTED at $(date -Iseconds)"
+
+      # Configure sccache
+      sccache --show-stats
+
+      # Create sccache wrapper for B2
+      mkdir -p /tmp/cc-wrapper
+      echo '#!/bin/bash' > /tmp/cc-wrapper/clang-20
+      echo 'exec sccache /usr/bin/clang-20 "$@"' >> /tmp/cc-wrapper/clang-20
+      chmod +x /tmp/cc-wrapper/clang-20
+      echo '#!/bin/bash' > /tmp/cc-wrapper/clang++-20
+      echo 'exec sccache /usr/bin/clang++-20 "$@"' >> /tmp/cc-wrapper/clang++-20
+      chmod +x /tmp/cc-wrapper/clang++-20
+      export PATH=/tmp/cc-wrapper:$PATH
+
+      # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
+      BUILD_START=$(date +%s)
+      sudo apt-get install -y python3 python-is-python3
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      cd boost-source
+      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+
+      # Create root Jamfile for B2 to find the project structure
+      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
+      echo "build-project build ;" >> libs/capy/Jamfile
+      echo "build-project test ;" >> libs/capy/Jamfile
+
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      ./bootstrap.sh gcc
+
+      # Run B2 build for C++23 only (sccache caches object files)
+      ./b2 \
+        toolset=clang-20 \
+        cxxstd=23 \
+        variant=release \
+        address-model=64 \
+        link=shared \
+        libs/capy/test
+
+      BUILD_END=$(date +%s)
+      BUILD_TIME=$((BUILD_END - BUILD_START))
+
+      # Show sccache statistics
+      sccache --show-stats
+
+      # ===== TIMING END =====
+      TASK_END=$(date +%s)
+      TASK_DURATION=$((TASK_END - TASK_START))
+      echo "⏱ TASK: build-clang-20-b2-cxx23 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
+
+      # Log timing for summary
+      mkdir -p /tmp/timing-logs
+      echo "${TASK_DURATION}|build-clang-20-b2-cxx23|SUCCESS" >> /tmp/timing-logs/tasks.log
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -784,15 +864,16 @@ tasks:
       sudo apt-get install -y clang-20 build-essential git cmake gcc-multilib g++-multilib
 
   # Clang 20 x86: B2 build only (matches original workflow)
-  - key: build-clang-20-x86
+  # Split into C++20 and C++23 builds to keep each task <2min
+  - key: build-clang-20-x86-cxx20
     use: [clone-capy, install-sccache, install-clang-20-multilib]
     env:
-      SCCACHE_DIR: /tmp/sccache-clang20-x86
+      SCCACHE_DIR: /tmp/sccache-clang20-x86-cxx20
       SCCACHE_CACHE_SIZE: 1G
     run: |
       # ===== TIMING START =====
       TASK_START=$(date +%s)
-      echo "▶ TASK: build-clang-20-x86 STARTED at $(date -Iseconds)"
+      echo "▶ TASK: build-clang-20-x86-cxx20 STARTED at $(date -Iseconds)"
 
       # Configure sccache
       sccache --show-stats
@@ -822,11 +903,11 @@ tasks:
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
 
-      # Run B2 build (32-bit x86, sccache caches object files)
+      # Run B2 build for C++20 only (32-bit x86, sccache caches object files)
       BUILD_START=$(date +%s)
       ./b2 \
         toolset=clang-20 \
-        cxxstd=20,23 \
+        cxxstd=20 \
         variant=release \
         address-model=32 \
         link=static \
@@ -841,11 +922,90 @@ tasks:
       # ===== TIMING END =====
       TASK_END=$(date +%s)
       TASK_DURATION=$((TASK_END - TASK_START))
-      echo "⏱ TASK: build-clang-20-x86 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
+      echo "⏱ TASK: build-clang-20-x86-cxx20 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
 
       # Log timing for summary
       mkdir -p /tmp/timing-logs
-      echo "${TASK_DURATION}|build-clang-20-x86|SUCCESS" >> /tmp/timing-logs/tasks.log
+      echo "${TASK_DURATION}|build-clang-20-x86-cxx20|SUCCESS" >> /tmp/timing-logs/tasks.log
+    cache: true
+    filter:
+      - capy-root/**/*.cpp
+      - capy-root/**/*.hpp
+      - capy-root/**/*.h
+      - capy-root/CMakeLists.txt
+      - capy-root/test/CMakeLists.txt
+      - capy-root/bench/CMakeLists.txt
+      - capy-root/test/cmake_test/CMakeLists.txt
+      - capy-root/test/unit/CMakeLists.txt
+      - capy-root/extra/test_suite/CMakeLists.txt
+      - capy-root/extra/test_suite/DiscoverTests.cmake
+      - capy-root/extra/test_suite/DiscoverAndWriteTestsScripts.cmake
+      - capy-root/build/Jamfile
+      - capy-root/test/Jamfile
+      - capy-root/test/unit/Jamfile
+
+  - key: build-clang-20-x86-cxx23
+    use: [clone-capy, install-sccache, install-clang-20-multilib]
+    env:
+      SCCACHE_DIR: /tmp/sccache-clang20-x86-cxx23
+      SCCACHE_CACHE_SIZE: 1G
+    run: |
+      # ===== TIMING START =====
+      TASK_START=$(date +%s)
+      echo "▶ TASK: build-clang-20-x86-cxx23 STARTED at $(date -Iseconds)"
+
+      # Configure sccache
+      sccache --show-stats
+
+      # Create sccache wrapper for B2
+      mkdir -p /tmp/cc-wrapper
+      echo '#!/bin/bash' > /tmp/cc-wrapper/clang-20
+      echo 'exec sccache /usr/bin/clang-20 "$@"' >> /tmp/cc-wrapper/clang-20
+      chmod +x /tmp/cc-wrapper/clang-20
+      echo '#!/bin/bash' > /tmp/cc-wrapper/clang++-20
+      echo 'exec sccache /usr/bin/clang++-20 "$@"' >> /tmp/cc-wrapper/clang++-20
+      chmod +x /tmp/cc-wrapper/clang++-20
+      export PATH=/tmp/cc-wrapper:$PATH
+
+      # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
+      sudo apt-get install -y python3 python-is-python3
+      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      cd boost-source
+      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+
+      # Create root Jamfile for B2 to find the project structure
+      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
+      echo "build-project build ;" >> libs/capy/Jamfile
+      echo "build-project test ;" >> libs/capy/Jamfile
+
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      ./bootstrap.sh gcc
+
+      # Run B2 build for C++23 only (32-bit x86, sccache caches object files)
+      BUILD_START=$(date +%s)
+      ./b2 \
+        toolset=clang-20 \
+        cxxstd=23 \
+        variant=release \
+        address-model=32 \
+        link=static \
+        libs/capy/test
+
+      BUILD_END=$(date +%s)
+      BUILD_TIME=$((BUILD_END - BUILD_START))
+
+      # Show sccache statistics
+      sccache --show-stats
+
+      # ===== TIMING END =====
+      TASK_END=$(date +%s)
+      TASK_DURATION=$((TASK_END - TASK_START))
+      echo "⏱ TASK: build-clang-20-x86-cxx23 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
+
+      # Log timing for summary
+      mkdir -p /tmp/timing-logs
+      echo "${TASK_DURATION}|build-clang-20-x86-cxx23|SUCCESS" >> /tmp/timing-logs/tasks.log
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -895,7 +1055,7 @@ tasks:
   # Build Performance Analysis & Optimization Summary
   # ============================================================================
   - key: performance-analysis
-    use: [build-gcc-12, build-gcc-13-coverage, build-clang-20-b2, build-clang-20-cmake, build-clang-20-asan-ubsan, build-clang-17, build-clang-20-x86]
+    use: [build-gcc-12, build-gcc-13-coverage, build-clang-20-b2-cxx20, build-clang-20-b2-cxx23, build-clang-20-cmake, build-clang-20-asan-ubsan, build-clang-17, build-clang-20-x86-cxx20, build-clang-20-x86-cxx23]
     run: |
       echo ""
       echo "╔════════════════════════════════════════════════════════════════╗"

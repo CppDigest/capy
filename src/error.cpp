@@ -21,8 +21,6 @@ name() const noexcept
     return "boost.capy";
 }
 
-
-
 std::string
 error_cat_type::
 message(int code) const
