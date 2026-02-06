@@ -397,7 +397,7 @@ tasks:
 
   # GCC 13 coverage: CMake build only (coverage flag disables B2 in GitHub Actions)
   - key: build-gcc-13-coverage
-    use: [clone-capy, install-sccache, install-build-cache-helper, install-timing-helper, install-gcc-13-coverage]
+    use: [clone-capy, install-sccache, install-gcc-13-coverage]
     env:
       SCCACHE_DIR: /tmp/sccache-gcc13-coverage
       SCCACHE_CACHE_SIZE: 1G
@@ -407,23 +407,19 @@ tasks:
       export CXX="sccache g++-13"
       sccache --show-stats
 
-      # Use custom content-hash build cache + timing measurement
+      # Build with sccache (caches object files)
       cd capy-root
-      measure-task.sh "build-gcc-13-coverage" "
-        build-cache-helper.sh /tmp/build-artifacts-cache-gcc13 . __build__ '
-          cmake -B __build__ \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_CXX_STANDARD=20 \
-            -DCMAKE_CXX_COMPILER=g++-13 \
-            -DCMAKE_C_COMPILER=gcc-13 \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
-            -DCMAKE_C_COMPILER_LAUNCHER=sccache \
-            -DCMAKE_CXX_FLAGS=\"--coverage -fprofile-arcs -ftest-coverage\" \
-            -DCMAKE_C_FLAGS=\"--coverage -fprofile-arcs -ftest-coverage\" &&
-          cmake --build __build__ --target boost_capy_tests &&
-          ctest --test-dir __build__
-        '
-      "
+      cmake -B __build__ \
+        -DCMAKE_BUILD_TYPE=Debug \
+        -DCMAKE_CXX_STANDARD=20 \
+        -DCMAKE_CXX_COMPILER=g++-13 \
+        -DCMAKE_C_COMPILER=gcc-13 \
+        -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
+        -DCMAKE_C_COMPILER_LAUNCHER=sccache \
+        -DCMAKE_CXX_FLAGS="--coverage -fprofile-arcs -ftest-coverage" \
+        -DCMAKE_C_FLAGS="--coverage -fprofile-arcs -ftest-coverage"
+      cmake --build __build__ --target boost_capy_tests
+      ctest --test-dir __build__
 
       # Show sccache statistics
       sccache --show-stats
@@ -703,45 +699,3 @@ tasks:
     filter:
       - capy-root/**
 
-  # ============================================================================
-  # Optimization Analysis - Timing Summary (for iteration)
-  # ============================================================================
-  # This task runs after all builds and shows timing data to identify
-  # the longest tasks for optimization. Use this to iterate on optimization:
-  # 1. Run builds and check timing summary
-  # 2. Identify longest task
-  # 3. Optimize that specific task
-  # 4. Repeat until target <2min is achieved
-
-  - key: optimization-summary
-    use: [install-timing-helper, build-gcc-12, build-gcc-13-coverage, build-clang-20-b2, build-clang-20-cmake, build-clang-20-asan-ubsan, build-clang-17, build-clang-20-x86]
-    run: |
-      echo ""
-      echo "############################################################"
-      echo "#  OPTIMIZATION ANALYSIS - TIMING SUMMARY                  #"
-      echo "############################################################"
-      echo ""
-
-      /usr/local/bin/show-timing-summary.sh
-
-      echo ""
-      echo "############################################################"
-      echo "#  OPTIMIZATION ITERATION GUIDE                            #"
-      echo "############################################################"
-      echo ""
-      echo "TARGET: All builds < 2 minutes (120s)"
-      echo ""
-      echo "NEXT STEPS:"
-      echo "1. Identify the longest task above"
-      echo "2. Analyze why it's slow (check logs)"
-      echo "3. Add optimizations for that specific task:"
-      echo "   - Increase cache size"
-      echo "   - Enable distributed sccache (S3/GCS)"
-      echo "   - Add custom caching for that task"
-      echo "   - Parallelize sub-steps if possible"
-      echo "4. Re-run and measure again"
-      echo "5. Repeat until all tasks < 2min"
-      echo ""
-      echo "############################################################"
-    filter:
-      - .rwx/ci.yml
