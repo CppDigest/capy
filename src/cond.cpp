@@ -24,7 +24,6 @@ name() const noexcept
 }
 
 
-
 std::string
 cond_cat_type::
 message(int code) const

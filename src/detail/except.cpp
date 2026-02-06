@@ -24,7 +24,6 @@ throw_bad_typeid()
 }
 
 
-
 void
 throw_bad_alloc()
 {
