@@ -272,6 +272,11 @@ tasks:
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
 
+      # Configure B2 to use sccache as compiler wrapper
+      cat > ~/user-config.jam << 'JAMEOF'
+using gcc : 12 : sccache g++-12 ;
+JAMEOF
+
       # ===== INCREMENTAL BUILD CACHING =====
       # Restore previous build artifacts AFTER Boost tree setup (enables incremental builds)
       ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-gcc12"
