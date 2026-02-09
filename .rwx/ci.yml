@@ -302,17 +302,38 @@ tasks:
         cp -r bin.v2 "$ARTIFACTS_DIR/" 2>/dev/null || true
       fi
 
-      # Show sccache statistics
+      # ===== SCCACHE STATISTICS =====
+      echo ""
+      echo "╔═══════════════════════════════════════════════════════════════╗"
+      echo "║                   SCCACHE STATISTICS                           ║"
+      echo "╚═══════════════════════════════════════════════════════════════╝"
       sccache --show-stats
+
+      # Save sccache stats to dedicated file for easy access
+      mkdir -p /tmp/cache-stats
+      sccache --show-stats > /tmp/cache-stats/build-gcc-12.txt 2>&1
+
+      # Extract key metrics
+      CACHE_HITS=$(sccache --show-stats | grep -i "cache hits" | head -1 || echo "N/A")
+      CACHE_MISSES=$(sccache --show-stats | grep -i "cache misses" | head -1 || echo "N/A")
+      CACHE_RATE=$(sccache --show-stats | grep -i "cache hit rate" | head -1 || echo "N/A")
+
+      echo ""
+      echo "📊 KEY METRICS:"
+      echo "  ${CACHE_HITS}"
+      echo "  ${CACHE_MISSES}"
+      echo "  ${CACHE_RATE}"
+      echo ""
 
       # ===== TIMING END =====
       TASK_END=$(date +%s)
       TASK_DURATION=$((TASK_END - TASK_START))
       echo "⏱ TASK: build-gcc-12 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
 
-      # Log timing for summary
+      # Log timing and cache stats for summary
       mkdir -p /tmp/timing-logs
       echo "${TASK_DURATION}|build-gcc-12|SUCCESS" >> /tmp/timing-logs/tasks.log
+      echo "build-gcc-12|${CACHE_HITS}|${CACHE_MISSES}|${CACHE_RATE}" >> /tmp/cache-stats/summary.log
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -1165,17 +1186,52 @@ tasks:
 
       echo ""
       echo "╔════════════════════════════════════════════════════════════════╗"
+      echo "║          SCCACHE EFFECTIVENESS ANALYSIS                        ║"
+      echo "╚════════════════════════════════════════════════════════════════╝"
+      echo ""
+
+      if [ -f /tmp/cache-stats/summary.log ]; then
+        echo "🔍 Cache Hit Rates by Task:"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        while IFS='|' read -r task hits misses rate; do
+          printf "  %-30s %s\n" "$task:" "$rate"
+        done < /tmp/cache-stats/summary.log
+        echo ""
+
+        # Check if caching is working
+        FIRST_BUILD=$(grep "Cache hit rate" /tmp/cache-stats/summary.log | head -1 | grep -o "[0-9]*\.[0-9]*%" || echo "0%")
+        FIRST_RATE=$(echo "$FIRST_BUILD" | grep -o "[0-9]*\.[0-9]*" || echo "0")
+
+        if [ "$FIRST_RATE" = "0" ] || [ -z "$FIRST_RATE" ]; then
+          echo "⚠️  WARNING: sccache shows 0% hit rate!"
+          echo "  This means object file caching is not working."
+          echo "  Possible issues:"
+          echo "  • Cache directory not persisting between runs"
+          echo "  • Compiler flags changing between builds"
+          echo "  • Source file timestamps always appearing as 'new'"
+          echo ""
+        else
+          echo "✅ sccache is working! Cache hit rate: $FIRST_BUILD"
+          echo ""
+        fi
+      else
+        echo "⚠️  No cache statistics available"
+        echo ""
+      fi
+
+      echo "╔════════════════════════════════════════════════════════════════╗"
       echo "║          NEXT ITERATION STEPS                                  ║"
       echo "╚════════════════════════════════════════════════════════════════╝"
       echo ""
       echo "1. Identify longest task above"
       echo "2. Analyze task logs for bottlenecks"
-      echo "3. Apply targeted optimizations:"
+      echo "3. Check sccache effectiveness (cache hit rate > 50% for incremental builds)"
+      echo "4. Apply targeted optimizations:"
       echo "   - Enable distributed sccache (SCCACHE_BUCKET env)"
       echo "   - Optimize Boost setup (if applicable)"
       echo "   - Increase compiler cache size"
-      echo "4. Re-run and measure improvement"
-      echo "5. Repeat until all tasks <2min"
+      echo "5. Re-run and measure improvement"
+      echo "6. Repeat until all tasks <2min"
       echo ""
     filter:
       - .rwx/ci.yml
