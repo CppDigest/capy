@@ -243,7 +243,7 @@ tasks:
   - key: build-gcc-12
     use: [clone-capy, install-sccache, install-gcc-12]
     env:
-      SCCACHE_DIR: /tmp/sccache-gcc12-b2
+      SCCACHE_DIR: tmp/sccache-gcc12-b2
       SCCACHE_CACHE_SIZE: 1G
     run: |
       # ===== TIMING START =====
@@ -356,7 +356,7 @@ tasks:
   - key: build-gcc-13-coverage
     use: [clone-capy, install-sccache, install-gcc-13-coverage]
     env:
-      SCCACHE_DIR: /tmp/sccache-gcc13-coverage
+      SCCACHE_DIR: tmp/sccache-gcc13-coverage
       SCCACHE_CACHE_SIZE: 1G
     run: |
       # ===== TIMING START =====
@@ -459,7 +459,7 @@ tasks:
   - key: build-clang-20-b2-cxx20
     use: [clone-capy, install-sccache, install-clang-20]
     env:
-      SCCACHE_DIR: /tmp/sccache-clang20-b2-cxx20
+      SCCACHE_DIR: tmp/sccache-clang20-b2-cxx20
       SCCACHE_CACHE_SIZE: 1G
     run: |
       # ===== TIMING START =====
@@ -567,7 +567,7 @@ tasks:
   - key: build-clang-20-b2-cxx23
     use: [clone-capy, install-sccache, install-clang-20]
     env:
-      SCCACHE_DIR: /tmp/sccache-clang20-b2-cxx23
+      SCCACHE_DIR: tmp/sccache-clang20-b2-cxx23
       SCCACHE_CACHE_SIZE: 1G
     run: |
       # ===== TIMING START =====
@@ -675,7 +675,7 @@ tasks:
   - key: build-clang-20-cmake
     use: [clone-capy, install-sccache, install-clang-20]
     env:
-      SCCACHE_DIR: /tmp/sccache-clang20-cmake
+      SCCACHE_DIR: tmp/sccache-clang20-cmake
       SCCACHE_CACHE_SIZE: 1G
     run: |
       # ===== TIMING START =====
@@ -752,7 +752,7 @@ tasks:
   - key: build-clang-20-asan-ubsan
     use: [clone-capy, install-sccache, install-clang-20]
     env:
-      SCCACHE_DIR: /tmp/sccache-clang20-asan
+      SCCACHE_DIR: tmp/sccache-clang20-asan
       SCCACHE_CACHE_SIZE: 1G
       ASAN_OPTIONS: detect_invalid_pointer_pairs=0:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
     run: |
@@ -872,7 +872,7 @@ tasks:
   - key: build-clang-17
     use: [clone-capy, install-sccache, install-clang-17]
     env:
-      SCCACHE_DIR: /tmp/sccache-clang17-b2
+      SCCACHE_DIR: tmp/sccache-clang17-b2
       SCCACHE_CACHE_SIZE: 1G
     run: |
       # ===== TIMING START =====
@@ -991,7 +991,7 @@ tasks:
   - key: build-clang-20-x86-cxx20
     use: [clone-capy, install-sccache, install-clang-20-multilib]
     env:
-      SCCACHE_DIR: /tmp/sccache-clang20-x86-cxx20
+      SCCACHE_DIR: tmp/sccache-clang20-x86-cxx20
       SCCACHE_CACHE_SIZE: 1G
     run: |
       # ===== TIMING START =====
@@ -1099,7 +1099,7 @@ tasks:
   - key: build-clang-20-x86-cxx23
     use: [clone-capy, install-sccache, install-clang-20-multilib]
     env:
-      SCCACHE_DIR: /tmp/sccache-clang20-x86-cxx23
+      SCCACHE_DIR: tmp/sccache-clang20-x86-cxx23
       SCCACHE_CACHE_SIZE: 1G
     run: |
       # ===== TIMING START =====
