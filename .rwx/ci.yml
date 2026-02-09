@@ -276,13 +276,13 @@ tasks:
       # Create wrapper scripts for gcc that use sccache
       mkdir -p ~/bin
       cat > ~/bin/g++ << 'EOF'
-#!/bin/bash
-exec sccache /usr/bin/g++-12 "$@"
-EOF
+      #!/bin/bash
+      exec sccache /usr/bin/g++-12 "$@"
+      EOF
       cat > ~/bin/gcc << 'EOF'
-#!/bin/bash
-exec sccache /usr/bin/gcc-12 "$@"
-EOF
+      #!/bin/bash
+      exec sccache /usr/bin/gcc-12 "$@"
+      EOF
       chmod +x ~/bin/g++ ~/bin/gcc
       export PATH=~/bin:$PATH
 
