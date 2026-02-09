@@ -45,6 +45,7 @@ equivalent(
     std::error_code const& ec,
     int condition) const noexcept
 {
+    // Check if error code matches the specified condition
     switch(static_cast<cond>(condition))
     {
     case cond::eof:
