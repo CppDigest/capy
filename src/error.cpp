@@ -18,7 +18,7 @@ const char*
 error_cat_type::
 name() const noexcept
 {
-    // Return the error category name
+    // Return the error category name for boost.capy
     return "boost.capy";
 }
 
