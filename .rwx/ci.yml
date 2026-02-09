@@ -479,6 +479,25 @@ tasks:
       chmod +x /tmp/cc-wrapper/clang++-20
       export PATH=/tmp/cc-wrapper:$PATH
 
+      # ===== CUSTOM CONTENT-HASH CACHING =====
+      # Compute hash of capy source files (content-based, not mtime)
+      cd capy-root
+      CONTENT_HASH=$(find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) 2>/dev/null | sort | xargs cat 2>/dev/null | sha256sum | cut -d' ' -f1)
+      CACHE_DIR="/tmp/build-cache-clang20-b2-cxx20/$CONTENT_HASH"
+      echo "📦 Content hash: $CONTENT_HASH"
+
+      # Check if build artifacts cached
+      if [ -d "$CACHE_DIR/bin.v2" ]; then
+        echo "✓ CACHE HIT! Restoring build artifacts..."
+        mkdir -p ../boost-source
+        cp -r "$CACHE_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
+        CACHE_HIT=true
+      else
+        echo "✗ Cache miss - will build and cache"
+        CACHE_HIT=false
+      fi
+      cd ..
+
       # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
       BUILD_START=$(date +%s)
       sudo apt-get install -y python3 python-is-python3
@@ -508,6 +527,13 @@ tasks:
 
       BUILD_END=$(date +%s)
       BUILD_TIME=$((BUILD_END - BUILD_START))
+
+      # Cache build artifacts if not from cache
+      if [ "$CACHE_HIT" = false ] && [ -d "bin.v2" ]; then
+        echo "💾 Caching build artifacts..."
+        mkdir -p "$CACHE_DIR"
+        cp -r bin.v2 "$CACHE_DIR/" 2>/dev/null || true
+      fi
 
       # Show sccache statistics
       sccache --show-stats
@@ -561,6 +587,25 @@ tasks:
       chmod +x /tmp/cc-wrapper/clang++-20
       export PATH=/tmp/cc-wrapper:$PATH
 
+      # ===== CUSTOM CONTENT-HASH CACHING =====
+      # Compute hash of capy source files (content-based, not mtime)
+      cd capy-root
+      CONTENT_HASH=$(find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) 2>/dev/null | sort | xargs cat 2>/dev/null | sha256sum | cut -d' ' -f1)
+      CACHE_DIR="/tmp/build-cache-clang20-b2-cxx23/$CONTENT_HASH"
+      echo "📦 Content hash: $CONTENT_HASH"
+
+      # Check if build artifacts cached
+      if [ -d "$CACHE_DIR/bin.v2" ]; then
+        echo "✓ CACHE HIT! Restoring build artifacts..."
+        mkdir -p ../boost-source
+        cp -r "$CACHE_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
+        CACHE_HIT=true
+      else
+        echo "✗ Cache miss - will build and cache"
+        CACHE_HIT=false
+      fi
+      cd ..
+
       # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
       BUILD_START=$(date +%s)
       sudo apt-get install -y python3 python-is-python3
@@ -590,6 +635,13 @@ tasks:
 
       BUILD_END=$(date +%s)
       BUILD_TIME=$((BUILD_END - BUILD_START))
+
+      # Cache build artifacts if not from cache
+      if [ "$CACHE_HIT" = false ] && [ -d "bin.v2" ]; then
+        echo "💾 Caching build artifacts..."
+        mkdir -p "$CACHE_DIR"
+        cp -r bin.v2 "$CACHE_DIR/" 2>/dev/null || true
+      fi
 
       # Show sccache statistics
       sccache --show-stats
@@ -721,6 +773,25 @@ tasks:
       chmod +x /tmp/cc-wrapper/clang++-20
       export PATH=/tmp/cc-wrapper:$PATH
 
+      # ===== CUSTOM CONTENT-HASH CACHING =====
+      # Compute hash of capy source files (content-based, not mtime)
+      cd capy-root
+      CONTENT_HASH=$(find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) 2>/dev/null | sort | xargs cat 2>/dev/null | sha256sum | cut -d' ' -f1)
+      CACHE_DIR="/tmp/build-cache-clang20-asan/$CONTENT_HASH"
+      echo "📦 Content hash: $CONTENT_HASH"
+
+      # Check if build artifacts cached
+      if [ -d "$CACHE_DIR/bin.v2" ]; then
+        echo "✓ CACHE HIT! Restoring build artifacts..."
+        mkdir -p ../boost-source
+        cp -r "$CACHE_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
+        CACHE_HIT=true
+      else
+        echo "✗ Cache miss - will build and cache"
+        CACHE_HIT=false
+      fi
+      cd ..
+
       # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
       sudo apt-get install -y python3 python-is-python3
 
@@ -755,6 +826,13 @@ tasks:
 
       BUILD_END=$(date +%s)
       BUILD_TIME=$((BUILD_END - BUILD_START))
+
+      # Cache build artifacts if not from cache
+      if [ "$CACHE_HIT" = false ] && [ -d "bin.v2" ]; then
+        echo "💾 Caching build artifacts..."
+        mkdir -p "$CACHE_DIR"
+        cp -r bin.v2 "$CACHE_DIR/" 2>/dev/null || true
+      fi
 
       # Show sccache statistics
       sccache --show-stats
@@ -814,6 +892,25 @@ tasks:
       chmod +x /tmp/cc-wrapper/clang++-17
       export PATH=/tmp/cc-wrapper:$PATH
 
+      # ===== CUSTOM CONTENT-HASH CACHING =====
+      # Compute hash of capy source files (content-based, not mtime)
+      cd capy-root
+      CONTENT_HASH=$(find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) 2>/dev/null | sort | xargs cat 2>/dev/null | sha256sum | cut -d' ' -f1)
+      CACHE_DIR="/tmp/build-cache-clang17/$CONTENT_HASH"
+      echo "📦 Content hash: $CONTENT_HASH"
+
+      # Check if build artifacts cached
+      if [ -d "$CACHE_DIR/bin.v2" ]; then
+        echo "✓ CACHE HIT! Restoring build artifacts..."
+        mkdir -p ../boost-source
+        cp -r "$CACHE_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
+        CACHE_HIT=true
+      else
+        echo "✗ Cache miss - will build and cache"
+        CACHE_HIT=false
+      fi
+      cd ..
+
       # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
       sudo apt-get install -y python3 python-is-python3
 
@@ -843,6 +940,13 @@ tasks:
 
       BUILD_END=$(date +%s)
       BUILD_TIME=$((BUILD_END - BUILD_START))
+
+      # Cache build artifacts if not from cache
+      if [ "$CACHE_HIT" = false ] && [ -d "bin.v2" ]; then
+        echo "💾 Caching build artifacts..."
+        mkdir -p "$CACHE_DIR"
+        cp -r bin.v2 "$CACHE_DIR/" 2>/dev/null || true
+      fi
 
       # Show sccache statistics
       sccache --show-stats
@@ -907,6 +1011,25 @@ tasks:
       chmod +x /tmp/cc-wrapper/clang++-20
       export PATH=/tmp/cc-wrapper:$PATH
 
+      # ===== CUSTOM CONTENT-HASH CACHING =====
+      # Compute hash of capy source files (content-based, not mtime)
+      cd capy-root
+      CONTENT_HASH=$(find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) 2>/dev/null | sort | xargs cat 2>/dev/null | sha256sum | cut -d' ' -f1)
+      CACHE_DIR="/tmp/build-cache-clang20-x86-cxx20/$CONTENT_HASH"
+      echo "📦 Content hash: $CONTENT_HASH"
+
+      # Check if build artifacts cached
+      if [ -d "$CACHE_DIR/bin.v2" ]; then
+        echo "✓ CACHE HIT! Restoring build artifacts..."
+        mkdir -p ../boost-source
+        cp -r "$CACHE_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
+        CACHE_HIT=true
+      else
+        echo "✗ Cache miss - will build and cache"
+        CACHE_HIT=false
+      fi
+      cd ..
+
       # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
       sudo apt-get install -y python3 python-is-python3
 
@@ -936,6 +1059,13 @@ tasks:
 
       BUILD_END=$(date +%s)
       BUILD_TIME=$((BUILD_END - BUILD_START))
+
+      # Cache build artifacts if not from cache
+      if [ "$CACHE_HIT" = false ] && [ -d "bin.v2" ]; then
+        echo "💾 Caching build artifacts..."
+        mkdir -p "$CACHE_DIR"
+        cp -r bin.v2 "$CACHE_DIR/" 2>/dev/null || true
+      fi
 
       # Show sccache statistics
       sccache --show-stats
@@ -989,6 +1119,25 @@ tasks:
       chmod +x /tmp/cc-wrapper/clang++-20
       export PATH=/tmp/cc-wrapper:$PATH
 
+      # ===== CUSTOM CONTENT-HASH CACHING =====
+      # Compute hash of capy source files (content-based, not mtime)
+      cd capy-root
+      CONTENT_HASH=$(find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) 2>/dev/null | sort | xargs cat 2>/dev/null | sha256sum | cut -d' ' -f1)
+      CACHE_DIR="/tmp/build-cache-clang20-x86-cxx23/$CONTENT_HASH"
+      echo "📦 Content hash: $CONTENT_HASH"
+
+      # Check if build artifacts cached
+      if [ -d "$CACHE_DIR/bin.v2" ]; then
+        echo "✓ CACHE HIT! Restoring build artifacts..."
+        mkdir -p ../boost-source
+        cp -r "$CACHE_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
+        CACHE_HIT=true
+      else
+        echo "✗ Cache miss - will build and cache"
+        CACHE_HIT=false
+      fi
+      cd ..
+
       # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
       sudo apt-get install -y python3 python-is-python3
 
@@ -1018,6 +1167,13 @@ tasks:
 
       BUILD_END=$(date +%s)
       BUILD_TIME=$((BUILD_END - BUILD_START))
+
+      # Cache build artifacts if not from cache
+      if [ "$CACHE_HIT" = false ] && [ -d "bin.v2" ]; then
+        echo "💾 Caching build artifacts..."
+        mkdir -p "$CACHE_DIR"
+        cp -r bin.v2 "$CACHE_DIR/" 2>/dev/null || true
+      fi
 
       # Show sccache statistics
       sccache --show-stats
