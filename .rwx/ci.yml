@@ -254,22 +254,6 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-gcc12-b2"
       sccache --show-stats
 
-      # ===== INCREMENTAL BUILD CACHING =====
-      # Use workspace-relative artifacts to enable B2 incremental compilation
-      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-gcc12"
-      echo "📦 Artifacts location: $ARTIFACTS_DIR"
-
-      # Restore previous build artifacts if they exist (enables incremental builds)
-      cd capy-root
-      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
-        echo "✓ Restoring previous build artifacts for incremental compilation..."
-        mkdir -p ../boost-source
-        cp -r "$ARTIFACTS_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
-      else
-        echo "✗ No previous artifacts - full build"
-      fi
-      cd ..
-
       # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
       BUILD_START=$(date +%s)
       sudo apt-get install -y python3 python-is-python3
@@ -287,6 +271,17 @@ tasks:
 
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
+
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Restore previous build artifacts AFTER Boost tree setup (enables incremental builds)
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-gcc12"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
+      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
+        cp -r "$ARTIFACTS_DIR/bin.v2" . 2>/dev/null || true
+      else
+        echo "✗ No previous artifacts - full build"
+      fi
 
       # Run B2 build (sccache caches object files, artifacts enable incremental builds)
       ./b2 \
@@ -460,22 +455,6 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-b2-cxx20"
       sccache --show-stats
 
-      # ===== INCREMENTAL BUILD CACHING =====
-      # Use workspace-relative artifacts to enable B2 incremental compilation
-      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-b2-cxx20"
-      echo "📦 Artifacts location: $ARTIFACTS_DIR"
-
-      # Restore previous build artifacts if they exist (enables incremental builds)
-      cd capy-root
-      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
-        echo "✓ Restoring previous build artifacts for incremental compilation..."
-        mkdir -p ../boost-source
-        cp -r "$ARTIFACTS_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
-      else
-        echo "✗ No previous artifacts - full build"
-      fi
-      cd ..
-
       # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
       BUILD_START=$(date +%s)
       sudo apt-get install -y python3 python-is-python3
@@ -493,6 +472,17 @@ tasks:
 
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
+
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Restore previous build artifacts AFTER Boost tree setup (enables incremental builds)
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-b2-cxx20"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
+      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
+        cp -r "$ARTIFACTS_DIR/bin.v2" . 2>/dev/null || true
+      else
+        echo "✗ No previous artifacts - full build"
+      fi
 
       # Run B2 build for C++20 only (sccache caches object files, artifacts enable incremental builds)
       ./b2 \
@@ -557,22 +547,6 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-b2-cxx23"
       sccache --show-stats
 
-      # ===== INCREMENTAL BUILD CACHING =====
-      # Use workspace-relative artifacts to enable B2 incremental compilation
-      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-b2-cxx23"
-      echo "📦 Artifacts location: $ARTIFACTS_DIR"
-
-      # Restore previous build artifacts if they exist (enables incremental builds)
-      cd capy-root
-      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
-        echo "✓ Restoring previous build artifacts for incremental compilation..."
-        mkdir -p ../boost-source
-        cp -r "$ARTIFACTS_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
-      else
-        echo "✗ No previous artifacts - full build"
-      fi
-      cd ..
-
       # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
       BUILD_START=$(date +%s)
       sudo apt-get install -y python3 python-is-python3
@@ -590,6 +564,17 @@ tasks:
 
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
+
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Restore previous build artifacts AFTER Boost tree setup (enables incremental builds)
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-b2-cxx23"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
+      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
+        cp -r "$ARTIFACTS_DIR/bin.v2" . 2>/dev/null || true
+      else
+        echo "✗ No previous artifacts - full build"
+      fi
 
       # Run B2 build for C++23 only (sccache caches object files, artifacts enable incremental builds)
       ./b2 \
@@ -735,22 +720,6 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-asan"
       sccache --show-stats
 
-      # ===== INCREMENTAL BUILD CACHING =====
-      # Use workspace-relative artifacts to enable B2 incremental compilation
-      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-asan"
-      echo "📦 Artifacts location: $ARTIFACTS_DIR"
-
-      # Restore previous build artifacts if they exist (enables incremental builds)
-      cd capy-root
-      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
-        echo "✓ Restoring previous build artifacts for incremental compilation..."
-        mkdir -p ../boost-source
-        cp -r "$ARTIFACTS_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
-      else
-        echo "✗ No previous artifacts - full build"
-      fi
-      cd ..
-
       # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
       sudo apt-get install -y python3 python-is-python3
 
@@ -767,6 +736,17 @@ tasks:
 
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
+
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Restore previous build artifacts AFTER Boost tree setup (enables incremental builds)
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-asan"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
+      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
+        cp -r "$ARTIFACTS_DIR/bin.v2" . 2>/dev/null || true
+      else
+        echo "✗ No previous artifacts - full build"
+      fi
 
       # Disable ASLR for sanitizers
       sudo sysctl vm.mmap_rnd_bits=28 || true
@@ -843,22 +823,6 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang17-b2"
       sccache --show-stats
 
-      # ===== INCREMENTAL BUILD CACHING =====
-      # Use workspace-relative artifacts to enable B2 incremental compilation
-      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang17"
-      echo "📦 Artifacts location: $ARTIFACTS_DIR"
-
-      # Restore previous build artifacts if they exist (enables incremental builds)
-      cd capy-root
-      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
-        echo "✓ Restoring previous build artifacts for incremental compilation..."
-        mkdir -p ../boost-source
-        cp -r "$ARTIFACTS_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
-      else
-        echo "✗ No previous artifacts - full build"
-      fi
-      cd ..
-
       # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
       sudo apt-get install -y python3 python-is-python3
 
@@ -875,6 +839,17 @@ tasks:
 
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
+
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Restore previous build artifacts AFTER Boost tree setup (enables incremental builds)
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang17"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
+      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
+        cp -r "$ARTIFACTS_DIR/bin.v2" . 2>/dev/null || true
+      else
+        echo "✗ No previous artifacts - full build"
+      fi
 
       # Run B2 build (sccache caches object files, artifacts enable incremental builds)
       BUILD_START=$(date +%s)
@@ -951,22 +926,6 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-x86-cxx20"
       sccache --show-stats
 
-      # ===== INCREMENTAL BUILD CACHING =====
-      # Use workspace-relative artifacts to enable B2 incremental compilation
-      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-x86-cxx20"
-      echo "📦 Artifacts location: $ARTIFACTS_DIR"
-
-      # Restore previous build artifacts if they exist (enables incremental builds)
-      cd capy-root
-      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
-        echo "✓ Restoring previous build artifacts for incremental compilation..."
-        mkdir -p ../boost-source
-        cp -r "$ARTIFACTS_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
-      else
-        echo "✗ No previous artifacts - full build"
-      fi
-      cd ..
-
       # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
       sudo apt-get install -y python3 python-is-python3
 
@@ -983,6 +942,17 @@ tasks:
 
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
+
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Restore previous build artifacts AFTER Boost tree setup (enables incremental builds)
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-x86-cxx20"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
+      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
+        cp -r "$ARTIFACTS_DIR/bin.v2" . 2>/dev/null || true
+      else
+        echo "✗ No previous artifacts - full build"
+      fi
 
       # Run B2 build for C++20 only (32-bit x86, sccache caches object files, artifacts enable incremental builds)
       BUILD_START=$(date +%s)
@@ -1048,22 +1018,6 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-x86-cxx23"
       sccache --show-stats
 
-      # ===== INCREMENTAL BUILD CACHING =====
-      # Use workspace-relative artifacts to enable B2 incremental compilation
-      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-x86-cxx23"
-      echo "📦 Artifacts location: $ARTIFACTS_DIR"
-
-      # Restore previous build artifacts if they exist (enables incremental builds)
-      cd capy-root
-      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
-        echo "✓ Restoring previous build artifacts for incremental compilation..."
-        mkdir -p ../boost-source
-        cp -r "$ARTIFACTS_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
-      else
-        echo "✗ No previous artifacts - full build"
-      fi
-      cd ..
-
       # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
       sudo apt-get install -y python3 python-is-python3
 
@@ -1080,6 +1034,17 @@ tasks:
 
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
+
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Restore previous build artifacts AFTER Boost tree setup (enables incremental builds)
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-x86-cxx23"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
+      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
+        cp -r "$ARTIFACTS_DIR/bin.v2" . 2>/dev/null || true
+      else
+        echo "✗ No previous artifacts - full build"
+      fi
 
       # Run B2 build for C++23 only (32-bit x86, sccache caches object files, artifacts enable incremental builds)
       BUILD_START=$(date +%s)
