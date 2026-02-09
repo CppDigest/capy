@@ -26,7 +26,6 @@ std::string
 error_cat_type::
 message(int code) const
 {
-    // Convert error code to human-readable message
     switch(static_cast<error>(code))
     {
     case error::eof: return "eof";

@@ -20,7 +20,6 @@ tag_invoke(
     slice_how how,
     std::size_t n) noexcept
 {
-    // Slice const_buffer_pair according to specified method
     switch(how)
     {
     case slice_how::remove_prefix:
