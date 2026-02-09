@@ -345,6 +345,7 @@ tasks:
       - capy-root/build/Jamfile
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
+      - /tmp/sccache-gcc12-b2/**
 
   - key: install-gcc-13-coverage
     run: |
@@ -438,6 +439,7 @@ tasks:
       - capy-root/build/Jamfile
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
+      - /tmp/sccache-gcc13-coverage/**
 
   # ============================================================================
   # Linux Clang Builds (5 configurations: Clang 17, Clang 20 variants, Clang 20 x86)
@@ -534,6 +536,7 @@ tasks:
       - capy-root/build/Jamfile
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
+      - /tmp/sccache-clang20-b2-cxx20/**
 
   - key: build-clang-20-b2-cxx23
     use: [clone-capy, install-sccache, install-clang-20]
@@ -615,6 +618,7 @@ tasks:
       - capy-root/build/Jamfile
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
+      - /tmp/sccache-clang20-b2-cxx23/**
 
   - key: build-clang-20-cmake
     use: [clone-capy, install-sccache, install-clang-20]
@@ -690,6 +694,7 @@ tasks:
       - capy-root/build/Jamfile
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
+      - /tmp/sccache-clang20-cmake/**
 
   # Clang 20 asan+ubsan: B2 build only
   - key: build-clang-20-asan-ubsan
@@ -778,6 +783,7 @@ tasks:
       - capy-root/build/Jamfile
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
+      - /tmp/sccache-clang20-asan/**
 
   - key: install-clang-17
     run: |
@@ -865,6 +871,7 @@ tasks:
       - capy-root/build/Jamfile
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
+      - /tmp/sccache-clang17-b2/**
 
   - key: install-clang-20-multilib
     run: |
@@ -957,6 +964,7 @@ tasks:
       - capy-root/build/Jamfile
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
+      - /tmp/sccache-clang20-x86-cxx20/**
 
   - key: build-clang-20-x86-cxx23
     use: [clone-capy, install-sccache, install-clang-20-multilib]
@@ -1038,6 +1046,7 @@ tasks:
       - capy-root/build/Jamfile
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
+      - /tmp/sccache-clang20-x86-cxx23/**
 
   # ============================================================================
   # Changelog Task (independent)
