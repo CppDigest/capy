@@ -13,6 +13,7 @@
 namespace boost {
 namespace capy {
 
+// Slice const_buffer_pair according to specified method
 void
 tag_invoke(
     slice_tag const&,

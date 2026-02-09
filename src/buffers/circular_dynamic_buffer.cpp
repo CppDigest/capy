@@ -27,6 +27,7 @@ data() const noexcept ->
         const_buffer{ base_, in_len_- (cap_ - in_pos_)} }};
 }
 
+// Prepare n bytes for writing into the circular buffer
 auto
 circular_dynamic_buffer::
 prepare(std::size_t n) ->

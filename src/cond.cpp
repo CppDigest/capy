@@ -39,6 +39,7 @@ message(int code) const
     }
 }
 
+// Check if error code matches the specified condition
 bool
 cond_cat_type::
 equivalent(

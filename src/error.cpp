@@ -22,6 +22,7 @@ name() const noexcept
 }
 
 
+// Convert error code to human-readable message
 std::string
 error_cat_type::
 message(int code) const
