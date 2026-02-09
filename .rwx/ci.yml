@@ -57,12 +57,66 @@ tasks:
       git fetch origin ${{ init.commit-sha }}
       git checkout ${{ init.commit-sha }}
     filter:
-      - .github/workflows/**
-      - include/**
-      - src/**
-      - test/**
-      - CMakeLists.txt
-      - Jamfile
+      - capy-root/.github/workflows/**
+      - capy-root/include/**
+      - capy-root/src/**
+      - capy-root/test/**
+      - capy-root/bench/**
+      - capy-root/extra/**
+      - capy-root/CMakeLists.txt
+      - capy-root/test/CMakeLists.txt
+      - capy-root/bench/CMakeLists.txt
+      - capy-root/test/cmake_test/CMakeLists.txt
+      - capy-root/test/unit/CMakeLists.txt
+      - capy-root/extra/test_suite/CMakeLists.txt
+      - capy-root/extra/test_suite/DiscoverTests.cmake
+      - capy-root/extra/test_suite/DiscoverAndWriteTestsScripts.cmake
+      - capy-root/build/Jamfile
+      - capy-root/test/Jamfile
+      - capy-root/test/unit/Jamfile
+
+  # Shared Boost tree setup with capy integrated (cached across all B2 builds)
+  # This task clones Boost, integrates capy, runs depinst, and caches everything.
+  # This eliminates 10-60s of depinst overhead from each individual build.
+  - key: setup-boost-tree
+    use: [clone-capy]
+    run: |
+      sudo apt-get update
+      sudo apt-get install -y python3 python-is-python3 git
+
+      # Clone Boost with partial clone to reduce download size
+      git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
+      cd boost-source
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
+      ./bootstrap.sh gcc
+
+      # Integrate capy into Boost tree and install dependencies (cached!)
+      cp -r ../capy-root libs/capy
+
+      # Create root Jamfile for B2 to find the project structure
+      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
+      echo "build-project build ;" >> libs/capy/Jamfile
+      echo "build-project test ;" >> libs/capy/Jamfile
+
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+    cache: true
+    filter:
+      - .rwx/ci.yml
+      - capy-root/**
+
+  # Shared sccache installation (distributed compiler cache)
+  # sccache supports local disk cache (default) or cloud backends (S3, GCS, Redis)
+  # For distributed caching, set: SCCACHE_BUCKET, SCCACHE_REGION, AWS credentials
+  - key: install-sccache
+    run: |
+      wget https://github.com/mozilla/sccache/releases/download/v0.8.2/sccache-v0.8.2-x86_64-unknown-linux-musl.tar.gz
+      tar xzf sccache-v0.8.2-x86_64-unknown-linux-musl.tar.gz
+      sudo mv sccache-v0.8.2-x86_64-unknown-linux-musl/sccache /usr/local/bin/
+      chmod +x /usr/local/bin/sccache
+      sccache --version
+    cache: true
+    filter:
+      - .rwx/ci.yml
 
   # ============================================================================
   # Windows and macOS Builds
@@ -187,29 +241,114 @@ tasks:
 
   # GCC 12: B2 build only (matches original workflow)
   - key: build-gcc-12
-    use: [clone-capy, install-gcc-12]
+    use: [clone-capy, install-sccache, install-gcc-12]
+    env:
+      SCCACHE_CACHE_SIZE: 1G
     run: |
-      # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
-      cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      ./bootstrap.sh gcc
-      cd ..
+      # ===== TIMING START =====
+      TASK_START=$(date +%s)
+      echo "▶ TASK: build-gcc-12 STARTED at $(date -Iseconds)"
 
-      # Run B2 build
+      # Configure sccache with workspace-relative path
+      WORKSPACE_ROOT=$(pwd)
+      export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-gcc12-b2"
+      sccache --show-stats
+
+      # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
+      BUILD_START=$(date +%s)
+      sudo apt-get install -y python3 python-is-python3
+
+      # Clone Boost with partial clone to reduce download size
+      git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+
+      # Create root Jamfile for B2 to find the project structure
+      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
+      echo "build-project build ;" >> libs/capy/Jamfile
+      echo "build-project test ;" >> libs/capy/Jamfile
+
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+
+      # Create sccache wrapper scripts BEFORE bootstrap so B2 finds them
+      # This allows B2 to configure itself to use sccache from the start
+      mkdir -p ~/bin
+      cat > ~/bin/g++ << 'EOF'
+      #!/bin/bash
+      exec sccache /usr/bin/g++-12 "$@"
+      EOF
+      cat > ~/bin/gcc << 'EOF'
+      #!/bin/bash
+      exec sccache /usr/bin/gcc-12 "$@"
+      EOF
+      chmod +x ~/bin/g++ ~/bin/gcc
+      export PATH=~/bin:$PATH
+
+      # Now bootstrap will find our sccache wrappers instead of real compilers
+      ./bootstrap.sh gcc
+
+      # Run B2 build (now using sccache via wrappers configured during bootstrap)
       ./b2 \
-        toolset=gcc-12 \
+        toolset=gcc \
         cxxstd=20 \
         variant=release \
         address-model=64 \
         link=shared \
         libs/capy/test
+
+      BUILD_END=$(date +%s)
+      BUILD_TIME=$((BUILD_END - BUILD_START))
+
+      # ===== SCCACHE STATISTICS =====
+      echo ""
+      echo "╔═══════════════════════════════════════════════════════════════╗"
+      echo "║                   SCCACHE STATISTICS                           ║"
+      echo "╚═══════════════════════════════════════════════════════════════╝"
+      sccache --show-stats
+
+      # Save sccache stats to dedicated file for easy access
+      mkdir -p /tmp/cache-stats
+      sccache --show-stats > /tmp/cache-stats/build-gcc-12.txt 2>&1
+
+      # Extract key metrics
+      CACHE_HITS=$(sccache --show-stats | grep -i "cache hits" | head -1 || echo "N/A")
+      CACHE_MISSES=$(sccache --show-stats | grep -i "cache misses" | head -1 || echo "N/A")
+      CACHE_RATE=$(sccache --show-stats | grep -i "cache hit rate" | head -1 || echo "N/A")
+
+      echo ""
+      echo "📊 KEY METRICS:"
+      echo "  ${CACHE_HITS}"
+      echo "  ${CACHE_MISSES}"
+      echo "  ${CACHE_RATE}"
+      echo ""
+
+      # ===== TIMING END =====
+      TASK_END=$(date +%s)
+      TASK_DURATION=$((TASK_END - TASK_START))
+      echo "⏱ TASK: build-gcc-12 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
+
+      # Log timing and cache stats for summary
+      mkdir -p /tmp/timing-logs
+      echo "${TASK_DURATION}|build-gcc-12|SUCCESS" >> /tmp/timing-logs/tasks.log
+      echo "build-gcc-12|${CACHE_HITS}|${CACHE_MISSES}|${CACHE_RATE}" >> /tmp/cache-stats/summary.log
+    cache: true
     filter:
-      - capy-root/**
+      - capy-root/**/*.cpp
+      - capy-root/**/*.hpp
+      - capy-root/**/*.h
+      - capy-root/CMakeLists.txt
+      - capy-root/test/CMakeLists.txt
+      - capy-root/bench/CMakeLists.txt
+      - capy-root/test/cmake_test/CMakeLists.txt
+      - capy-root/test/unit/CMakeLists.txt
+      - capy-root/extra/test_suite/CMakeLists.txt
+      - capy-root/extra/test_suite/DiscoverTests.cmake
+      - capy-root/extra/test_suite/DiscoverAndWriteTestsScripts.cmake
+      - capy-root/build/Jamfile
+      - capy-root/test/Jamfile
+      - capy-root/test/unit/Jamfile
+      - tmp/sccache-gcc12-b2/**
 
   - key: install-gcc-13-coverage
     run: |
@@ -218,18 +357,60 @@ tasks:
 
   # GCC 13 coverage: CMake build only (coverage flag disables B2 in GitHub Actions)
   - key: build-gcc-13-coverage
-    use: [clone-capy, install-gcc-13-coverage]
+    use: [clone-capy, install-sccache, install-gcc-13-coverage]
+    env:
+      SCCACHE_CACHE_SIZE: 1G
     run: |
+      # ===== TIMING START =====
+      TASK_START=$(date +%s)
+      echo "▶ TASK: build-gcc-13-coverage STARTED at $(date -Iseconds)"
+
+      # Configure sccache with workspace-relative path
+      WORKSPACE_ROOT=$(pwd)
+      export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-gcc13-coverage"
+      export CC="sccache gcc-13"
+      export CXX="sccache g++-13"
+      sccache --show-stats
+
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Use workspace-relative artifacts to enable CMake incremental compilation
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-gcc13-coverage"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
+
       cd capy-root
+      # Restore previous build artifacts if they exist
+      if [ -d "$ARTIFACTS_DIR/__build__" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
+        cp -r "$ARTIFACTS_DIR/__build__" . 2>/dev/null || true
+      else
+        echo "✗ No previous artifacts - full build"
+      fi
+
+      # Build with sccache (caches object files)
+      BUILD_START=$(date +%s)
       cmake -B __build__ \
         -DCMAKE_BUILD_TYPE=Debug \
         -DCMAKE_CXX_STANDARD=20 \
         -DCMAKE_CXX_COMPILER=g++-13 \
         -DCMAKE_C_COMPILER=gcc-13 \
+        -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
+        -DCMAKE_C_COMPILER_LAUNCHER=sccache \
         -DCMAKE_CXX_FLAGS="--coverage -fprofile-arcs -ftest-coverage" \
         -DCMAKE_C_FLAGS="--coverage -fprofile-arcs -ftest-coverage"
       cmake --build __build__ --target boost_capy_tests
       ctest --test-dir __build__
+      BUILD_END=$(date +%s)
+      BUILD_TIME=$((BUILD_END - BUILD_START))
+
+      # Save build artifacts for next run (enables incremental builds)
+      if [ -d "__build__" ]; then
+        echo "💾 Saving build artifacts for incremental builds..."
+        mkdir -p "$ARTIFACTS_DIR"
+        cp -r __build__ "$ARTIFACTS_DIR/" 2>/dev/null || true
+      fi
+
+      # Show sccache statistics
+      sccache --show-stats
 
       # Generate coverage report
       lcov -c -q -o "__build__/coverage.info" -d "__build__" \
@@ -237,8 +418,31 @@ tasks:
 
       # Upload to codecov
       bash <(curl -s https://codecov.io/bash) -f "__build__/coverage.info"
+
+      # ===== TIMING END =====
+      TASK_END=$(date +%s)
+      TASK_DURATION=$((TASK_END - TASK_START))
+      echo "⏱ TASK: build-gcc-13-coverage completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
+      mkdir -p /tmp/timing-logs
+      echo "${TASK_DURATION}|build-gcc-13-coverage|SUCCESS" >> /tmp/timing-logs/tasks.log
+    cache: true
     filter:
-      - capy-root/**
+      - capy-root/**/*.cpp
+      - capy-root/**/*.hpp
+      - capy-root/**/*.h
+      - capy-root/CMakeLists.txt
+      - capy-root/test/CMakeLists.txt
+      - capy-root/bench/CMakeLists.txt
+      - capy-root/test/cmake_test/CMakeLists.txt
+      - capy-root/test/unit/CMakeLists.txt
+      - capy-root/extra/test_suite/CMakeLists.txt
+      - capy-root/extra/test_suite/DiscoverTests.cmake
+      - capy-root/extra/test_suite/DiscoverAndWriteTestsScripts.cmake
+      - capy-root/build/Jamfile
+      - capy-root/test/Jamfile
+      - capy-root/test/unit/Jamfile
+      - tmp/sccache-gcc13-coverage/**
+      - tmp/build-artifacts-gcc13-coverage/**
 
   # ============================================================================
   # Linux Clang Builds (5 configurations: Clang 17, Clang 20 variants, Clang 20 x86)
@@ -254,64 +458,319 @@ tasks:
       sudo apt-get install -y clang-20 build-essential git cmake
 
   # Clang 20: Both B2 and CMake builds (matches build-cmake: true in GitHub Actions)
-  - key: build-clang-20-b2
-    use: [clone-capy, install-clang-20]
+  # Split into C++20 and C++23 builds to keep each task <2min
+  - key: build-clang-20-b2-cxx20
+    use: [clone-capy, install-sccache, install-clang-20]
+    env:
+      SCCACHE_CACHE_SIZE: 1G
     run: |
-      # Setup Boost tree with capy integrated
+      # ===== TIMING START =====
+      TASK_START=$(date +%s)
+      echo "▶ TASK: build-clang-20-b2-cxx20 STARTED at $(date -Iseconds)"
+
+      # Configure sccache with workspace-relative path
+      WORKSPACE_ROOT=$(pwd)
+      export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-b2-cxx20"
+      sccache --show-stats
+
+      # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
+      BUILD_START=$(date +%s)
       sudo apt-get install -y python3 python-is-python3
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+
+      # Clone Boost with partial clone to reduce download size
+      git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
+
+      # Create root Jamfile for B2 to find the project structure
+      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
+      echo "build-project build ;" >> libs/capy/Jamfile
+      echo "build-project test ;" >> libs/capy/Jamfile
+
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
-      cd ..
 
-      # Run B2 build
-      cd boost-source
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Restore previous build artifacts AFTER Boost tree setup (enables incremental builds)
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-b2-cxx20"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
+      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
+        cp -r "$ARTIFACTS_DIR/bin.v2" . 2>/dev/null || true
+      else
+        echo "✗ No previous artifacts - full build"
+      fi
+
+      # Run B2 build for C++20 only (sccache caches object files, artifacts enable incremental builds)
       ./b2 \
         toolset=clang-20 \
-        cxxstd=20,23 \
+        cxxstd=20 \
         variant=release \
         address-model=64 \
         link=shared \
         libs/capy/test
+
+      BUILD_END=$(date +%s)
+      BUILD_TIME=$((BUILD_END - BUILD_START))
+
+      # Save build artifacts for next run (enables incremental builds)
+      if [ -d "bin.v2" ]; then
+        echo "💾 Saving build artifacts for incremental builds..."
+        mkdir -p "$ARTIFACTS_DIR"
+        cp -r bin.v2 "$ARTIFACTS_DIR/" 2>/dev/null || true
+      fi
+
+      # Show sccache statistics
+      sccache --show-stats
+
+      # ===== TIMING END =====
+      TASK_END=$(date +%s)
+      TASK_DURATION=$((TASK_END - TASK_START))
+      echo "⏱ TASK: build-clang-20-b2-cxx20 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
+
+      # Log timing for summary
+      mkdir -p /tmp/timing-logs
+      echo "${TASK_DURATION}|build-clang-20-b2-cxx20|SUCCESS" >> /tmp/timing-logs/tasks.log
+    cache: true
     filter:
-      - capy-root/**
+      - capy-root/**/*.cpp
+      - capy-root/**/*.hpp
+      - capy-root/**/*.h
+      - capy-root/CMakeLists.txt
+      - capy-root/test/CMakeLists.txt
+      - capy-root/bench/CMakeLists.txt
+      - capy-root/test/cmake_test/CMakeLists.txt
+      - capy-root/test/unit/CMakeLists.txt
+      - capy-root/extra/test_suite/CMakeLists.txt
+      - capy-root/extra/test_suite/DiscoverTests.cmake
+      - capy-root/extra/test_suite/DiscoverAndWriteTestsScripts.cmake
+      - capy-root/build/Jamfile
+      - capy-root/test/Jamfile
+      - capy-root/test/unit/Jamfile
+      - tmp/sccache-clang20-b2-cxx20/**
+      - tmp/build-artifacts-clang20-b2-cxx20/**
+
+  - key: build-clang-20-b2-cxx23
+    use: [clone-capy, install-sccache, install-clang-20]
+    env:
+      SCCACHE_CACHE_SIZE: 1G
+    run: |
+      # ===== TIMING START =====
+      TASK_START=$(date +%s)
+      echo "▶ TASK: build-clang-20-b2-cxx23 STARTED at $(date -Iseconds)"
+
+      # Configure sccache with workspace-relative path
+      WORKSPACE_ROOT=$(pwd)
+      export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-b2-cxx23"
+      sccache --show-stats
+
+      # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
+      BUILD_START=$(date +%s)
+      sudo apt-get install -y python3 python-is-python3
+
+      # Clone Boost with partial clone to reduce download size
+      git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
+      cd boost-source
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+
+      # Create root Jamfile for B2 to find the project structure
+      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
+      echo "build-project build ;" >> libs/capy/Jamfile
+      echo "build-project test ;" >> libs/capy/Jamfile
+
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      ./bootstrap.sh gcc
+
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Restore previous build artifacts AFTER Boost tree setup (enables incremental builds)
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-b2-cxx23"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
+      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
+        cp -r "$ARTIFACTS_DIR/bin.v2" . 2>/dev/null || true
+      else
+        echo "✗ No previous artifacts - full build"
+      fi
+
+      # Run B2 build for C++23 only (sccache caches object files, artifacts enable incremental builds)
+      ./b2 \
+        toolset=clang-20 \
+        cxxstd=23 \
+        variant=release \
+        address-model=64 \
+        link=shared \
+        libs/capy/test
+
+      BUILD_END=$(date +%s)
+      BUILD_TIME=$((BUILD_END - BUILD_START))
+
+      # Save build artifacts for next run (enables incremental builds)
+      if [ -d "bin.v2" ]; then
+        echo "💾 Saving build artifacts for incremental builds..."
+        mkdir -p "$ARTIFACTS_DIR"
+        cp -r bin.v2 "$ARTIFACTS_DIR/" 2>/dev/null || true
+      fi
+
+      # Show sccache statistics
+      sccache --show-stats
+
+      # ===== TIMING END =====
+      TASK_END=$(date +%s)
+      TASK_DURATION=$((TASK_END - TASK_START))
+      echo "⏱ TASK: build-clang-20-b2-cxx23 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
+
+      # Log timing for summary
+      mkdir -p /tmp/timing-logs
+      echo "${TASK_DURATION}|build-clang-20-b2-cxx23|SUCCESS" >> /tmp/timing-logs/tasks.log
+    cache: true
+    filter:
+      - capy-root/**/*.cpp
+      - capy-root/**/*.hpp
+      - capy-root/**/*.h
+      - capy-root/CMakeLists.txt
+      - capy-root/test/CMakeLists.txt
+      - capy-root/bench/CMakeLists.txt
+      - capy-root/test/cmake_test/CMakeLists.txt
+      - capy-root/test/unit/CMakeLists.txt
+      - capy-root/extra/test_suite/CMakeLists.txt
+      - capy-root/extra/test_suite/DiscoverTests.cmake
+      - capy-root/extra/test_suite/DiscoverAndWriteTestsScripts.cmake
+      - capy-root/build/Jamfile
+      - capy-root/test/Jamfile
+      - capy-root/test/unit/Jamfile
+      - tmp/sccache-clang20-b2-cxx23/**
+      - tmp/build-artifacts-clang20-b2-cxx23/**
 
   - key: build-clang-20-cmake
-    use: [clone-capy, install-clang-20]
+    use: [clone-capy, install-sccache, install-clang-20]
+    env:
+      SCCACHE_CACHE_SIZE: 1G
     run: |
+      # ===== TIMING START =====
+      TASK_START=$(date +%s)
+      echo "▶ TASK: build-clang-20-cmake STARTED at $(date -Iseconds)"
+
+      # Configure sccache with workspace-relative path
+      WORKSPACE_ROOT=$(pwd)
+      export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-cmake"
+      export CC="sccache clang-20"
+      export CXX="sccache clang++-20"
+      sccache --show-stats
+
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Use workspace-relative artifacts to enable CMake incremental compilation
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-cmake"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
+
       cd capy-root
+      # Restore previous build artifacts if they exist
+      if [ -d "$ARTIFACTS_DIR/__build__" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
+        cp -r "$ARTIFACTS_DIR/__build__" . 2>/dev/null || true
+      else
+        echo "✗ No previous artifacts - full build"
+      fi
+
+      # Build
+      BUILD_START=$(date +%s)
       cmake -B __build__ \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_CXX_STANDARD=23 \
         -DCMAKE_CXX_COMPILER=clang++-20 \
-        -DCMAKE_C_COMPILER=clang-20
+        -DCMAKE_C_COMPILER=clang-20 \
+        -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
+        -DCMAKE_C_COMPILER_LAUNCHER=sccache
       cmake --build __build__ --target boost_capy_tests
       ctest --test-dir __build__
+      BUILD_END=$(date +%s)
+      BUILD_TIME=$((BUILD_END - BUILD_START))
+
+      # Save build artifacts for next run (enables incremental builds)
+      if [ -d "__build__" ]; then
+        echo "💾 Saving build artifacts for incremental builds..."
+        mkdir -p "$ARTIFACTS_DIR"
+        cp -r __build__ "$ARTIFACTS_DIR/" 2>/dev/null || true
+      fi
+
+      # Show sccache statistics
+      sccache --show-stats
+
+      # ===== TIMING END =====
+      TASK_END=$(date +%s)
+      TASK_DURATION=$((TASK_END - TASK_START))
+      echo "⏱ TASK: build-clang-20-cmake completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
+      mkdir -p /tmp/timing-logs
+      echo "${TASK_DURATION}|build-clang-20-cmake|SUCCESS" >> /tmp/timing-logs/tasks.log
+    cache: true
     filter:
-      - capy-root/**
+      - capy-root/**/*.cpp
+      - capy-root/**/*.hpp
+      - capy-root/**/*.h
+      - capy-root/CMakeLists.txt
+      - capy-root/test/CMakeLists.txt
+      - capy-root/bench/CMakeLists.txt
+      - capy-root/test/cmake_test/CMakeLists.txt
+      - capy-root/test/unit/CMakeLists.txt
+      - capy-root/extra/test_suite/CMakeLists.txt
+      - capy-root/extra/test_suite/DiscoverTests.cmake
+      - capy-root/extra/test_suite/DiscoverAndWriteTestsScripts.cmake
+      - capy-root/build/Jamfile
+      - capy-root/test/Jamfile
+      - capy-root/test/unit/Jamfile
+      - tmp/sccache-clang20-cmake/**
+      - tmp/build-artifacts-clang20-cmake/**
 
   # Clang 20 asan+ubsan: B2 build only
   - key: build-clang-20-asan-ubsan
-    use: [clone-capy, install-clang-20]
+    use: [clone-capy, install-sccache, install-clang-20]
+    env:
+      SCCACHE_CACHE_SIZE: 1G
+      ASAN_OPTIONS: detect_invalid_pointer_pairs=0:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
     run: |
-      # Setup Boost tree with capy integrated
+      # ===== TIMING START =====
+      TASK_START=$(date +%s)
+      echo "▶ TASK: build-clang-20-asan-ubsan STARTED at $(date -Iseconds)"
+
+      # Configure sccache with workspace-relative path
+      WORKSPACE_ROOT=$(pwd)
+      export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-asan"
+      sccache --show-stats
+
+      # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
       sudo apt-get install -y python3 python-is-python3
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+
+      # Clone Boost with partial clone to reduce download size
+      git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
+
+      # Create root Jamfile for B2 to find the project structure
+      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
+      echo "build-project build ;" >> libs/capy/Jamfile
+      echo "build-project test ;" >> libs/capy/Jamfile
+
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
-      cd ..
+
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Restore previous build artifacts AFTER Boost tree setup (enables incremental builds)
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-asan"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
+      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
+        cp -r "$ARTIFACTS_DIR/bin.v2" . 2>/dev/null || true
+      else
+        echo "✗ No previous artifacts - full build"
+      fi
 
       # Disable ASLR for sanitizers
       sudo sysctl vm.mmap_rnd_bits=28 || true
 
-      # Run B2 build
-      cd boost-source
+      # Run B2 build (sccache caches object files, artifacts enable incremental builds)
+      BUILD_START=$(date +%s)
       ./b2 \
         toolset=clang-20 \
         cxxstd=20 \
@@ -321,10 +780,46 @@ tasks:
         cxxflags="-fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -fsanitize=pointer-subtract" \
         linkflags="-fsanitize=address -fsanitize=undefined" \
         libs/capy/test
+
+      BUILD_END=$(date +%s)
+      BUILD_TIME=$((BUILD_END - BUILD_START))
+
+      # Save build artifacts for next run (enables incremental builds)
+      if [ -d "bin.v2" ]; then
+        echo "💾 Saving build artifacts for incremental builds..."
+        mkdir -p "$ARTIFACTS_DIR"
+        cp -r bin.v2 "$ARTIFACTS_DIR/" 2>/dev/null || true
+      fi
+
+      # Show sccache statistics
+      sccache --show-stats
+
+      # ===== TIMING END =====
+      TASK_END=$(date +%s)
+      TASK_DURATION=$((TASK_END - TASK_START))
+      echo "⏱ TASK: build-clang-20-asan-ubsan completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
+
+      # Log timing for summary
+      mkdir -p /tmp/timing-logs
+      echo "${TASK_DURATION}|build-clang-20-asan-ubsan|SUCCESS" >> /tmp/timing-logs/tasks.log
+    cache: true
     filter:
-      - capy-root/**
-    env:
-      ASAN_OPTIONS: detect_invalid_pointer_pairs=0:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
+      - capy-root/**/*.cpp
+      - capy-root/**/*.hpp
+      - capy-root/**/*.h
+      - capy-root/CMakeLists.txt
+      - capy-root/test/CMakeLists.txt
+      - capy-root/bench/CMakeLists.txt
+      - capy-root/test/cmake_test/CMakeLists.txt
+      - capy-root/test/unit/CMakeLists.txt
+      - capy-root/extra/test_suite/CMakeLists.txt
+      - capy-root/extra/test_suite/DiscoverTests.cmake
+      - capy-root/extra/test_suite/DiscoverAndWriteTestsScripts.cmake
+      - capy-root/build/Jamfile
+      - capy-root/test/Jamfile
+      - capy-root/test/unit/Jamfile
+      - tmp/sccache-clang20-asan/**
+      - tmp/build-artifacts-clang20-asan/**
 
   - key: install-clang-17
     run: |
@@ -333,20 +828,49 @@ tasks:
 
   # Clang 17: B2 build only (matches original workflow)
   - key: build-clang-17
-    use: [clone-capy, install-clang-17]
+    use: [clone-capy, install-sccache, install-clang-17]
+    env:
+      SCCACHE_CACHE_SIZE: 1G
     run: |
-      # Setup Boost tree with capy integrated
+      # ===== TIMING START =====
+      TASK_START=$(date +%s)
+      echo "▶ TASK: build-clang-17 STARTED at $(date -Iseconds)"
+
+      # Configure sccache with workspace-relative path
+      WORKSPACE_ROOT=$(pwd)
+      export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang17-b2"
+      sccache --show-stats
+
+      # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
       sudo apt-get install -y python3 python-is-python3
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+
+      # Clone Boost with partial clone to reduce download size
+      git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
+
+      # Create root Jamfile for B2 to find the project structure
+      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
+      echo "build-project build ;" >> libs/capy/Jamfile
+      echo "build-project test ;" >> libs/capy/Jamfile
+
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
-      cd ..
 
-      # Run B2 build
-      cd boost-source
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Restore previous build artifacts AFTER Boost tree setup (enables incremental builds)
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang17"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
+      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
+        cp -r "$ARTIFACTS_DIR/bin.v2" . 2>/dev/null || true
+      else
+        echo "✗ No previous artifacts - full build"
+      fi
+
+      # Run B2 build (sccache caches object files, artifacts enable incremental builds)
+      BUILD_START=$(date +%s)
       ./b2 \
         toolset=clang-17 \
         cxxstd=20 \
@@ -354,8 +878,46 @@ tasks:
         address-model=64 \
         link=static \
         libs/capy/test
+
+      BUILD_END=$(date +%s)
+      BUILD_TIME=$((BUILD_END - BUILD_START))
+
+      # Save build artifacts for next run (enables incremental builds)
+      if [ -d "bin.v2" ]; then
+        echo "💾 Saving build artifacts for incremental builds..."
+        mkdir -p "$ARTIFACTS_DIR"
+        cp -r bin.v2 "$ARTIFACTS_DIR/" 2>/dev/null || true
+      fi
+
+      # Show sccache statistics
+      sccache --show-stats
+
+      # ===== TIMING END =====
+      TASK_END=$(date +%s)
+      TASK_DURATION=$((TASK_END - TASK_START))
+      echo "⏱ TASK: build-clang-17 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
+
+      # Log timing for summary
+      mkdir -p /tmp/timing-logs
+      echo "${TASK_DURATION}|build-clang-17|SUCCESS" >> /tmp/timing-logs/tasks.log
+    cache: true
     filter:
-      - capy-root/**
+      - capy-root/**/*.cpp
+      - capy-root/**/*.hpp
+      - capy-root/**/*.h
+      - capy-root/CMakeLists.txt
+      - capy-root/test/CMakeLists.txt
+      - capy-root/bench/CMakeLists.txt
+      - capy-root/test/cmake_test/CMakeLists.txt
+      - capy-root/test/unit/CMakeLists.txt
+      - capy-root/extra/test_suite/CMakeLists.txt
+      - capy-root/extra/test_suite/DiscoverTests.cmake
+      - capy-root/extra/test_suite/DiscoverAndWriteTestsScripts.cmake
+      - capy-root/build/Jamfile
+      - capy-root/test/Jamfile
+      - capy-root/test/unit/Jamfile
+      - tmp/sccache-clang17-b2/**
+      - tmp/build-artifacts-clang17/**
 
   - key: install-clang-20-multilib
     run: |
@@ -367,30 +929,190 @@ tasks:
       sudo apt-get install -y clang-20 build-essential git cmake gcc-multilib g++-multilib
 
   # Clang 20 x86: B2 build only (matches original workflow)
-  - key: build-clang-20-x86
-    use: [clone-capy, install-clang-20-multilib]
+  # Split into C++20 and C++23 builds to keep each task <2min
+  - key: build-clang-20-x86-cxx20
+    use: [clone-capy, install-sccache, install-clang-20-multilib]
+    env:
+      SCCACHE_CACHE_SIZE: 1G
     run: |
-      # Setup Boost tree with capy integrated
+      # ===== TIMING START =====
+      TASK_START=$(date +%s)
+      echo "▶ TASK: build-clang-20-x86-cxx20 STARTED at $(date -Iseconds)"
+
+      # Configure sccache with workspace-relative path
+      WORKSPACE_ROOT=$(pwd)
+      export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-x86-cxx20"
+      sccache --show-stats
+
+      # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
       sudo apt-get install -y python3 python-is-python3
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+
+      # Clone Boost with partial clone to reduce download size
+      git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
+
+      # Create root Jamfile for B2 to find the project structure
+      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
+      echo "build-project build ;" >> libs/capy/Jamfile
+      echo "build-project test ;" >> libs/capy/Jamfile
+
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
-      cd ..
 
-      # Run B2 build (32-bit x86)
-      cd boost-source
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Restore previous build artifacts AFTER Boost tree setup (enables incremental builds)
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-x86-cxx20"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
+      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
+        cp -r "$ARTIFACTS_DIR/bin.v2" . 2>/dev/null || true
+      else
+        echo "✗ No previous artifacts - full build"
+      fi
+
+      # Run B2 build for C++20 only (32-bit x86, sccache caches object files, artifacts enable incremental builds)
+      BUILD_START=$(date +%s)
       ./b2 \
         toolset=clang-20 \
-        cxxstd=20,23 \
+        cxxstd=20 \
         variant=release \
         address-model=32 \
         link=static \
         libs/capy/test
+
+      BUILD_END=$(date +%s)
+      BUILD_TIME=$((BUILD_END - BUILD_START))
+
+      # Save build artifacts for next run (enables incremental builds)
+      if [ -d "bin.v2" ]; then
+        echo "💾 Saving build artifacts for incremental builds..."
+        mkdir -p "$ARTIFACTS_DIR"
+        cp -r bin.v2 "$ARTIFACTS_DIR/" 2>/dev/null || true
+      fi
+
+      # Show sccache statistics
+      sccache --show-stats
+
+      # ===== TIMING END =====
+      TASK_END=$(date +%s)
+      TASK_DURATION=$((TASK_END - TASK_START))
+      echo "⏱ TASK: build-clang-20-x86-cxx20 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
+
+      # Log timing for summary
+      mkdir -p /tmp/timing-logs
+      echo "${TASK_DURATION}|build-clang-20-x86-cxx20|SUCCESS" >> /tmp/timing-logs/tasks.log
+    cache: true
     filter:
-      - capy-root/**
+      - capy-root/**/*.cpp
+      - capy-root/**/*.hpp
+      - capy-root/**/*.h
+      - capy-root/CMakeLists.txt
+      - capy-root/test/CMakeLists.txt
+      - capy-root/bench/CMakeLists.txt
+      - capy-root/test/cmake_test/CMakeLists.txt
+      - capy-root/test/unit/CMakeLists.txt
+      - capy-root/extra/test_suite/CMakeLists.txt
+      - capy-root/extra/test_suite/DiscoverTests.cmake
+      - capy-root/extra/test_suite/DiscoverAndWriteTestsScripts.cmake
+      - capy-root/build/Jamfile
+      - capy-root/test/Jamfile
+      - capy-root/test/unit/Jamfile
+      - tmp/sccache-clang20-x86-cxx20/**
+      - tmp/build-artifacts-clang20-x86-cxx20/**
+
+  - key: build-clang-20-x86-cxx23
+    use: [clone-capy, install-sccache, install-clang-20-multilib]
+    env:
+      SCCACHE_CACHE_SIZE: 1G
+    run: |
+      # ===== TIMING START =====
+      TASK_START=$(date +%s)
+      echo "▶ TASK: build-clang-20-x86-cxx23 STARTED at $(date -Iseconds)"
+
+      # Configure sccache with workspace-relative path
+      WORKSPACE_ROOT=$(pwd)
+      export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-x86-cxx23"
+      sccache --show-stats
+
+      # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
+      sudo apt-get install -y python3 python-is-python3
+
+      # Clone Boost with partial clone to reduce download size
+      git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
+      cd boost-source
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+
+      # Create root Jamfile for B2 to find the project structure
+      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
+      echo "build-project build ;" >> libs/capy/Jamfile
+      echo "build-project test ;" >> libs/capy/Jamfile
+
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      ./bootstrap.sh gcc
+
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Restore previous build artifacts AFTER Boost tree setup (enables incremental builds)
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-x86-cxx23"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
+      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
+        cp -r "$ARTIFACTS_DIR/bin.v2" . 2>/dev/null || true
+      else
+        echo "✗ No previous artifacts - full build"
+      fi
+
+      # Run B2 build for C++23 only (32-bit x86, sccache caches object files, artifacts enable incremental builds)
+      BUILD_START=$(date +%s)
+      ./b2 \
+        toolset=clang-20 \
+        cxxstd=23 \
+        variant=release \
+        address-model=32 \
+        link=static \
+        libs/capy/test
+
+      BUILD_END=$(date +%s)
+      BUILD_TIME=$((BUILD_END - BUILD_START))
+
+      # Save build artifacts for next run (enables incremental builds)
+      if [ -d "bin.v2" ]; then
+        echo "💾 Saving build artifacts for incremental builds..."
+        mkdir -p "$ARTIFACTS_DIR"
+        cp -r bin.v2 "$ARTIFACTS_DIR/" 2>/dev/null || true
+      fi
+
+      # Show sccache statistics
+      sccache --show-stats
+
+      # ===== TIMING END =====
+      TASK_END=$(date +%s)
+      TASK_DURATION=$((TASK_END - TASK_START))
+      echo "⏱ TASK: build-clang-20-x86-cxx23 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
+
+      # Log timing for summary
+      mkdir -p /tmp/timing-logs
+      echo "${TASK_DURATION}|build-clang-20-x86-cxx23|SUCCESS" >> /tmp/timing-logs/tasks.log
+    cache: true
+    filter:
+      - capy-root/**/*.cpp
+      - capy-root/**/*.hpp
+      - capy-root/**/*.h
+      - capy-root/CMakeLists.txt
+      - capy-root/test/CMakeLists.txt
+      - capy-root/bench/CMakeLists.txt
+      - capy-root/test/cmake_test/CMakeLists.txt
+      - capy-root/test/unit/CMakeLists.txt
+      - capy-root/extra/test_suite/CMakeLists.txt
+      - capy-root/extra/test_suite/DiscoverTests.cmake
+      - capy-root/extra/test_suite/DiscoverAndWriteTestsScripts.cmake
+      - capy-root/build/Jamfile
+      - capy-root/test/Jamfile
+      - capy-root/test/unit/Jamfile
+      - tmp/sccache-clang20-x86-cxx23/**
+      - tmp/build-artifacts-clang20-x86-cxx23/**
 
   # ============================================================================
   # Changelog Task (independent)
@@ -419,3 +1141,95 @@ tasks:
       git shortlog -sn --no-merges | head -20
     filter:
       - capy-root/**
+
+  # ============================================================================
+  # Build Performance Analysis & Optimization Summary
+  # ============================================================================
+  - key: performance-analysis
+    use: [build-gcc-12, build-gcc-13-coverage, build-clang-20-b2-cxx20, build-clang-20-b2-cxx23, build-clang-20-cmake, build-clang-20-asan-ubsan, build-clang-17, build-clang-20-x86-cxx20, build-clang-20-x86-cxx23]
+    run: |
+      echo ""
+      echo "╔════════════════════════════════════════════════════════════════╗"
+      echo "║          RWX CI BUILD PERFORMANCE ANALYSIS                     ║"
+      echo "╚════════════════════════════════════════════════════════════════╝"
+      echo ""
+
+      if [ -f /tmp/timing-logs/tasks.log ]; then
+        echo "📊 Build Task Timings (sorted by duration):"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        sort -rn /tmp/timing-logs/tasks.log | while IFS='|' read -r duration task status; do
+          printf "  %-30s %8s  [%s]\n" "$task" "$duration" "$status"
+        done
+        echo ""
+
+        LONGEST=$(sort -rn /tmp/timing-logs/tasks.log | head -1)
+        LONGEST_TASK=$(echo "$LONGEST" | cut -d'|' -f2)
+        LONGEST_TIME=$(echo "$LONGEST" | cut -d'|' -f1)
+
+        echo "🎯 LONGEST TASK: $LONGEST_TASK ($LONGEST_TIME)"
+        echo ""
+        echo "📈 Optimization Recommendations:"
+        if [ "$LONGEST_TIME" -gt 120 ]; then
+          echo "  ⚠️  Target not met (>2min). Optimize: $LONGEST_TASK"
+          echo "  • Consider distributed sccache (S3/GCS)"
+          echo "  • Increase cache size"
+          echo "  • Profile depinst.py execution"
+        else
+          echo "  ✅ Target achieved (<2min)!"
+        fi
+      else
+        echo "⚠️  No timing data available"
+      fi
+
+      echo ""
+      echo "╔════════════════════════════════════════════════════════════════╗"
+      echo "║          SCCACHE EFFECTIVENESS ANALYSIS                        ║"
+      echo "╚════════════════════════════════════════════════════════════════╝"
+      echo ""
+
+      if [ -f /tmp/cache-stats/summary.log ]; then
+        echo "🔍 Cache Hit Rates by Task:"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        while IFS='|' read -r task hits misses rate; do
+          printf "  %-30s %s\n" "$task:" "$rate"
+        done < /tmp/cache-stats/summary.log
+        echo ""
+
+        # Check if caching is working
+        FIRST_BUILD=$(grep "Cache hit rate" /tmp/cache-stats/summary.log | head -1 | grep -o "[0-9]*\.[0-9]*%" || echo "0%")
+        FIRST_RATE=$(echo "$FIRST_BUILD" | grep -o "[0-9]*\.[0-9]*" || echo "0")
+
+        if [ "$FIRST_RATE" = "0" ] || [ -z "$FIRST_RATE" ]; then
+          echo "⚠️  WARNING: sccache shows 0% hit rate!"
+          echo "  This means object file caching is not working."
+          echo "  Possible issues:"
+          echo "  • Cache directory not persisting between runs"
+          echo "  • Compiler flags changing between builds"
+          echo "  • Source file timestamps always appearing as 'new'"
+          echo ""
+        else
+          echo "✅ sccache is working! Cache hit rate: $FIRST_BUILD"
+          echo ""
+        fi
+      else
+        echo "⚠️  No cache statistics available"
+        echo ""
+      fi
+
+      echo "╔════════════════════════════════════════════════════════════════╗"
+      echo "║          NEXT ITERATION STEPS                                  ║"
+      echo "╚════════════════════════════════════════════════════════════════╝"
+      echo ""
+      echo "1. Identify longest task above"
+      echo "2. Analyze task logs for bottlenecks"
+      echo "3. Check sccache effectiveness (cache hit rate > 50% for incremental builds)"
+      echo "4. Apply targeted optimizations:"
+      echo "   - Enable distributed sccache (SCCACHE_BUCKET env)"
+      echo "   - Optimize Boost setup (if applicable)"
+      echo "   - Increase compiler cache size"
+      echo "5. Re-run and measure improvement"
+      echo "6. Repeat until all tasks <2min"
+      echo ""
+    filter:
+      - .rwx/ci.yml
+
