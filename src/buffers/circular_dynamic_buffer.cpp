@@ -32,7 +32,6 @@ circular_dynamic_buffer::
 prepare(std::size_t n) ->
     mutable_buffers_type
 {
-    // Prepare n bytes for writing into the circular buffer
     // Buffer is too small for n
     if(n > cap_ - in_len_)
         detail::throw_length_error();

@@ -254,15 +254,8 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-gcc12-b2"
       sccache --show-stats
 
-      # Create sccache wrapper for B2
-      mkdir -p /tmp/cc-wrapper
-      echo '#!/bin/bash' > /tmp/cc-wrapper/gcc-12
-      echo 'exec sccache /usr/bin/gcc-12 "$@"' >> /tmp/cc-wrapper/gcc-12
-      chmod +x /tmp/cc-wrapper/gcc-12
-      echo '#!/bin/bash' > /tmp/cc-wrapper/g++-12
-      echo 'exec sccache /usr/bin/g++-12 "$@"' >> /tmp/cc-wrapper/g++-12
-      chmod +x /tmp/cc-wrapper/g++-12
-      export PATH=/tmp/cc-wrapper:$PATH
+      # Configure B2 to use sccache (via user-config.jam)
+      echo "using gcc : 12 : sccache g++-12 ;" > ~/user-config.jam
 
       # ===== CUSTOM CONTENT-HASH CACHING =====
       # Compute hash of capy source files (content-based, not mtime)
@@ -472,15 +465,8 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-b2-cxx20"
       sccache --show-stats
 
-      # Create sccache wrapper for B2
-      mkdir -p /tmp/cc-wrapper
-      echo '#!/bin/bash' > /tmp/cc-wrapper/clang-20
-      echo 'exec sccache /usr/bin/clang-20 "$@"' >> /tmp/cc-wrapper/clang-20
-      chmod +x /tmp/cc-wrapper/clang-20
-      echo '#!/bin/bash' > /tmp/cc-wrapper/clang++-20
-      echo 'exec sccache /usr/bin/clang++-20 "$@"' >> /tmp/cc-wrapper/clang++-20
-      chmod +x /tmp/cc-wrapper/clang++-20
-      export PATH=/tmp/cc-wrapper:$PATH
+      # Configure B2 to use sccache (via user-config.jam)
+      echo "using clang : 20 : sccache clang++-20 ;" > ~/user-config.jam
 
       # ===== CUSTOM CONTENT-HASH CACHING =====
       # Compute hash of capy source files (content-based, not mtime)
@@ -581,15 +567,8 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-b2-cxx23"
       sccache --show-stats
 
-      # Create sccache wrapper for B2
-      mkdir -p /tmp/cc-wrapper
-      echo '#!/bin/bash' > /tmp/cc-wrapper/clang-20
-      echo 'exec sccache /usr/bin/clang-20 "$@"' >> /tmp/cc-wrapper/clang-20
-      chmod +x /tmp/cc-wrapper/clang-20
-      echo '#!/bin/bash' > /tmp/cc-wrapper/clang++-20
-      echo 'exec sccache /usr/bin/clang++-20 "$@"' >> /tmp/cc-wrapper/clang++-20
-      chmod +x /tmp/cc-wrapper/clang++-20
-      export PATH=/tmp/cc-wrapper:$PATH
+      # Configure B2 to use sccache (via user-config.jam)
+      echo "using clang : 20 : sccache clang++-20 ;" > ~/user-config.jam
 
       # ===== CUSTOM CONTENT-HASH CACHING =====
       # Compute hash of capy source files (content-based, not mtime)
@@ -769,15 +748,8 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-asan"
       sccache --show-stats
 
-      # Create sccache wrapper for B2
-      mkdir -p /tmp/cc-wrapper
-      echo '#!/bin/bash' > /tmp/cc-wrapper/clang-20
-      echo 'exec sccache /usr/bin/clang-20 "$@"' >> /tmp/cc-wrapper/clang-20
-      chmod +x /tmp/cc-wrapper/clang-20
-      echo '#!/bin/bash' > /tmp/cc-wrapper/clang++-20
-      echo 'exec sccache /usr/bin/clang++-20 "$@"' >> /tmp/cc-wrapper/clang++-20
-      chmod +x /tmp/cc-wrapper/clang++-20
-      export PATH=/tmp/cc-wrapper:$PATH
+      # Configure B2 to use sccache (via user-config.jam)
+      echo "using clang : 20 : sccache clang++-20 ;" > ~/user-config.jam
 
       # ===== CUSTOM CONTENT-HASH CACHING =====
       # Compute hash of capy source files (content-based, not mtime)
@@ -889,15 +861,8 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang17-b2"
       sccache --show-stats
 
-      # Create sccache wrapper for B2
-      mkdir -p /tmp/cc-wrapper
-      echo '#!/bin/bash' > /tmp/cc-wrapper/clang-17
-      echo 'exec sccache /usr/bin/clang-17 "$@"' >> /tmp/cc-wrapper/clang-17
-      chmod +x /tmp/cc-wrapper/clang-17
-      echo '#!/bin/bash' > /tmp/cc-wrapper/clang++-17
-      echo 'exec sccache /usr/bin/clang++-17 "$@"' >> /tmp/cc-wrapper/clang++-17
-      chmod +x /tmp/cc-wrapper/clang++-17
-      export PATH=/tmp/cc-wrapper:$PATH
+      # Configure B2 to use sccache (via user-config.jam)
+      echo "using clang : 17 : sccache clang++-17 ;" > ~/user-config.jam
 
       # ===== CUSTOM CONTENT-HASH CACHING =====
       # Compute hash of capy source files (content-based, not mtime)
@@ -1009,15 +974,8 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-x86-cxx20"
       sccache --show-stats
 
-      # Create sccache wrapper for B2
-      mkdir -p /tmp/cc-wrapper
-      echo '#!/bin/bash' > /tmp/cc-wrapper/clang-20
-      echo 'exec sccache /usr/bin/clang-20 "$@"' >> /tmp/cc-wrapper/clang-20
-      chmod +x /tmp/cc-wrapper/clang-20
-      echo '#!/bin/bash' > /tmp/cc-wrapper/clang++-20
-      echo 'exec sccache /usr/bin/clang++-20 "$@"' >> /tmp/cc-wrapper/clang++-20
-      chmod +x /tmp/cc-wrapper/clang++-20
-      export PATH=/tmp/cc-wrapper:$PATH
+      # Configure B2 to use sccache (via user-config.jam)
+      echo "using clang : 20 : sccache clang++-20 ;" > ~/user-config.jam
 
       # ===== CUSTOM CONTENT-HASH CACHING =====
       # Compute hash of capy source files (content-based, not mtime)
@@ -1118,15 +1076,8 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-x86-cxx23"
       sccache --show-stats
 
-      # Create sccache wrapper for B2
-      mkdir -p /tmp/cc-wrapper
-      echo '#!/bin/bash' > /tmp/cc-wrapper/clang-20
-      echo 'exec sccache /usr/bin/clang-20 "$@"' >> /tmp/cc-wrapper/clang-20
-      chmod +x /tmp/cc-wrapper/clang-20
-      echo '#!/bin/bash' > /tmp/cc-wrapper/clang++-20
-      echo 'exec sccache /usr/bin/clang++-20 "$@"' >> /tmp/cc-wrapper/clang++-20
-      chmod +x /tmp/cc-wrapper/clang++-20
-      export PATH=/tmp/cc-wrapper:$PATH
+      # Configure B2 to use sccache (via user-config.jam)
+      echo "using clang : 20 : sccache clang++-20 ;" > ~/user-config.jam
 
       # ===== CUSTOM CONTENT-HASH CACHING =====
       # Compute hash of capy source files (content-based, not mtime)

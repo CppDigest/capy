@@ -50,7 +50,6 @@ namespace detail {
 void
 set_current_thread_name(char const* name) noexcept
 {
-    // Set the name of the current thread for debugging visibility
 #if defined(_WIN32)
     // SetThreadDescription requires Windows 10 1607+. Older Windows versions
     // are unsupported; the program may fail to link on those systems.
