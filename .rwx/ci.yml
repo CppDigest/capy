@@ -273,12 +273,21 @@ tasks:
       ./bootstrap.sh gcc
 
       # Run B2 build with sccache-wrapped compiler (sccache caches compiled objects)
-      # Export compiler wrappers so B2 uses sccache
-      export CC="sccache gcc-12"
-      export CXX="sccache g++-12"
+      # Create wrapper scripts for gcc that use sccache
+      mkdir -p ~/bin
+      cat > ~/bin/g++ << 'EOF'
+#!/bin/bash
+exec sccache /usr/bin/g++-12 "$@"
+EOF
+      cat > ~/bin/gcc << 'EOF'
+#!/bin/bash
+exec sccache /usr/bin/gcc-12 "$@"
+EOF
+      chmod +x ~/bin/g++ ~/bin/gcc
+      export PATH=~/bin:$PATH
 
       ./b2 \
-        toolset=gcc-12 \
+        toolset=gcc \
         cxxstd=20 \
         variant=release \
         address-model=64 \
