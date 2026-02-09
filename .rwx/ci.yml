@@ -243,14 +243,15 @@ tasks:
   - key: build-gcc-12
     use: [clone-capy, install-sccache, install-gcc-12]
     env:
-      SCCACHE_DIR: tmp/sccache-gcc12-b2
       SCCACHE_CACHE_SIZE: 1G
     run: |
       # ===== TIMING START =====
       TASK_START=$(date +%s)
       echo "▶ TASK: build-gcc-12 STARTED at $(date -Iseconds)"
 
-      # Configure sccache
+      # Configure sccache with workspace-relative path
+      WORKSPACE_ROOT=$(pwd)
+      export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-gcc12-b2"
       sccache --show-stats
 
       # Create sccache wrapper for B2
@@ -356,14 +357,15 @@ tasks:
   - key: build-gcc-13-coverage
     use: [clone-capy, install-sccache, install-gcc-13-coverage]
     env:
-      SCCACHE_DIR: tmp/sccache-gcc13-coverage
       SCCACHE_CACHE_SIZE: 1G
     run: |
       # ===== TIMING START =====
       TASK_START=$(date +%s)
       echo "▶ TASK: build-gcc-13-coverage STARTED at $(date -Iseconds)"
 
-      # Configure sccache
+      # Configure sccache with workspace-relative path
+      WORKSPACE_ROOT=$(pwd)
+      export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-gcc13-coverage"
       export CC="sccache gcc-13"
       export CXX="sccache g++-13"
       sccache --show-stats
@@ -459,14 +461,15 @@ tasks:
   - key: build-clang-20-b2-cxx20
     use: [clone-capy, install-sccache, install-clang-20]
     env:
-      SCCACHE_DIR: tmp/sccache-clang20-b2-cxx20
       SCCACHE_CACHE_SIZE: 1G
     run: |
       # ===== TIMING START =====
       TASK_START=$(date +%s)
       echo "▶ TASK: build-clang-20-b2-cxx20 STARTED at $(date -Iseconds)"
 
-      # Configure sccache
+      # Configure sccache with workspace-relative path
+      WORKSPACE_ROOT=$(pwd)
+      export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-b2-cxx20"
       sccache --show-stats
 
       # Create sccache wrapper for B2
@@ -567,14 +570,15 @@ tasks:
   - key: build-clang-20-b2-cxx23
     use: [clone-capy, install-sccache, install-clang-20]
     env:
-      SCCACHE_DIR: tmp/sccache-clang20-b2-cxx23
       SCCACHE_CACHE_SIZE: 1G
     run: |
       # ===== TIMING START =====
       TASK_START=$(date +%s)
       echo "▶ TASK: build-clang-20-b2-cxx23 STARTED at $(date -Iseconds)"
 
-      # Configure sccache
+      # Configure sccache with workspace-relative path
+      WORKSPACE_ROOT=$(pwd)
+      export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-b2-cxx23"
       sccache --show-stats
 
       # Create sccache wrapper for B2
@@ -675,14 +679,15 @@ tasks:
   - key: build-clang-20-cmake
     use: [clone-capy, install-sccache, install-clang-20]
     env:
-      SCCACHE_DIR: tmp/sccache-clang20-cmake
       SCCACHE_CACHE_SIZE: 1G
     run: |
       # ===== TIMING START =====
       TASK_START=$(date +%s)
       echo "▶ TASK: build-clang-20-cmake STARTED at $(date -Iseconds)"
 
-      # Configure sccache
+      # Configure sccache with workspace-relative path
+      WORKSPACE_ROOT=$(pwd)
+      export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-cmake"
       export CC="sccache clang-20"
       export CXX="sccache clang++-20"
       sccache --show-stats
@@ -752,7 +757,6 @@ tasks:
   - key: build-clang-20-asan-ubsan
     use: [clone-capy, install-sccache, install-clang-20]
     env:
-      SCCACHE_DIR: tmp/sccache-clang20-asan
       SCCACHE_CACHE_SIZE: 1G
       ASAN_OPTIONS: detect_invalid_pointer_pairs=0:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
     run: |
@@ -760,7 +764,9 @@ tasks:
       TASK_START=$(date +%s)
       echo "▶ TASK: build-clang-20-asan-ubsan STARTED at $(date -Iseconds)"
 
-      # Configure sccache
+      # Configure sccache with workspace-relative path
+      WORKSPACE_ROOT=$(pwd)
+      export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-asan"
       sccache --show-stats
 
       # Create sccache wrapper for B2
@@ -872,14 +878,15 @@ tasks:
   - key: build-clang-17
     use: [clone-capy, install-sccache, install-clang-17]
     env:
-      SCCACHE_DIR: tmp/sccache-clang17-b2
       SCCACHE_CACHE_SIZE: 1G
     run: |
       # ===== TIMING START =====
       TASK_START=$(date +%s)
       echo "▶ TASK: build-clang-17 STARTED at $(date -Iseconds)"
 
-      # Configure sccache
+      # Configure sccache with workspace-relative path
+      WORKSPACE_ROOT=$(pwd)
+      export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang17-b2"
       sccache --show-stats
 
       # Create sccache wrapper for B2
@@ -991,14 +998,15 @@ tasks:
   - key: build-clang-20-x86-cxx20
     use: [clone-capy, install-sccache, install-clang-20-multilib]
     env:
-      SCCACHE_DIR: tmp/sccache-clang20-x86-cxx20
       SCCACHE_CACHE_SIZE: 1G
     run: |
       # ===== TIMING START =====
       TASK_START=$(date +%s)
       echo "▶ TASK: build-clang-20-x86-cxx20 STARTED at $(date -Iseconds)"
 
-      # Configure sccache
+      # Configure sccache with workspace-relative path
+      WORKSPACE_ROOT=$(pwd)
+      export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-x86-cxx20"
       sccache --show-stats
 
       # Create sccache wrapper for B2
@@ -1099,14 +1107,15 @@ tasks:
   - key: build-clang-20-x86-cxx23
     use: [clone-capy, install-sccache, install-clang-20-multilib]
     env:
-      SCCACHE_DIR: tmp/sccache-clang20-x86-cxx23
       SCCACHE_CACHE_SIZE: 1G
     run: |
       # ===== TIMING START =====
       TASK_START=$(date +%s)
       echo "▶ TASK: build-clang-20-x86-cxx23 STARTED at $(date -Iseconds)"
 
-      # Configure sccache
+      # Configure sccache with workspace-relative path
+      WORKSPACE_ROOT=$(pwd)
+      export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-x86-cxx23"
       sccache --show-stats
 
       # Create sccache wrapper for B2
