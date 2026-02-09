@@ -254,27 +254,19 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-gcc12-b2"
       sccache --show-stats
 
-      # Create sccache wrapper script and configure B2 to use it
-      mkdir -p ~/sccache-wrappers
-      printf '#!/bin/bash\nexec sccache /usr/bin/g++-12 "$@"\n' > ~/sccache-wrappers/g++-12
-      chmod +x ~/sccache-wrappers/g++-12
-      echo "using gcc : 12 : $HOME/sccache-wrappers/g++-12 ;" > ~/user-config.jam
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Use workspace-relative artifacts to enable B2 incremental compilation
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-gcc12"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
 
-      # ===== CUSTOM CONTENT-HASH CACHING =====
-      # Compute hash of capy source files (content-based, not mtime)
+      # Restore previous build artifacts if they exist (enables incremental builds)
       cd capy-root
-      CONTENT_HASH=$(find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) 2>/dev/null | sort | xargs cat 2>/dev/null | sha256sum | cut -d' ' -f1)
-      CACHE_DIR="/tmp/build-cache-gcc12/$CONTENT_HASH"
-      echo "📦 Content hash: $CONTENT_HASH"
-
-      # Check if build artifacts cached
-      if [ -d "$CACHE_DIR/bin.v2" ]; then
-        echo "✓ CACHE HIT! Restoring build artifacts..."
-        cp -r "$CACHE_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
-        CACHE_HIT=true
+      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
+        mkdir -p ../boost-source
+        cp -r "$ARTIFACTS_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
       else
-        echo "✗ Cache miss - will build and cache"
-        CACHE_HIT=false
+        echo "✗ No previous artifacts - full build"
       fi
       cd ..
 
@@ -296,7 +288,7 @@ tasks:
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
 
-      # Run B2 build (sccache caches object files, custom cache stores final binaries)
+      # Run B2 build (sccache caches object files, artifacts enable incremental builds)
       ./b2 \
         toolset=gcc-12 \
         cxxstd=20 \
@@ -308,11 +300,11 @@ tasks:
       BUILD_END=$(date +%s)
       BUILD_TIME=$((BUILD_END - BUILD_START))
 
-      # Cache build artifacts if not from cache
-      if [ "$CACHE_HIT" = false ] && [ -d "bin.v2" ]; then
-        echo "💾 Caching build artifacts..."
-        mkdir -p "$CACHE_DIR"
-        cp -r bin.v2 "$CACHE_DIR/" 2>/dev/null || true
+      # Save build artifacts for next run (enables incremental builds)
+      if [ -d "bin.v2" ]; then
+        echo "💾 Saving build artifacts for incremental builds..."
+        mkdir -p "$ARTIFACTS_DIR"
+        cp -r bin.v2 "$ARTIFACTS_DIR/" 2>/dev/null || true
       fi
 
       # Show sccache statistics
@@ -343,6 +335,7 @@ tasks:
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
       - tmp/sccache-gcc12-b2/**
+      - tmp/build-artifacts-gcc12/**
 
   - key: install-gcc-13-coverage
     run: |
@@ -366,20 +359,18 @@ tasks:
       export CXX="sccache g++-13"
       sccache --show-stats
 
-      # ===== CUSTOM CONTENT-HASH CACHING =====
-      cd capy-root
-      CONTENT_HASH=$(find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) 2>/dev/null | sort | xargs cat 2>/dev/null | sha256sum | cut -d' ' -f1)
-      CACHE_DIR="/tmp/build-cache-gcc13-coverage/$CONTENT_HASH"
-      echo "📦 Content hash: $CONTENT_HASH"
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Use workspace-relative artifacts to enable CMake incremental compilation
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-gcc13-coverage"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
 
-      # Check cache
-      if [ -d "$CACHE_DIR/__build__" ]; then
-        echo "✓ CACHE HIT! Restoring build artifacts..."
-        cp -r "$CACHE_DIR/__build__" . 2>/dev/null || true
-        CACHE_HIT=true
+      cd capy-root
+      # Restore previous build artifacts if they exist
+      if [ -d "$ARTIFACTS_DIR/__build__" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
+        cp -r "$ARTIFACTS_DIR/__build__" . 2>/dev/null || true
       else
-        echo "✗ Cache miss - will build and cache"
-        CACHE_HIT=false
+        echo "✗ No previous artifacts - full build"
       fi
 
       # Build with sccache (caches object files)
@@ -398,11 +389,11 @@ tasks:
       BUILD_END=$(date +%s)
       BUILD_TIME=$((BUILD_END - BUILD_START))
 
-      # Cache if not hit
-      if [ "$CACHE_HIT" = false ] && [ -d "__build__" ]; then
-        echo "💾 Caching build artifacts..."
-        mkdir -p "$CACHE_DIR"
-        cp -r __build__ "$CACHE_DIR/" 2>/dev/null || true
+      # Save build artifacts for next run (enables incremental builds)
+      if [ -d "__build__" ]; then
+        echo "💾 Saving build artifacts for incremental builds..."
+        mkdir -p "$ARTIFACTS_DIR"
+        cp -r __build__ "$ARTIFACTS_DIR/" 2>/dev/null || true
       fi
 
       # Show sccache statistics
@@ -438,6 +429,7 @@ tasks:
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
       - tmp/sccache-gcc13-coverage/**
+      - tmp/build-artifacts-gcc13-coverage/**
 
   # ============================================================================
   # Linux Clang Builds (5 configurations: Clang 17, Clang 20 variants, Clang 20 x86)
@@ -468,28 +460,19 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-b2-cxx20"
       sccache --show-stats
 
-      # Create sccache wrapper script and configure B2 to use it
-      mkdir -p ~/sccache-wrappers
-      printf '#!/bin/bash\nexec sccache /usr/bin/clang++-20 "$@"\n' > ~/sccache-wrappers/clang++-20
-      chmod +x ~/sccache-wrappers/clang++-20
-      echo "using clang : 20 : $HOME/sccache-wrappers/clang++-20 ;" > ~/user-config.jam
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Use workspace-relative artifacts to enable B2 incremental compilation
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-b2-cxx20"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
 
-      # ===== CUSTOM CONTENT-HASH CACHING =====
-      # Compute hash of capy source files (content-based, not mtime)
+      # Restore previous build artifacts if they exist (enables incremental builds)
       cd capy-root
-      CONTENT_HASH=$(find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) 2>/dev/null | sort | xargs cat 2>/dev/null | sha256sum | cut -d' ' -f1)
-      CACHE_DIR="/tmp/build-cache-clang20-b2-cxx20/$CONTENT_HASH"
-      echo "📦 Content hash: $CONTENT_HASH"
-
-      # Check if build artifacts cached
-      if [ -d "$CACHE_DIR/bin.v2" ]; then
-        echo "✓ CACHE HIT! Restoring build artifacts..."
+      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
         mkdir -p ../boost-source
-        cp -r "$CACHE_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
-        CACHE_HIT=true
+        cp -r "$ARTIFACTS_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
       else
-        echo "✗ Cache miss - will build and cache"
-        CACHE_HIT=false
+        echo "✗ No previous artifacts - full build"
       fi
       cd ..
 
@@ -511,7 +494,7 @@ tasks:
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
 
-      # Run B2 build for C++20 only (sccache caches object files)
+      # Run B2 build for C++20 only (sccache caches object files, artifacts enable incremental builds)
       ./b2 \
         toolset=clang-20 \
         cxxstd=20 \
@@ -523,11 +506,11 @@ tasks:
       BUILD_END=$(date +%s)
       BUILD_TIME=$((BUILD_END - BUILD_START))
 
-      # Cache build artifacts if not from cache
-      if [ "$CACHE_HIT" = false ] && [ -d "bin.v2" ]; then
-        echo "💾 Caching build artifacts..."
-        mkdir -p "$CACHE_DIR"
-        cp -r bin.v2 "$CACHE_DIR/" 2>/dev/null || true
+      # Save build artifacts for next run (enables incremental builds)
+      if [ -d "bin.v2" ]; then
+        echo "💾 Saving build artifacts for incremental builds..."
+        mkdir -p "$ARTIFACTS_DIR"
+        cp -r bin.v2 "$ARTIFACTS_DIR/" 2>/dev/null || true
       fi
 
       # Show sccache statistics
@@ -558,6 +541,7 @@ tasks:
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang20-b2-cxx20/**
+      - tmp/build-artifacts-clang20-b2-cxx20/**
 
   - key: build-clang-20-b2-cxx23
     use: [clone-capy, install-sccache, install-clang-20]
@@ -573,28 +557,19 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-b2-cxx23"
       sccache --show-stats
 
-      # Create sccache wrapper script and configure B2 to use it
-      mkdir -p ~/sccache-wrappers
-      printf '#!/bin/bash\nexec sccache /usr/bin/clang++-20 "$@"\n' > ~/sccache-wrappers/clang++-20-cxx23
-      chmod +x ~/sccache-wrappers/clang++-20-cxx23
-      echo "using clang : 20 : $HOME/sccache-wrappers/clang++-20-cxx23 ;" > ~/user-config.jam
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Use workspace-relative artifacts to enable B2 incremental compilation
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-b2-cxx23"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
 
-      # ===== CUSTOM CONTENT-HASH CACHING =====
-      # Compute hash of capy source files (content-based, not mtime)
+      # Restore previous build artifacts if they exist (enables incremental builds)
       cd capy-root
-      CONTENT_HASH=$(find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) 2>/dev/null | sort | xargs cat 2>/dev/null | sha256sum | cut -d' ' -f1)
-      CACHE_DIR="/tmp/build-cache-clang20-b2-cxx23/$CONTENT_HASH"
-      echo "📦 Content hash: $CONTENT_HASH"
-
-      # Check if build artifacts cached
-      if [ -d "$CACHE_DIR/bin.v2" ]; then
-        echo "✓ CACHE HIT! Restoring build artifacts..."
+      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
         mkdir -p ../boost-source
-        cp -r "$CACHE_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
-        CACHE_HIT=true
+        cp -r "$ARTIFACTS_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
       else
-        echo "✗ Cache miss - will build and cache"
-        CACHE_HIT=false
+        echo "✗ No previous artifacts - full build"
       fi
       cd ..
 
@@ -616,7 +591,7 @@ tasks:
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
 
-      # Run B2 build for C++23 only (sccache caches object files)
+      # Run B2 build for C++23 only (sccache caches object files, artifacts enable incremental builds)
       ./b2 \
         toolset=clang-20 \
         cxxstd=23 \
@@ -628,11 +603,11 @@ tasks:
       BUILD_END=$(date +%s)
       BUILD_TIME=$((BUILD_END - BUILD_START))
 
-      # Cache build artifacts if not from cache
-      if [ "$CACHE_HIT" = false ] && [ -d "bin.v2" ]; then
-        echo "💾 Caching build artifacts..."
-        mkdir -p "$CACHE_DIR"
-        cp -r bin.v2 "$CACHE_DIR/" 2>/dev/null || true
+      # Save build artifacts for next run (enables incremental builds)
+      if [ -d "bin.v2" ]; then
+        echo "💾 Saving build artifacts for incremental builds..."
+        mkdir -p "$ARTIFACTS_DIR"
+        cp -r bin.v2 "$ARTIFACTS_DIR/" 2>/dev/null || true
       fi
 
       # Show sccache statistics
@@ -663,6 +638,7 @@ tasks:
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang20-b2-cxx23/**
+      - tmp/build-artifacts-clang20-b2-cxx23/**
 
   - key: build-clang-20-cmake
     use: [clone-capy, install-sccache, install-clang-20]
@@ -680,18 +656,18 @@ tasks:
       export CXX="sccache clang++-20"
       sccache --show-stats
 
-      # ===== CUSTOM CONTENT-HASH CACHING =====
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Use workspace-relative artifacts to enable CMake incremental compilation
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-cmake"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
+
       cd capy-root
-      CONTENT_HASH=$(find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) 2>/dev/null | sort | xargs cat 2>/dev/null | sha256sum | cut -d' ' -f1)
-      CACHE_DIR="/tmp/build-cache-clang20-cmake/$CONTENT_HASH"
-      echo "📦 Content hash: $CONTENT_HASH"
-      if [ -d "$CACHE_DIR/__build__" ]; then
-        echo "✓ CACHE HIT!"
-        cp -r "$CACHE_DIR/__build__" . 2>/dev/null || true
-        CACHE_HIT=true
+      # Restore previous build artifacts if they exist
+      if [ -d "$ARTIFACTS_DIR/__build__" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
+        cp -r "$ARTIFACTS_DIR/__build__" . 2>/dev/null || true
       else
-        echo "✗ Cache miss"
-        CACHE_HIT=false
+        echo "✗ No previous artifacts - full build"
       fi
 
       # Build
@@ -708,10 +684,11 @@ tasks:
       BUILD_END=$(date +%s)
       BUILD_TIME=$((BUILD_END - BUILD_START))
 
-      # Cache if needed
-      if [ "$CACHE_HIT" = false ] && [ -d "__build__" ]; then
-        mkdir -p "$CACHE_DIR"
-        cp -r __build__ "$CACHE_DIR/" 2>/dev/null || true
+      # Save build artifacts for next run (enables incremental builds)
+      if [ -d "__build__" ]; then
+        echo "💾 Saving build artifacts for incremental builds..."
+        mkdir -p "$ARTIFACTS_DIR"
+        cp -r __build__ "$ARTIFACTS_DIR/" 2>/dev/null || true
       fi
 
       # Show sccache statistics
@@ -740,6 +717,7 @@ tasks:
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang20-cmake/**
+      - tmp/build-artifacts-clang20-cmake/**
 
   # Clang 20 asan+ubsan: B2 build only
   - key: build-clang-20-asan-ubsan
@@ -757,28 +735,19 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-asan"
       sccache --show-stats
 
-      # Create sccache wrapper script and configure B2 to use it
-      mkdir -p ~/sccache-wrappers
-      printf '#!/bin/bash\nexec sccache /usr/bin/clang++-20 "$@"\n' > ~/sccache-wrappers/clang++-20-asan
-      chmod +x ~/sccache-wrappers/clang++-20-asan
-      echo "using clang : 20 : $HOME/sccache-wrappers/clang++-20-asan ;" > ~/user-config.jam
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Use workspace-relative artifacts to enable B2 incremental compilation
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-asan"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
 
-      # ===== CUSTOM CONTENT-HASH CACHING =====
-      # Compute hash of capy source files (content-based, not mtime)
+      # Restore previous build artifacts if they exist (enables incremental builds)
       cd capy-root
-      CONTENT_HASH=$(find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) 2>/dev/null | sort | xargs cat 2>/dev/null | sha256sum | cut -d' ' -f1)
-      CACHE_DIR="/tmp/build-cache-clang20-asan/$CONTENT_HASH"
-      echo "📦 Content hash: $CONTENT_HASH"
-
-      # Check if build artifacts cached
-      if [ -d "$CACHE_DIR/bin.v2" ]; then
-        echo "✓ CACHE HIT! Restoring build artifacts..."
+      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
         mkdir -p ../boost-source
-        cp -r "$CACHE_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
-        CACHE_HIT=true
+        cp -r "$ARTIFACTS_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
       else
-        echo "✗ Cache miss - will build and cache"
-        CACHE_HIT=false
+        echo "✗ No previous artifacts - full build"
       fi
       cd ..
 
@@ -802,7 +771,7 @@ tasks:
       # Disable ASLR for sanitizers
       sudo sysctl vm.mmap_rnd_bits=28 || true
 
-      # Run B2 build (sccache caches object files)
+      # Run B2 build (sccache caches object files, artifacts enable incremental builds)
       BUILD_START=$(date +%s)
       ./b2 \
         toolset=clang-20 \
@@ -817,11 +786,11 @@ tasks:
       BUILD_END=$(date +%s)
       BUILD_TIME=$((BUILD_END - BUILD_START))
 
-      # Cache build artifacts if not from cache
-      if [ "$CACHE_HIT" = false ] && [ -d "bin.v2" ]; then
-        echo "💾 Caching build artifacts..."
-        mkdir -p "$CACHE_DIR"
-        cp -r bin.v2 "$CACHE_DIR/" 2>/dev/null || true
+      # Save build artifacts for next run (enables incremental builds)
+      if [ -d "bin.v2" ]; then
+        echo "💾 Saving build artifacts for incremental builds..."
+        mkdir -p "$ARTIFACTS_DIR"
+        cp -r bin.v2 "$ARTIFACTS_DIR/" 2>/dev/null || true
       fi
 
       # Show sccache statistics
@@ -852,6 +821,7 @@ tasks:
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang20-asan/**
+      - tmp/build-artifacts-clang20-asan/**
 
   - key: install-clang-17
     run: |
@@ -873,28 +843,19 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang17-b2"
       sccache --show-stats
 
-      # Create sccache wrapper script and configure B2 to use it
-      mkdir -p ~/sccache-wrappers
-      printf '#!/bin/bash\nexec sccache /usr/bin/clang++-17 "$@"\n' > ~/sccache-wrappers/clang++-17
-      chmod +x ~/sccache-wrappers/clang++-17
-      echo "using clang : 17 : $HOME/sccache-wrappers/clang++-17 ;" > ~/user-config.jam
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Use workspace-relative artifacts to enable B2 incremental compilation
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang17"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
 
-      # ===== CUSTOM CONTENT-HASH CACHING =====
-      # Compute hash of capy source files (content-based, not mtime)
+      # Restore previous build artifacts if they exist (enables incremental builds)
       cd capy-root
-      CONTENT_HASH=$(find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) 2>/dev/null | sort | xargs cat 2>/dev/null | sha256sum | cut -d' ' -f1)
-      CACHE_DIR="/tmp/build-cache-clang17/$CONTENT_HASH"
-      echo "📦 Content hash: $CONTENT_HASH"
-
-      # Check if build artifacts cached
-      if [ -d "$CACHE_DIR/bin.v2" ]; then
-        echo "✓ CACHE HIT! Restoring build artifacts..."
+      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
         mkdir -p ../boost-source
-        cp -r "$CACHE_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
-        CACHE_HIT=true
+        cp -r "$ARTIFACTS_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
       else
-        echo "✗ Cache miss - will build and cache"
-        CACHE_HIT=false
+        echo "✗ No previous artifacts - full build"
       fi
       cd ..
 
@@ -915,7 +876,7 @@ tasks:
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
 
-      # Run B2 build (sccache caches object files)
+      # Run B2 build (sccache caches object files, artifacts enable incremental builds)
       BUILD_START=$(date +%s)
       ./b2 \
         toolset=clang-17 \
@@ -928,11 +889,11 @@ tasks:
       BUILD_END=$(date +%s)
       BUILD_TIME=$((BUILD_END - BUILD_START))
 
-      # Cache build artifacts if not from cache
-      if [ "$CACHE_HIT" = false ] && [ -d "bin.v2" ]; then
-        echo "💾 Caching build artifacts..."
-        mkdir -p "$CACHE_DIR"
-        cp -r bin.v2 "$CACHE_DIR/" 2>/dev/null || true
+      # Save build artifacts for next run (enables incremental builds)
+      if [ -d "bin.v2" ]; then
+        echo "💾 Saving build artifacts for incremental builds..."
+        mkdir -p "$ARTIFACTS_DIR"
+        cp -r bin.v2 "$ARTIFACTS_DIR/" 2>/dev/null || true
       fi
 
       # Show sccache statistics
@@ -963,6 +924,7 @@ tasks:
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang17-b2/**
+      - tmp/build-artifacts-clang17/**
 
   - key: install-clang-20-multilib
     run: |
@@ -989,28 +951,19 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-x86-cxx20"
       sccache --show-stats
 
-      # Create sccache wrapper script and configure B2 to use it
-      mkdir -p ~/sccache-wrappers
-      printf '#!/bin/bash\nexec sccache /usr/bin/clang++-20 "$@"\n' > ~/sccache-wrappers/clang++-20-x86
-      chmod +x ~/sccache-wrappers/clang++-20-x86
-      echo "using clang : 20 : $HOME/sccache-wrappers/clang++-20-x86 ;" > ~/user-config.jam
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Use workspace-relative artifacts to enable B2 incremental compilation
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-x86-cxx20"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
 
-      # ===== CUSTOM CONTENT-HASH CACHING =====
-      # Compute hash of capy source files (content-based, not mtime)
+      # Restore previous build artifacts if they exist (enables incremental builds)
       cd capy-root
-      CONTENT_HASH=$(find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) 2>/dev/null | sort | xargs cat 2>/dev/null | sha256sum | cut -d' ' -f1)
-      CACHE_DIR="/tmp/build-cache-clang20-x86-cxx20/$CONTENT_HASH"
-      echo "📦 Content hash: $CONTENT_HASH"
-
-      # Check if build artifacts cached
-      if [ -d "$CACHE_DIR/bin.v2" ]; then
-        echo "✓ CACHE HIT! Restoring build artifacts..."
+      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
         mkdir -p ../boost-source
-        cp -r "$CACHE_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
-        CACHE_HIT=true
+        cp -r "$ARTIFACTS_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
       else
-        echo "✗ Cache miss - will build and cache"
-        CACHE_HIT=false
+        echo "✗ No previous artifacts - full build"
       fi
       cd ..
 
@@ -1031,7 +984,7 @@ tasks:
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
 
-      # Run B2 build for C++20 only (32-bit x86, sccache caches object files)
+      # Run B2 build for C++20 only (32-bit x86, sccache caches object files, artifacts enable incremental builds)
       BUILD_START=$(date +%s)
       ./b2 \
         toolset=clang-20 \
@@ -1044,11 +997,11 @@ tasks:
       BUILD_END=$(date +%s)
       BUILD_TIME=$((BUILD_END - BUILD_START))
 
-      # Cache build artifacts if not from cache
-      if [ "$CACHE_HIT" = false ] && [ -d "bin.v2" ]; then
-        echo "💾 Caching build artifacts..."
-        mkdir -p "$CACHE_DIR"
-        cp -r bin.v2 "$CACHE_DIR/" 2>/dev/null || true
+      # Save build artifacts for next run (enables incremental builds)
+      if [ -d "bin.v2" ]; then
+        echo "💾 Saving build artifacts for incremental builds..."
+        mkdir -p "$ARTIFACTS_DIR"
+        cp -r bin.v2 "$ARTIFACTS_DIR/" 2>/dev/null || true
       fi
 
       # Show sccache statistics
@@ -1079,6 +1032,7 @@ tasks:
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang20-x86-cxx20/**
+      - tmp/build-artifacts-clang20-x86-cxx20/**
 
   - key: build-clang-20-x86-cxx23
     use: [clone-capy, install-sccache, install-clang-20-multilib]
@@ -1094,28 +1048,19 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-x86-cxx23"
       sccache --show-stats
 
-      # Create sccache wrapper script and configure B2 to use it
-      mkdir -p ~/sccache-wrappers
-      printf '#!/bin/bash\nexec sccache /usr/bin/clang++-20 "$@"\n' > ~/sccache-wrappers/clang++-20-x86-cxx23
-      chmod +x ~/sccache-wrappers/clang++-20-x86-cxx23
-      echo "using clang : 20 : $HOME/sccache-wrappers/clang++-20-x86-cxx23 ;" > ~/user-config.jam
+      # ===== INCREMENTAL BUILD CACHING =====
+      # Use workspace-relative artifacts to enable B2 incremental compilation
+      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-x86-cxx23"
+      echo "📦 Artifacts location: $ARTIFACTS_DIR"
 
-      # ===== CUSTOM CONTENT-HASH CACHING =====
-      # Compute hash of capy source files (content-based, not mtime)
+      # Restore previous build artifacts if they exist (enables incremental builds)
       cd capy-root
-      CONTENT_HASH=$(find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) 2>/dev/null | sort | xargs cat 2>/dev/null | sha256sum | cut -d' ' -f1)
-      CACHE_DIR="/tmp/build-cache-clang20-x86-cxx23/$CONTENT_HASH"
-      echo "📦 Content hash: $CONTENT_HASH"
-
-      # Check if build artifacts cached
-      if [ -d "$CACHE_DIR/bin.v2" ]; then
-        echo "✓ CACHE HIT! Restoring build artifacts..."
+      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
+        echo "✓ Restoring previous build artifacts for incremental compilation..."
         mkdir -p ../boost-source
-        cp -r "$CACHE_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
-        CACHE_HIT=true
+        cp -r "$ARTIFACTS_DIR/bin.v2" ../boost-source/ 2>/dev/null || true
       else
-        echo "✗ Cache miss - will build and cache"
-        CACHE_HIT=false
+        echo "✗ No previous artifacts - full build"
       fi
       cd ..
 
@@ -1136,7 +1081,7 @@ tasks:
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
 
-      # Run B2 build for C++23 only (32-bit x86, sccache caches object files)
+      # Run B2 build for C++23 only (32-bit x86, sccache caches object files, artifacts enable incremental builds)
       BUILD_START=$(date +%s)
       ./b2 \
         toolset=clang-20 \
@@ -1149,11 +1094,11 @@ tasks:
       BUILD_END=$(date +%s)
       BUILD_TIME=$((BUILD_END - BUILD_START))
 
-      # Cache build artifacts if not from cache
-      if [ "$CACHE_HIT" = false ] && [ -d "bin.v2" ]; then
-        echo "💾 Caching build artifacts..."
-        mkdir -p "$CACHE_DIR"
-        cp -r bin.v2 "$CACHE_DIR/" 2>/dev/null || true
+      # Save build artifacts for next run (enables incremental builds)
+      if [ -d "bin.v2" ]; then
+        echo "💾 Saving build artifacts for incremental builds..."
+        mkdir -p "$ARTIFACTS_DIR"
+        cp -r bin.v2 "$ARTIFACTS_DIR/" 2>/dev/null || true
       fi
 
       # Show sccache statistics
@@ -1184,6 +1129,7 @@ tasks:
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang20-x86-cxx23/**
+      - tmp/build-artifacts-clang20-x86-cxx23/**
 
   # ============================================================================
   # Changelog Task (independent)
