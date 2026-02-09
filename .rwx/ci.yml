@@ -272,23 +272,11 @@ tasks:
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
       ./bootstrap.sh gcc
 
-      # Configure B2 to use sccache as compiler wrapper
-      cat > ~/user-config.jam << 'JAMEOF'
-using gcc : 12 : sccache g++-12 ;
-JAMEOF
+      # Run B2 build with sccache-wrapped compiler (sccache caches compiled objects)
+      # Export compiler wrappers so B2 uses sccache
+      export CC="sccache gcc-12"
+      export CXX="sccache g++-12"
 
-      # ===== INCREMENTAL BUILD CACHING =====
-      # Restore previous build artifacts AFTER Boost tree setup (enables incremental builds)
-      ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-gcc12"
-      echo "📦 Artifacts location: $ARTIFACTS_DIR"
-      if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
-        echo "✓ Restoring previous build artifacts for incremental compilation..."
-        cp -r "$ARTIFACTS_DIR/bin.v2" . 2>/dev/null || true
-      else
-        echo "✗ No previous artifacts - full build"
-      fi
-
-      # Run B2 build (sccache caches object files, artifacts enable incremental builds)
       ./b2 \
         toolset=gcc-12 \
         cxxstd=20 \
@@ -299,13 +287,6 @@ JAMEOF
 
       BUILD_END=$(date +%s)
       BUILD_TIME=$((BUILD_END - BUILD_START))
-
-      # Save build artifacts for next run (enables incremental builds)
-      if [ -d "bin.v2" ]; then
-        echo "💾 Saving build artifacts for incremental builds..."
-        mkdir -p "$ARTIFACTS_DIR"
-        cp -r bin.v2 "$ARTIFACTS_DIR/" 2>/dev/null || true
-      fi
 
       # ===== SCCACHE STATISTICS =====
       echo ""
@@ -356,7 +337,6 @@ JAMEOF
       - capy-root/test/Jamfile
       - capy-root/test/unit/Jamfile
       - tmp/sccache-gcc12-b2/**
-      - tmp/build-artifacts-gcc12/**
 
   - key: install-gcc-13-coverage
     run: |
