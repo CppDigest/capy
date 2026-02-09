@@ -256,12 +256,9 @@ tasks:
 
       # Create sccache wrapper script and configure B2 to use it
       mkdir -p ~/sccache-wrappers
-      cat > ~/sccache-wrappers/g++-12 << 'WRAPPER_EOF'
-#!/bin/bash
-exec sccache /usr/bin/g++-12 "$@"
-WRAPPER_EOF
+      printf '#!/bin/bash\nexec sccache /usr/bin/g++-12 "$@"\n' > ~/sccache-wrappers/g++-12
       chmod +x ~/sccache-wrappers/g++-12
-      echo "using gcc : 12 : \$HOME/sccache-wrappers/g++-12 ;" > ~/user-config.jam
+      echo "using gcc : 12 : $HOME/sccache-wrappers/g++-12 ;" > ~/user-config.jam
 
       # ===== CUSTOM CONTENT-HASH CACHING =====
       # Compute hash of capy source files (content-based, not mtime)
@@ -473,12 +470,9 @@ WRAPPER_EOF
 
       # Create sccache wrapper script and configure B2 to use it
       mkdir -p ~/sccache-wrappers
-      cat > ~/sccache-wrappers/clang++-20 << 'WRAPPER_EOF'
-#!/bin/bash
-exec sccache /usr/bin/clang++-20 "$@"
-WRAPPER_EOF
+      printf '#!/bin/bash\nexec sccache /usr/bin/clang++-20 "$@"\n' > ~/sccache-wrappers/clang++-20
       chmod +x ~/sccache-wrappers/clang++-20
-      echo "using clang : 20 : \$HOME/sccache-wrappers/clang++-20 ;" > ~/user-config.jam
+      echo "using clang : 20 : $HOME/sccache-wrappers/clang++-20 ;" > ~/user-config.jam
 
       # ===== CUSTOM CONTENT-HASH CACHING =====
       # Compute hash of capy source files (content-based, not mtime)
@@ -581,12 +575,9 @@ WRAPPER_EOF
 
       # Create sccache wrapper script and configure B2 to use it
       mkdir -p ~/sccache-wrappers
-      cat > ~/sccache-wrappers/clang++-20-cxx23 << 'WRAPPER_EOF'
-#!/bin/bash
-exec sccache /usr/bin/clang++-20 "$@"
-WRAPPER_EOF
+      printf '#!/bin/bash\nexec sccache /usr/bin/clang++-20 "$@"\n' > ~/sccache-wrappers/clang++-20-cxx23
       chmod +x ~/sccache-wrappers/clang++-20-cxx23
-      echo "using clang : 20 : \$HOME/sccache-wrappers/clang++-20-cxx23 ;" > ~/user-config.jam
+      echo "using clang : 20 : $HOME/sccache-wrappers/clang++-20-cxx23 ;" > ~/user-config.jam
 
       # ===== CUSTOM CONTENT-HASH CACHING =====
       # Compute hash of capy source files (content-based, not mtime)
@@ -768,12 +759,9 @@ WRAPPER_EOF
 
       # Create sccache wrapper script and configure B2 to use it
       mkdir -p ~/sccache-wrappers
-      cat > ~/sccache-wrappers/clang++-20-asan << 'WRAPPER_EOF'
-#!/bin/bash
-exec sccache /usr/bin/clang++-20 "$@"
-WRAPPER_EOF
+      printf '#!/bin/bash\nexec sccache /usr/bin/clang++-20 "$@"\n' > ~/sccache-wrappers/clang++-20-asan
       chmod +x ~/sccache-wrappers/clang++-20-asan
-      echo "using clang : 20 : \$HOME/sccache-wrappers/clang++-20-asan ;" > ~/user-config.jam
+      echo "using clang : 20 : $HOME/sccache-wrappers/clang++-20-asan ;" > ~/user-config.jam
 
       # ===== CUSTOM CONTENT-HASH CACHING =====
       # Compute hash of capy source files (content-based, not mtime)
@@ -887,12 +875,9 @@ WRAPPER_EOF
 
       # Create sccache wrapper script and configure B2 to use it
       mkdir -p ~/sccache-wrappers
-      cat > ~/sccache-wrappers/clang++-17 << 'WRAPPER_EOF'
-#!/bin/bash
-exec sccache /usr/bin/clang++-17 "$@"
-WRAPPER_EOF
+      printf '#!/bin/bash\nexec sccache /usr/bin/clang++-17 "$@"\n' > ~/sccache-wrappers/clang++-17
       chmod +x ~/sccache-wrappers/clang++-17
-      echo "using clang : 17 : \$HOME/sccache-wrappers/clang++-17 ;" > ~/user-config.jam
+      echo "using clang : 17 : $HOME/sccache-wrappers/clang++-17 ;" > ~/user-config.jam
 
       # ===== CUSTOM CONTENT-HASH CACHING =====
       # Compute hash of capy source files (content-based, not mtime)
@@ -1006,12 +991,9 @@ WRAPPER_EOF
 
       # Create sccache wrapper script and configure B2 to use it
       mkdir -p ~/sccache-wrappers
-      cat > ~/sccache-wrappers/clang++-20-x86 << 'WRAPPER_EOF'
-#!/bin/bash
-exec sccache /usr/bin/clang++-20 "$@"
-WRAPPER_EOF
+      printf '#!/bin/bash\nexec sccache /usr/bin/clang++-20 "$@"\n' > ~/sccache-wrappers/clang++-20-x86
       chmod +x ~/sccache-wrappers/clang++-20-x86
-      echo "using clang : 20 : \$HOME/sccache-wrappers/clang++-20-x86 ;" > ~/user-config.jam
+      echo "using clang : 20 : $HOME/sccache-wrappers/clang++-20-x86 ;" > ~/user-config.jam
 
       # ===== CUSTOM CONTENT-HASH CACHING =====
       # Compute hash of capy source files (content-based, not mtime)
@@ -1114,12 +1096,9 @@ WRAPPER_EOF
 
       # Create sccache wrapper script and configure B2 to use it
       mkdir -p ~/sccache-wrappers
-      cat > ~/sccache-wrappers/clang++-20-x86-cxx23 << 'WRAPPER_EOF'
-#!/bin/bash
-exec sccache /usr/bin/clang++-20 "$@"
-WRAPPER_EOF
+      printf '#!/bin/bash\nexec sccache /usr/bin/clang++-20 "$@"\n' > ~/sccache-wrappers/clang++-20-x86-cxx23
       chmod +x ~/sccache-wrappers/clang++-20-x86-cxx23
-      echo "using clang : 20 : \$HOME/sccache-wrappers/clang++-20-x86-cxx23 ;" > ~/user-config.jam
+      echo "using clang : 20 : $HOME/sccache-wrappers/clang++-20-x86-cxx23 ;" > ~/user-config.jam
 
       # ===== CUSTOM CONTENT-HASH CACHING =====
       # Compute hash of capy source files (content-based, not mtime)
