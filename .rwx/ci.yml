@@ -270,10 +270,9 @@ tasks:
       echo "build-project test ;" >> libs/capy/Jamfile
 
       python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      ./bootstrap.sh gcc
 
-      # Run B2 build with sccache-wrapped compiler (sccache caches compiled objects)
-      # Create wrapper scripts for gcc that use sccache
+      # Create sccache wrapper scripts BEFORE bootstrap so B2 finds them
+      # This allows B2 to configure itself to use sccache from the start
       mkdir -p ~/bin
       cat > ~/bin/g++ << 'EOF'
       #!/bin/bash
@@ -286,6 +285,10 @@ tasks:
       chmod +x ~/bin/g++ ~/bin/gcc
       export PATH=~/bin:$PATH
 
+      # Now bootstrap will find our sccache wrappers instead of real compilers
+      ./bootstrap.sh gcc
+
+      # Run B2 build (now using sccache via wrappers configured during bootstrap)
       ./b2 \
         toolset=gcc \
         cxxstd=20 \
