@@ -54,7 +54,7 @@ tasks:
   # ============================================================================
 
   - key: clone-capy
-    call: git/clone 2.0.0
+    call: git/clone 2.0.2
     with:
       ref: ${{ init.commit-sha }}
       repository: https://github.com/CppDigest/capy.git
