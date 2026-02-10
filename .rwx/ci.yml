@@ -1121,41 +1121,58 @@ tasks:
       echo "║          RWX CI BUILD PERFORMANCE ANALYSIS                     ║"
       echo "╚════════════════════════════════════════════════════════════════╝"
       echo ""
-      echo "📊 Build Tasks Summary:"
-      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-      echo "  Task                           Status"
-      echo "  ─────────────────────────────  ──────"
-      echo "  build-gcc-12                   ✅ Complete"
-      echo "  build-gcc-13-coverage          ✅ Complete"
-      echo "  build-clang-20-b2-cxx20        ✅ Complete"
-      echo "  build-clang-20-b2-cxx23        ✅ Complete"
-      echo "  build-clang-20-cmake           ✅ Complete"
-      echo "  build-clang-20-asan-ubsan      ✅ Complete"
-      echo "  build-clang-17                 ✅ Complete"
-      echo "  build-clang-20-x86-cxx20       ✅ Complete"
-      echo "  build-clang-20-x86-cxx23       ✅ Complete"
-      echo ""
-      echo "🎯 LONGEST TASK: Check individual task logs for ⏱ timing markers"
-      echo ""
-      echo "📈 Performance Notes:"
-      echo "  • Each task outputs ⏱ TASK: <name> completed in Xs"
-      echo "  • Download task logs to extract actual timing data"
-      echo "  • Use: rwx logs <run-id>:<task-key> --output-dir ./logs"
-      echo "  • Then: grep '⏱ TASK:' ./logs/*.txt"
-      echo ""
+
+      # Check if timing data exists and aggregate it
+      if [ -f /tmp/timing-logs/tasks.log ]; then
+        echo "📊 Build Task Timings (sorted by duration):"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        sort -rn -t'|' -k1 /tmp/timing-logs/tasks.log | while IFS='|' read -r duration task status; do
+          printf "  %-35s %8ss  [%s]\n" "$task" "$duration" "$status"
+        done
+
+        # Extract and highlight the longest (bottleneck) task
+        LONGEST_LINE=$(sort -rn -t'|' -k1 /tmp/timing-logs/tasks.log | head -1)
+        LONGEST_DURATION=$(echo "$LONGEST_LINE" | cut -d'|' -f1)
+        LONGEST_TASK=$(echo "$LONGEST_LINE" | cut -d'|' -f2)
+
+        echo ""
+        echo "🎯 LONGEST TASK: ${LONGEST_TASK} = ${LONGEST_DURATION}s"
+        echo ""
+
+        # Show cache statistics if available
+        if [ -f /tmp/cache-stats/summary.log ]; then
+          echo "📦 Cache Statistics Summary:"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          cat /tmp/cache-stats/summary.log
+          echo ""
+        fi
+      else
+        echo "⚠️  No timing data available at /tmp/timing-logs/tasks.log"
+        echo ""
+        echo "📊 Build Tasks Status:"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "  Task                           Status"
+        echo "  ─────────────────────────────  ──────"
+        echo "  build-gcc-12                   ✅ Complete"
+        echo "  build-gcc-13-coverage          ✅ Complete"
+        echo "  build-clang-20-b2-cxx20        ✅ Complete"
+        echo "  build-clang-20-b2-cxx23        ✅ Complete"
+        echo "  build-clang-20-cmake           ✅ Complete"
+        echo "  build-clang-20-asan-ubsan      ✅ Complete"
+        echo "  build-clang-17                 ✅ Complete"
+        echo "  build-clang-20-x86-cxx20       ✅ Complete"
+        echo "  build-clang-20-x86-cxx23       ✅ Complete"
+        echo ""
+      fi
+
       echo "💡 Optimization Targets (<60s per task):"
       echo "  • sccache effectiveness: Check 'Cache hit rate' in task logs"
       echo "  • Incremental builds: Verify artifact restoration messages"
-      echo "  • Boost clone time: Look for git clone duration in logs"
+      echo "  • Boost clone time: Monitor git clone duration in logs"
       echo ""
-      echo "╔════════════════════════════════════════════════════════════════╗"
-      echo "║          NEXT ITERATION STEPS                                  ║"
-      echo "╚════════════════════════════════════════════════════════════════╝"
-      echo ""
-      echo "1. Download logs: rwx logs <run-id>:performance-analysis"
-      echo "2. Extract timing: grep '⏱ TASK:' from individual task logs"
-      echo "3. Identify longest task and analyze bottlenecks"
-      echo "4. Check sccache effectiveness (cache hit rate > 50%)"
-      echo "5. Apply targeted optimizations based on timing data"
-      echo "6. Re-run and verify improvement"
+      echo "📈 Performance Notes:"
+      echo "  • Each task outputs ⏱ TASK: <name> completed in Xs"
+      echo "  • Timing data aggregated from /tmp/timing-logs/tasks.log"
+      echo "  • Use: rwx logs <run-id>:performance-analysis --output-dir ./logs"
+      echo "  • Then: grep '⏱\|🎯' ./logs/*.txt"
       echo ""
