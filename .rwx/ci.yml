@@ -54,16 +54,12 @@ tasks:
   # ============================================================================
 
   - key: clone-capy
-    run: |
-      # Use explicit URL as fallback when clone-url is not provided (CLI usage)
-      CLONE_URL="${{ init.clone-url }}"
-      if [ -z "$CLONE_URL" ] || [ "$CLONE_URL" = "" ]; then
-        CLONE_URL="https://github.com/CppDigest/capy.git"
-      fi
-      git clone --depth 1 "$CLONE_URL" capy-root
-      cd capy-root
-      git fetch origin ${{ init.commit-sha }}
-      git checkout ${{ init.commit-sha }}
+    call: git/clone 2.0.0
+    with:
+      ref: ${{ init.commit-sha }}
+      repository: https://github.com/CppDigest/capy.git
+      destination: capy-root
+      github-token: ${{ github.token }}
     filter:
       - capy-root/.github/workflows/**
       - capy-root/include/**
