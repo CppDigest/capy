@@ -311,8 +311,8 @@ tasks:
       sccache --show-stats
 
       # Save sccache stats to dedicated file for easy access
-      mkdir -p /tmp/cache-stats
-      sccache --show-stats > /tmp/cache-stats/build-gcc-12.txt 2>&1
+      mkdir -p "$WORKSPACE_ROOT/cache-stats"
+      sccache --show-stats > "$WORKSPACE_ROOT/cache-stats/build-gcc-12.txt" 2>&1
 
       # Extract key metrics
       CACHE_HITS=$(sccache --show-stats | grep -i "cache hits" | head -1 || echo "N/A")
@@ -331,10 +331,11 @@ tasks:
       TASK_DURATION=$((TASK_END - TASK_START))
       echo "⏱ TASK: build-gcc-12 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
 
-      # Log timing and cache stats for summary
-      mkdir -p /tmp/timing-logs
-      echo "${TASK_DURATION}|build-gcc-12|SUCCESS" >> /tmp/timing-logs/tasks.log
-      echo "build-gcc-12|${CACHE_HITS}|${CACHE_MISSES}|${CACHE_RATE}" >> /tmp/cache-stats/summary.log
+      # Log timing and cache stats for summary (use WORKSPACE_ROOT for cross-task persistence)
+      mkdir -p "$WORKSPACE_ROOT/timing-logs"
+      echo "${TASK_DURATION}|build-gcc-12|SUCCESS" >> "$WORKSPACE_ROOT/timing-logs/tasks.log"
+      mkdir -p "$WORKSPACE_ROOT/cache-stats"
+      echo "build-gcc-12|${CACHE_HITS}|${CACHE_MISSES}|${CACHE_RATE}" >> "$WORKSPACE_ROOT/cache-stats/summary.log"
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -427,8 +428,8 @@ tasks:
       TASK_END=$(date +%s)
       TASK_DURATION=$((TASK_END - TASK_START))
       echo "⏱ TASK: build-gcc-13-coverage completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
-      mkdir -p /tmp/timing-logs
-      echo "${TASK_DURATION}|build-gcc-13-coverage|SUCCESS" >> /tmp/timing-logs/tasks.log
+      mkdir -p "$WORKSPACE_ROOT/timing-logs"
+      echo "${TASK_DURATION}|build-gcc-13-coverage|SUCCESS" >> "$WORKSPACE_ROOT/timing-logs/tasks.log"
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -528,8 +529,8 @@ tasks:
       echo "⏱ TASK: build-clang-20-b2-cxx20 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
 
       # Log timing for summary
-      mkdir -p /tmp/timing-logs
-      echo "${TASK_DURATION}|build-clang-20-b2-cxx20|SUCCESS" >> /tmp/timing-logs/tasks.log
+      mkdir -p "$WORKSPACE_ROOT/timing-logs"
+      echo "${TASK_DURATION}|build-clang-20-b2-cxx20|SUCCESS" >> "$WORKSPACE_ROOT/timing-logs/tasks.log"
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -615,8 +616,8 @@ tasks:
       echo "⏱ TASK: build-clang-20-b2-cxx23 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
 
       # Log timing for summary
-      mkdir -p /tmp/timing-logs
-      echo "${TASK_DURATION}|build-clang-20-b2-cxx23|SUCCESS" >> /tmp/timing-logs/tasks.log
+      mkdir -p "$WORKSPACE_ROOT/timing-logs"
+      echo "${TASK_DURATION}|build-clang-20-b2-cxx23|SUCCESS" >> "$WORKSPACE_ROOT/timing-logs/tasks.log"
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -694,8 +695,8 @@ tasks:
       TASK_END=$(date +%s)
       TASK_DURATION=$((TASK_END - TASK_START))
       echo "⏱ TASK: build-clang-20-cmake completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
-      mkdir -p /tmp/timing-logs
-      echo "${TASK_DURATION}|build-clang-20-cmake|SUCCESS" >> /tmp/timing-logs/tasks.log
+      mkdir -p "$WORKSPACE_ROOT/timing-logs"
+      echo "${TASK_DURATION}|build-clang-20-cmake|SUCCESS" >> "$WORKSPACE_ROOT/timing-logs/tasks.log"
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -787,8 +788,8 @@ tasks:
       echo "⏱ TASK: build-clang-20-asan-ubsan completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
 
       # Log timing for summary
-      mkdir -p /tmp/timing-logs
-      echo "${TASK_DURATION}|build-clang-20-asan-ubsan|SUCCESS" >> /tmp/timing-logs/tasks.log
+      mkdir -p "$WORKSPACE_ROOT/timing-logs"
+      echo "${TASK_DURATION}|build-clang-20-asan-ubsan|SUCCESS" >> "$WORKSPACE_ROOT/timing-logs/tasks.log"
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -879,8 +880,8 @@ tasks:
       echo "⏱ TASK: build-clang-17 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
 
       # Log timing for summary
-      mkdir -p /tmp/timing-logs
-      echo "${TASK_DURATION}|build-clang-17|SUCCESS" >> /tmp/timing-logs/tasks.log
+      mkdir -p "$WORKSPACE_ROOT/timing-logs"
+      echo "${TASK_DURATION}|build-clang-17|SUCCESS" >> "$WORKSPACE_ROOT/timing-logs/tasks.log"
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -976,8 +977,8 @@ tasks:
       echo "⏱ TASK: build-clang-20-x86-cxx20 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
 
       # Log timing for summary
-      mkdir -p /tmp/timing-logs
-      echo "${TASK_DURATION}|build-clang-20-x86-cxx20|SUCCESS" >> /tmp/timing-logs/tasks.log
+      mkdir -p "$WORKSPACE_ROOT/timing-logs"
+      echo "${TASK_DURATION}|build-clang-20-x86-cxx20|SUCCESS" >> "$WORKSPACE_ROOT/timing-logs/tasks.log"
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -1062,8 +1063,8 @@ tasks:
       echo "⏱ TASK: build-clang-20-x86-cxx23 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
 
       # Log timing for summary
-      mkdir -p /tmp/timing-logs
-      echo "${TASK_DURATION}|build-clang-20-x86-cxx23|SUCCESS" >> /tmp/timing-logs/tasks.log
+      mkdir -p "$WORKSPACE_ROOT/timing-logs"
+      echo "${TASK_DURATION}|build-clang-20-x86-cxx23|SUCCESS" >> "$WORKSPACE_ROOT/timing-logs/tasks.log"
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -1123,15 +1124,16 @@ tasks:
       echo ""
 
       # Check if timing data exists and aggregate it
-      if [ -f /tmp/timing-logs/tasks.log ]; then
+      WORKSPACE_ROOT=$(pwd)
+      if [ -f "$WORKSPACE_ROOT/timing-logs/tasks.log" ]; then
         echo "📊 Build Task Timings (sorted by duration):"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        sort -rn -t'|' -k1 /tmp/timing-logs/tasks.log | while IFS='|' read -r duration task status; do
+        sort -rn -t'|' -k1 "$WORKSPACE_ROOT/timing-logs/tasks.log" | while IFS='|' read -r duration task status; do
           printf "  %-35s %8ss  [%s]\n" "$task" "$duration" "$status"
         done
 
         # Extract and highlight the longest (bottleneck) task
-        LONGEST_LINE=$(sort -rn -t'|' -k1 /tmp/timing-logs/tasks.log | head -1)
+        LONGEST_LINE=$(sort -rn -t'|' -k1 "$WORKSPACE_ROOT/timing-logs/tasks.log" | head -1)
         LONGEST_DURATION=$(echo "$LONGEST_LINE" | cut -d'|' -f1)
         LONGEST_TASK=$(echo "$LONGEST_LINE" | cut -d'|' -f2)
 
@@ -1140,14 +1142,14 @@ tasks:
         echo ""
 
         # Show cache statistics if available
-        if [ -f /tmp/cache-stats/summary.log ]; then
+        if [ -f "$WORKSPACE_ROOT/cache-stats/summary.log" ]; then
           echo "📦 Cache Statistics Summary:"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          cat /tmp/cache-stats/summary.log
+          cat "$WORKSPACE_ROOT/cache-stats/summary.log"
           echo ""
         fi
       else
-        echo "⚠️  No timing data available at /tmp/timing-logs/tasks.log"
+        echo "⚠️  No timing data available at $WORKSPACE_ROOT/timing-logs/tasks.log"
         echo ""
         echo "📊 Build Tasks Status:"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -1172,7 +1174,7 @@ tasks:
       echo ""
       echo "📈 Performance Notes:"
       echo "  • Each task outputs ⏱ TASK: <name> completed in Xs"
-      echo "  • Timing data aggregated from /tmp/timing-logs/tasks.log"
+      echo "  • Timing data aggregated from \$WORKSPACE_ROOT/timing-logs/tasks.log"
       echo "  • Use: rwx logs <run-id>:performance-analysis --output-dir ./logs"
       echo "  • Then: grep '⏱\|🎯' ./logs/*.txt"
       echo ""
