@@ -75,6 +75,38 @@ tasks:
     filter:
       - .rwx/ci.yml
 
+  # Shared Boost repository clone (cached, reused across all B2 builds)
+  # This eliminates redundant 50+ MB downloads per build task
+  - key: setup-boost-tree
+    use: [clone-capy]
+    run: |
+      sudo apt-get update && sudo apt-get install -y python3 python-is-python3 git
+
+      # Clone Boost once with minimal depth and blob filtering
+      git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
+      cd boost-source
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
+
+      # Integrate capy into Boost tree
+      cp -r ../capy-root libs/capy
+
+      # Create root Jamfile for B2 project structure
+      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
+      echo "build-project build ;" >> libs/capy/Jamfile
+      echo "build-project test ;" >> libs/capy/Jamfile
+
+      # Run dependency installer once
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+
+      # Bootstrap B2 build system
+      ./bootstrap.sh gcc
+
+      echo "✓ Boost tree setup complete"
+    cache: true
+    filter:
+      - capy-root/**
+      - .rwx/ci.yml
+
   # ============================================================================
   # Windows and macOS Builds
   # ============================================================================
@@ -197,7 +229,7 @@ tasks:
 
   # GCC 12: B2 build only (matches original workflow)
   - key: build-gcc-12
-    use: [clone-capy, install-sccache, install-gcc-12]
+    use: [setup-boost-tree, install-sccache, install-gcc-12]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -210,23 +242,10 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-gcc12-b2"
       sccache --show-stats
 
-      # Setup Boost tree with capy integrated (RWX task isolation requires inline setup)
-      BUILD_START=$(date +%s)
-      sudo apt-get install -y python3 python-is-python3
-
-      # Clone Boost with partial clone to reduce download size
-      git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
+      # Use pre-setup Boost tree (cached from setup-boost-tree task)
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
 
-      # Create root Jamfile for B2 to find the project structure
-      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
-      echo "build-project build ;" >> libs/capy/Jamfile
-      echo "build-project test ;" >> libs/capy/Jamfile
-
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-      ./bootstrap.sh gcc
+      BUILD_START=$(date +%s)
 
       # ===== INCREMENTAL BUILD CACHING =====
       # Restore previous build artifacts AFTER Boost tree setup (enables incremental builds)
