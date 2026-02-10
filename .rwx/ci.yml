@@ -106,6 +106,7 @@ tasks:
     filter:
       - capy-root/**
       - .rwx/ci.yml
+      - boost-source/**
 
   # ============================================================================
   # Windows and macOS Builds
