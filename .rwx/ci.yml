@@ -1071,7 +1071,7 @@ tasks:
   # This task ensures all build tasks complete successfully and provides
   # a clear marker for automation to know when to extract timing data.
   # ============================================================================
-  - key: summary
+  - key: build-summary
     use: [build-gcc-12, build-gcc-13-coverage, build-clang-20-b2-cxx20, build-clang-20-b2-cxx23, build-clang-20-cmake, build-clang-20-asan-ubsan, build-clang-17, build-clang-20-x86-cxx20, build-clang-20-x86-cxx23, changelog]
     cache: false
     run: |
