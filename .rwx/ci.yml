@@ -58,7 +58,6 @@ tasks:
     with:
       ref: ${{ init.commit-sha }}
       repository: https://github.com/CppDigest/capy.git
-      github-token: ${{ github.token }}
     filter:
       - capy-root/.github/workflows/**
       - capy-root/include/**
