@@ -39,6 +39,9 @@ on:
       init:
         commit-sha: ${{ event.git.sha }}
         clone-url: ${{ event.github.pull_request.head.repo.clone_url }}
+  cli:
+    init:
+      commit-sha: ${{ event.git.sha }}
 
 # Base configuration applied to all tasks
 base:
@@ -52,7 +55,12 @@ tasks:
 
   - key: clone-capy
     run: |
-      git clone --depth 1 ${{ init.clone-url }} capy-root
+      # Use explicit URL as fallback when clone-url is not provided (CLI usage)
+      CLONE_URL="${{ init.clone-url }}"
+      if [ -z "$CLONE_URL" ] || [ "$CLONE_URL" = "" ]; then
+        CLONE_URL="https://github.com/CppDigest/capy.git"
+      fi
+      git clone --depth 1 "$CLONE_URL" capy-root
       cd capy-root
       git fetch origin ${{ init.commit-sha }}
       git checkout ${{ init.commit-sha }}
@@ -117,6 +125,7 @@ tasks:
     cache: true
     filter:
       - .rwx/ci.yml
+
 
   # ============================================================================
   # Windows and macOS Builds
@@ -233,7 +242,6 @@ tasks:
   #     - capy-root/**
   #   env:
   #     ASAN_OPTIONS: detect_invalid_pointer_pairs=2:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
-
   - key: install-gcc-12
     run: |
       sudo apt-get update
@@ -444,10 +452,10 @@ tasks:
       - tmp/sccache-gcc13-coverage/**
       - tmp/build-artifacts-gcc13-coverage/**
 
+
   # ============================================================================
   # Linux Clang Builds (5 configurations: Clang 17, Clang 20 variants, Clang 20 x86)
   # ============================================================================
-
   - key: install-clang-20
     run: |
       sudo apt-get update
@@ -1114,10 +1122,10 @@ tasks:
       - tmp/sccache-clang20-x86-cxx23/**
       - tmp/build-artifacts-clang20-x86-cxx23/**
 
+
   # ============================================================================
   # Changelog Task (independent)
   # ============================================================================
-
   - key: changelog
     use: [clone-capy]
     run: |
@@ -1232,4 +1240,3 @@ tasks:
       echo ""
     filter:
       - .rwx/ci.yml
-
