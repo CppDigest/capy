@@ -239,12 +239,12 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-gcc12-b2"
       sccache --show-stats
 
-      # Use shared Boost tree from setup-boost-tree task
+      # Use shared Boost tree from setup-boost-tree task (already bootstrapped)
       BUILD_START=$(date +%s)
       cd boost-source
 
-      # Create sccache wrapper scripts BEFORE bootstrap so B2 finds them
-      # This allows B2 to configure itself to use sccache from the start
+      # Create sccache wrapper scripts for gcc-12
+      # Note: bootstrap.sh was already run in setup-boost-tree, so we just wrap the compiler
       mkdir -p ~/bin
       cat > ~/bin/g++-12 << 'EOF'
       #!/bin/bash
@@ -257,10 +257,7 @@ tasks:
       chmod +x ~/bin/g++-12 ~/bin/gcc-12
       export PATH=~/bin:$PATH
 
-      # Now bootstrap will find our sccache wrappers instead of real compilers
-      ./bootstrap.sh gcc-12
-
-      # Run B2 build (now using sccache via wrappers configured during bootstrap)
+      # Run B2 build (using sccache wrappers)
       ./b2 \
         toolset=gcc-12 \
         cxxstd=20 \
