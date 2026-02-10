@@ -58,7 +58,6 @@ tasks:
     with:
       ref: ${{ init.commit-sha }}
       repository: https://github.com/CppDigest/capy.git
-      github-token: ${{ github.token }}
       path: capy-root
 
   # Shared Boost tree setup with capy integrated (cached across all B2 builds)
@@ -103,7 +102,6 @@ tasks:
     cache: true
     filter:
       - .rwx/ci.yml
-
 
   # ============================================================================
   # Windows and macOS Builds
@@ -429,7 +427,6 @@ tasks:
       - capy-root/test/unit/Jamfile
       - tmp/sccache-gcc13-coverage/**
       - tmp/build-artifacts-gcc13-coverage/**
-
 
   # ============================================================================
   # Linux Clang Builds (5 configurations: Clang 17, Clang 20 variants, Clang 20 x86)
@@ -1099,7 +1096,6 @@ tasks:
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang20-x86-cxx23/**
       - tmp/build-artifacts-clang20-x86-cxx23/**
-
 
   # ============================================================================
   # Changelog Task (independent)
