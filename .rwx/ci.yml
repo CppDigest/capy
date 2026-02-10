@@ -259,23 +259,23 @@ tasks:
       # Create sccache wrapper scripts BEFORE bootstrap so B2 finds them
       # This allows B2 to configure itself to use sccache from the start
       mkdir -p ~/bin
-      cat > ~/bin/g++ << 'EOF'
+      cat > ~/bin/g++-12 << 'EOF'
       #!/bin/bash
       exec sccache /usr/bin/g++-12 "$@"
       EOF
-      cat > ~/bin/gcc << 'EOF'
+      cat > ~/bin/gcc-12 << 'EOF'
       #!/bin/bash
       exec sccache /usr/bin/gcc-12 "$@"
       EOF
-      chmod +x ~/bin/g++ ~/bin/gcc
+      chmod +x ~/bin/g++-12 ~/bin/gcc-12
       export PATH=~/bin:$PATH
 
       # Now bootstrap will find our sccache wrappers instead of real compilers
-      ./bootstrap.sh gcc
+      ./bootstrap.sh gcc-12
 
       # Run B2 build (now using sccache via wrappers configured during bootstrap)
       ./b2 \
-        toolset=gcc \
+        toolset=gcc-12 \
         cxxstd=20 \
         variant=release \
         address-model=64 \
