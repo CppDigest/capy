@@ -1129,9 +1129,10 @@ tasks:
   # ============================================================================
   - key: summary
     use: [build-gcc-12, build-gcc-13-coverage, build-clang-20-b2-cxx20, build-clang-20-b2-cxx23, build-clang-20-cmake, build-clang-20-asan-ubsan, build-clang-17, build-clang-20-x86-cxx20, build-clang-20-x86-cxx23, changelog]
-    cache:
-      enabled: false
     run: |
+      # Force execution by including timestamp (prevents cache hits)
+      echo "⏰ Run timestamp: $(date -Iseconds) (ensures fresh execution)"
+
       SUMMARY_START=$(date +%s)
 
       echo "════════════════════════════════════════════════════════════════"
