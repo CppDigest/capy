@@ -352,6 +352,8 @@ tasks:
       - capy-root/test/unit/Jamfile
       - tmp/sccache-gcc12-b2/**
       - tmp/build-artifacts-gcc12/**
+      - timing-logs/**
+      - cache-stats/**
 
   - key: install-gcc-13-coverage
     run: |
@@ -446,6 +448,8 @@ tasks:
       - capy-root/test/unit/Jamfile
       - tmp/sccache-gcc13-coverage/**
       - tmp/build-artifacts-gcc13-coverage/**
+      - timing-logs/**
+      - cache-stats/**
 
   # ============================================================================
   # Linux Clang Builds (5 configurations: Clang 17, Clang 20 variants, Clang 20 x86)
@@ -547,6 +551,8 @@ tasks:
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang20-b2-cxx20/**
       - tmp/build-artifacts-clang20-b2-cxx20/**
+      - timing-logs/**
+      - cache-stats/**
 
   - key: build-clang-20-b2-cxx23
     use: [clone-capy, install-sccache, install-clang-20]
@@ -634,6 +640,8 @@ tasks:
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang20-b2-cxx23/**
       - tmp/build-artifacts-clang20-b2-cxx23/**
+      - timing-logs/**
+      - cache-stats/**
 
   - key: build-clang-20-cmake
     use: [clone-capy, install-sccache, install-clang-20]
@@ -713,6 +721,8 @@ tasks:
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang20-cmake/**
       - tmp/build-artifacts-clang20-cmake/**
+      - timing-logs/**
+      - cache-stats/**
 
   # Clang 20 asan+ubsan: B2 build only
   - key: build-clang-20-asan-ubsan
@@ -806,6 +816,8 @@ tasks:
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang20-asan/**
       - tmp/build-artifacts-clang20-asan/**
+      - timing-logs/**
+      - cache-stats/**
 
   - key: install-clang-17
     run: |
@@ -898,6 +910,8 @@ tasks:
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang17-b2/**
       - tmp/build-artifacts-clang17/**
+      - timing-logs/**
+      - cache-stats/**
 
   - key: install-clang-20-multilib
     run: |
@@ -995,6 +1009,8 @@ tasks:
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang20-x86-cxx20/**
       - tmp/build-artifacts-clang20-x86-cxx20/**
+      - timing-logs/**
+      - cache-stats/**
 
   - key: build-clang-20-x86-cxx23
     use: [clone-capy, install-sccache, install-clang-20-multilib]
@@ -1081,6 +1097,8 @@ tasks:
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang20-x86-cxx23/**
       - tmp/build-artifacts-clang20-x86-cxx23/**
+      - timing-logs/**
+      - cache-stats/**
 
   # ============================================================================
   # Changelog Task (independent)
