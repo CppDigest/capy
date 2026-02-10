@@ -59,7 +59,7 @@ tasks:
       ref: ${{ init.commit-sha }}
       repository: https://github.com/CppDigest/capy.git
       path: capy-root
-      github-token: ${{ github.token }}
+      preserve-git-dir: true
 
   # Shared Boost tree setup with capy integrated (cached across all B2 builds)
   # This task clones Boost, integrates capy, runs depinst, and caches everything.
