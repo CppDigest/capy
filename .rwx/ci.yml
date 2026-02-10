@@ -57,7 +57,7 @@ tasks:
     call: git/clone 2.0.0
     with:
       ref: ${{ init.commit-sha }}
-      repository: https://github.com/CppDigest/capy.git
+      repository: CppDigest/capy
 
   # Shared Boost tree setup with capy integrated (cached across all B2 builds)
   # This task clones Boost, integrates capy, runs depinst, and caches everything.
