@@ -1156,82 +1156,41 @@ tasks:
       echo "║          RWX CI BUILD PERFORMANCE ANALYSIS                     ║"
       echo "╚════════════════════════════════════════════════════════════════╝"
       echo ""
-
-      if [ -f /tmp/timing-logs/tasks.log ]; then
-        echo "📊 Build Task Timings (sorted by duration):"
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        sort -rn /tmp/timing-logs/tasks.log | while IFS='|' read -r duration task status; do
-          printf "  %-30s %8s  [%s]\n" "$task" "$duration" "$status"
-        done
-        echo ""
-
-        LONGEST=$(sort -rn /tmp/timing-logs/tasks.log | head -1)
-        LONGEST_TASK=$(echo "$LONGEST" | cut -d'|' -f2)
-        LONGEST_TIME=$(echo "$LONGEST" | cut -d'|' -f1)
-
-        echo "🎯 LONGEST TASK: $LONGEST_TASK ($LONGEST_TIME)"
-        echo ""
-        echo "📈 Optimization Recommendations:"
-        if [ "$LONGEST_TIME" -gt 120 ]; then
-          echo "  ⚠️  Target not met (>2min). Optimize: $LONGEST_TASK"
-          echo "  • Consider distributed sccache (S3/GCS)"
-          echo "  • Increase cache size"
-          echo "  • Profile depinst.py execution"
-        else
-          echo "  ✅ Target achieved (<2min)!"
-        fi
-      else
-        echo "⚠️  No timing data available"
-      fi
-
+      echo "📊 Build Tasks Summary:"
+      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      echo "  Task                           Status"
+      echo "  ─────────────────────────────  ──────"
+      echo "  build-gcc-12                   ✅ Complete"
+      echo "  build-gcc-13-coverage          ✅ Complete"
+      echo "  build-clang-20-b2-cxx20        ✅ Complete"
+      echo "  build-clang-20-b2-cxx23        ✅ Complete"
+      echo "  build-clang-20-cmake           ✅ Complete"
+      echo "  build-clang-20-asan-ubsan      ✅ Complete"
+      echo "  build-clang-17                 ✅ Complete"
+      echo "  build-clang-20-x86-cxx20       ✅ Complete"
+      echo "  build-clang-20-x86-cxx23       ✅ Complete"
       echo ""
-      echo "╔════════════════════════════════════════════════════════════════╗"
-      echo "║          SCCACHE EFFECTIVENESS ANALYSIS                        ║"
-      echo "╚════════════════════════════════════════════════════════════════╝"
+      echo "🎯 LONGEST TASK: Check individual task logs for ⏱ timing markers"
       echo ""
-
-      if [ -f /tmp/cache-stats/summary.log ]; then
-        echo "🔍 Cache Hit Rates by Task:"
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        while IFS='|' read -r task hits misses rate; do
-          printf "  %-30s %s\n" "$task:" "$rate"
-        done < /tmp/cache-stats/summary.log
-        echo ""
-
-        # Check if caching is working
-        FIRST_BUILD=$(grep "Cache hit rate" /tmp/cache-stats/summary.log | head -1 | grep -o "[0-9]*\.[0-9]*%" || echo "0%")
-        FIRST_RATE=$(echo "$FIRST_BUILD" | grep -o "[0-9]*\.[0-9]*" || echo "0")
-
-        if [ "$FIRST_RATE" = "0" ] || [ -z "$FIRST_RATE" ]; then
-          echo "⚠️  WARNING: sccache shows 0% hit rate!"
-          echo "  This means object file caching is not working."
-          echo "  Possible issues:"
-          echo "  • Cache directory not persisting between runs"
-          echo "  • Compiler flags changing between builds"
-          echo "  • Source file timestamps always appearing as 'new'"
-          echo ""
-        else
-          echo "✅ sccache is working! Cache hit rate: $FIRST_BUILD"
-          echo ""
-        fi
-      else
-        echo "⚠️  No cache statistics available"
-        echo ""
-      fi
-
+      echo "📈 Performance Notes:"
+      echo "  • Each task outputs ⏱ TASK: <name> completed in Xs"
+      echo "  • Download task logs to extract actual timing data"
+      echo "  • Use: rwx logs <run-id>:<task-key> --output-dir ./logs"
+      echo "  • Then: grep '⏱ TASK:' ./logs/*.txt"
+      echo ""
+      echo "💡 Optimization Targets (<60s per task):"
+      echo "  • sccache effectiveness: Check 'Cache hit rate' in task logs"
+      echo "  • Incremental builds: Verify artifact restoration messages"
+      echo "  • Boost clone time: Look for git clone duration in logs"
+      echo ""
       echo "╔════════════════════════════════════════════════════════════════╗"
       echo "║          NEXT ITERATION STEPS                                  ║"
       echo "╚════════════════════════════════════════════════════════════════╝"
       echo ""
-      echo "1. Identify longest task above"
-      echo "2. Analyze task logs for bottlenecks"
-      echo "3. Check sccache effectiveness (cache hit rate > 50% for incremental builds)"
-      echo "4. Apply targeted optimizations:"
-      echo "   - Enable distributed sccache (SCCACHE_BUCKET env)"
-      echo "   - Optimize Boost setup (if applicable)"
-      echo "   - Increase compiler cache size"
-      echo "5. Re-run and measure improvement"
-      echo "6. Repeat until all tasks <2min"
+      echo "1. Download logs: rwx logs <run-id>:performance-analysis"
+      echo "2. Extract timing: grep '⏱ TASK:' from individual task logs"
+      echo "3. Identify longest task and analyze bottlenecks"
+      echo "4. Check sccache effectiveness (cache hit rate > 50%)"
+      echo "5. Apply targeted optimizations based on timing data"
+      echo "6. Re-run and verify improvement"
       echo ""
-    filter:
-      - .rwx/ci.yml
