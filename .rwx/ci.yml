@@ -1131,6 +1131,8 @@ tasks:
     use: [build-gcc-12, build-gcc-13-coverage, build-clang-20-b2-cxx20, build-clang-20-b2-cxx23, build-clang-20-cmake, build-clang-20-asan-ubsan, build-clang-17, build-clang-20-x86-cxx20, build-clang-20-x86-cxx23, changelog]
     cache: false
     run: |
+      SUMMARY_START=$(date +%s)
+
       echo "════════════════════════════════════════════════════════════════"
       echo "RWX CI BUILD SUMMARY"
       echo "════════════════════════════════════════════════════════════════"
@@ -1154,7 +1156,7 @@ tasks:
       echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
       echo "  Each task outputs timing with ⏱ TASK: <name> completed in Xs"
       echo "  Extract timing from individual task logs using:"
-      echo "    rwx logs <run-id>:<task-key> --output-dir ./logs"
+      echo "    rwx logs <run-id>:build-gcc-12 --output-dir ./logs"
       echo "    grep '⏱ TASK:' ./logs/*.txt | grep -oP 'completed in \K\d+'"
       echo ""
       echo "💡 Optimization Targets:"
@@ -1162,5 +1164,10 @@ tasks:
       echo "  • Check sccache hit rates in task logs"
       echo "  • Verify incremental build artifact restoration"
       echo ""
-      echo "🎯 LONGEST TASK: Check individual task logs for timing data"
+
+      SUMMARY_END=$(date +%s)
+      SUMMARY_DURATION=$((SUMMARY_END - SUMMARY_START))
+
+      echo "⏱ TASK: summary completed in ${SUMMARY_DURATION}s"
+      echo "🎯 LONGEST TASK: Extract from individual build task logs (search for '⏱ TASK:')"
       echo ""
