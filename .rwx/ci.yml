@@ -229,9 +229,8 @@ tasks:
       sudo apt-get install -y gcc-12 g++-12 build-essential git cmake
 
   # GCC 12: B2 build only (matches original workflow)
-  # Uses shared setup-boost-tree to eliminate redundant Boost cloning
   - key: build-gcc-12
-    use: [setup-boost-tree, install-sccache, install-gcc-12]
+    use: [clone-capy, install-sccache, install-gcc-12]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -257,8 +256,24 @@ tasks:
       chmod +x ~/bin/g++-12 ~/bin/gcc-12
       export PATH=~/bin:$PATH
 
-      # Use pre-setup Boost tree from shared task
+      # Setup Boost tree with capy integrated
+      sudo apt-get install -y python3 python-is-python3
+
+      # Clone Boost with shallow clone
+      git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
       cd boost-source
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
+      cp -r ../capy-root libs/capy
+
+      # Create root Jamfile for B2 project structure
+      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
+      echo "build-project build ;" >> libs/capy/Jamfile
+      echo "build-project test ;" >> libs/capy/Jamfile
+
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+
+      # Bootstrap B2 build system
+      ./bootstrap.sh gcc
 
       BUILD_START=$(date +%s)
 
