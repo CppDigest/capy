@@ -41,7 +41,7 @@ on:
         clone-url: ${{ event.github.pull_request.head.repo.clone_url }}
   cli:
     init:
-      commit-sha: ${{ event.git.sha }}
+      commit-sha: HEAD
 
 # Base configuration applied to all tasks
 base:
