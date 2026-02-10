@@ -230,7 +230,7 @@ tasks:
 
   # GCC 12: B2 build only (matches original workflow)
   - key: build-gcc-12
-    use: [clone-capy, install-sccache, install-gcc-12]
+    use: [setup-boost-tree, install-sccache, install-gcc-12]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -243,17 +243,10 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-gcc12-b2"
       sccache --show-stats
 
-      # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
-
-      # Clone Boost with shallow clone
-      git clone --depth 1 --branch develop https://github.com/boostorg/boost.git boost-source
+      # Use pre-setup Boost tree from setup-boost-tree task
       cd boost-source
-      git submodule update --init --depth 1 tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
 
-      # Create sccache wrapper scripts for gcc-12 BEFORE bootstrap
+      # Create sccache wrapper scripts for gcc-12
       mkdir -p ~/bin
       cat > ~/bin/g++-12 << 'EOF'
       #!/bin/bash
@@ -265,9 +258,6 @@ tasks:
       EOF
       chmod +x ~/bin/g++-12 ~/bin/gcc-12
       export PATH=~/bin:$PATH
-
-      # Bootstrap B2 with sccache wrappers in PATH
-      ./bootstrap.sh gcc
 
       BUILD_START=$(date +%s)
 
