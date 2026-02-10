@@ -1114,6 +1114,7 @@ tasks:
   # ============================================================================
   - key: performance-analysis
     use: [build-gcc-12, build-gcc-13-coverage, build-clang-20-b2-cxx20, build-clang-20-b2-cxx23, build-clang-20-cmake, build-clang-20-asan-ubsan, build-clang-17, build-clang-20-x86-cxx20, build-clang-20-x86-cxx23]
+    cache: false
     run: |
       set -x  # Enable command tracing for debugging
       echo "════════════════════════════════════════════════════════════════" >&2
