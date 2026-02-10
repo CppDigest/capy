@@ -307,21 +307,6 @@ tasks:
       echo "║                   SCCACHE STATISTICS                           ║"
       echo "╚═══════════════════════════════════════════════════════════════╝"
       sccache --show-stats
-
-      # Save sccache stats to dedicated file for easy access
-      mkdir -p "$WORKSPACE_ROOT/cache-stats"
-      sccache --show-stats > "$WORKSPACE_ROOT/cache-stats/build-gcc-12.txt" 2>&1
-
-      # Extract key metrics
-      CACHE_HITS=$(sccache --show-stats | grep -i "cache hits" | head -1 || echo "N/A")
-      CACHE_MISSES=$(sccache --show-stats | grep -i "cache misses" | head -1 || echo "N/A")
-      CACHE_RATE=$(sccache --show-stats | grep -i "cache hit rate" | head -1 || echo "N/A")
-
-      echo ""
-      echo "📊 KEY METRICS:"
-      echo "  ${CACHE_HITS}"
-      echo "  ${CACHE_MISSES}"
-      echo "  ${CACHE_RATE}"
       echo ""
 
       # ===== TIMING END =====
@@ -329,11 +314,6 @@ tasks:
       TASK_DURATION=$((TASK_END - TASK_START))
       echo "⏱ TASK: build-gcc-12 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
 
-      # Log timing and cache stats for summary (use WORKSPACE_ROOT for cross-task persistence)
-      mkdir -p "$WORKSPACE_ROOT/timing-logs"
-      echo "${TASK_DURATION}|build-gcc-12|SUCCESS" >> "$WORKSPACE_ROOT/timing-logs/tasks.log"
-      mkdir -p "$WORKSPACE_ROOT/cache-stats"
-      echo "build-gcc-12|${CACHE_HITS}|${CACHE_MISSES}|${CACHE_RATE}" >> "$WORKSPACE_ROOT/cache-stats/summary.log"
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -352,8 +332,6 @@ tasks:
       - capy-root/test/unit/Jamfile
       - tmp/sccache-gcc12-b2/**
       - tmp/build-artifacts-gcc12/**
-      - timing-logs/**
-      - cache-stats/**
 
   - key: install-gcc-13-coverage
     run: |
@@ -428,8 +406,6 @@ tasks:
       TASK_END=$(date +%s)
       TASK_DURATION=$((TASK_END - TASK_START))
       echo "⏱ TASK: build-gcc-13-coverage completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
-      mkdir -p "$WORKSPACE_ROOT/timing-logs"
-      echo "${TASK_DURATION}|build-gcc-13-coverage|SUCCESS" >> "$WORKSPACE_ROOT/timing-logs/tasks.log"
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -448,8 +424,6 @@ tasks:
       - capy-root/test/unit/Jamfile
       - tmp/sccache-gcc13-coverage/**
       - tmp/build-artifacts-gcc13-coverage/**
-      - timing-logs/**
-      - cache-stats/**
 
   # ============================================================================
   # Linux Clang Builds (5 configurations: Clang 17, Clang 20 variants, Clang 20 x86)
@@ -529,10 +503,6 @@ tasks:
       TASK_END=$(date +%s)
       TASK_DURATION=$((TASK_END - TASK_START))
       echo "⏱ TASK: build-clang-20-b2-cxx20 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
-
-      # Log timing for summary
-      mkdir -p "$WORKSPACE_ROOT/timing-logs"
-      echo "${TASK_DURATION}|build-clang-20-b2-cxx20|SUCCESS" >> "$WORKSPACE_ROOT/timing-logs/tasks.log"
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -551,8 +521,6 @@ tasks:
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang20-b2-cxx20/**
       - tmp/build-artifacts-clang20-b2-cxx20/**
-      - timing-logs/**
-      - cache-stats/**
 
   - key: build-clang-20-b2-cxx23
     use: [clone-capy, install-sccache, install-clang-20]
@@ -618,10 +586,6 @@ tasks:
       TASK_END=$(date +%s)
       TASK_DURATION=$((TASK_END - TASK_START))
       echo "⏱ TASK: build-clang-20-b2-cxx23 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
-
-      # Log timing for summary
-      mkdir -p "$WORKSPACE_ROOT/timing-logs"
-      echo "${TASK_DURATION}|build-clang-20-b2-cxx23|SUCCESS" >> "$WORKSPACE_ROOT/timing-logs/tasks.log"
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -640,8 +604,6 @@ tasks:
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang20-b2-cxx23/**
       - tmp/build-artifacts-clang20-b2-cxx23/**
-      - timing-logs/**
-      - cache-stats/**
 
   - key: build-clang-20-cmake
     use: [clone-capy, install-sccache, install-clang-20]
@@ -701,8 +663,6 @@ tasks:
       TASK_END=$(date +%s)
       TASK_DURATION=$((TASK_END - TASK_START))
       echo "⏱ TASK: build-clang-20-cmake completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
-      mkdir -p "$WORKSPACE_ROOT/timing-logs"
-      echo "${TASK_DURATION}|build-clang-20-cmake|SUCCESS" >> "$WORKSPACE_ROOT/timing-logs/tasks.log"
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -721,8 +681,6 @@ tasks:
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang20-cmake/**
       - tmp/build-artifacts-clang20-cmake/**
-      - timing-logs/**
-      - cache-stats/**
 
   # Clang 20 asan+ubsan: B2 build only
   - key: build-clang-20-asan-ubsan
@@ -794,10 +752,6 @@ tasks:
       TASK_END=$(date +%s)
       TASK_DURATION=$((TASK_END - TASK_START))
       echo "⏱ TASK: build-clang-20-asan-ubsan completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
-
-      # Log timing for summary
-      mkdir -p "$WORKSPACE_ROOT/timing-logs"
-      echo "${TASK_DURATION}|build-clang-20-asan-ubsan|SUCCESS" >> "$WORKSPACE_ROOT/timing-logs/tasks.log"
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -816,8 +770,6 @@ tasks:
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang20-asan/**
       - tmp/build-artifacts-clang20-asan/**
-      - timing-logs/**
-      - cache-stats/**
 
   - key: install-clang-17
     run: |
@@ -888,10 +840,6 @@ tasks:
       TASK_END=$(date +%s)
       TASK_DURATION=$((TASK_END - TASK_START))
       echo "⏱ TASK: build-clang-17 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
-
-      # Log timing for summary
-      mkdir -p "$WORKSPACE_ROOT/timing-logs"
-      echo "${TASK_DURATION}|build-clang-17|SUCCESS" >> "$WORKSPACE_ROOT/timing-logs/tasks.log"
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -910,8 +858,6 @@ tasks:
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang17-b2/**
       - tmp/build-artifacts-clang17/**
-      - timing-logs/**
-      - cache-stats/**
 
   - key: install-clang-20-multilib
     run: |
@@ -987,10 +933,6 @@ tasks:
       TASK_END=$(date +%s)
       TASK_DURATION=$((TASK_END - TASK_START))
       echo "⏱ TASK: build-clang-20-x86-cxx20 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
-
-      # Log timing for summary
-      mkdir -p "$WORKSPACE_ROOT/timing-logs"
-      echo "${TASK_DURATION}|build-clang-20-x86-cxx20|SUCCESS" >> "$WORKSPACE_ROOT/timing-logs/tasks.log"
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -1009,8 +951,6 @@ tasks:
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang20-x86-cxx20/**
       - tmp/build-artifacts-clang20-x86-cxx20/**
-      - timing-logs/**
-      - cache-stats/**
 
   - key: build-clang-20-x86-cxx23
     use: [clone-capy, install-sccache, install-clang-20-multilib]
@@ -1075,10 +1015,6 @@ tasks:
       TASK_END=$(date +%s)
       TASK_DURATION=$((TASK_END - TASK_START))
       echo "⏱ TASK: build-clang-20-x86-cxx23 completed in ${TASK_DURATION}s (build: ${BUILD_TIME}s)"
-
-      # Log timing for summary
-      mkdir -p "$WORKSPACE_ROOT/timing-logs"
-      echo "${TASK_DURATION}|build-clang-20-x86-cxx23|SUCCESS" >> "$WORKSPACE_ROOT/timing-logs/tasks.log"
     cache: true
     filter:
       - capy-root/**/*.cpp
@@ -1097,8 +1033,6 @@ tasks:
       - capy-root/test/unit/Jamfile
       - tmp/sccache-clang20-x86-cxx23/**
       - tmp/build-artifacts-clang20-x86-cxx23/**
-      - timing-logs/**
-      - cache-stats/**
 
   # ============================================================================
   # Changelog Task (independent)
@@ -1128,76 +1062,45 @@ tasks:
       - capy-root/**
 
   # ============================================================================
-  # Build Performance Analysis & Optimization Summary
+  # Build Performance Summary
   # ============================================================================
-  - key: performance-analysis
+  # Note: RWX tasks run in isolated workspaces. Timing data written by build tasks
+  # to their individual workspaces is not automatically shared to dependent tasks.
+  # Instead, each build task outputs timing markers (⏱ TASK:) to stdout, which can
+  # be extracted from task logs using: rwx logs <run-id>:<task-key>
+  #
+  # This summary task serves as a visual checkpoint that all builds completed.
+  # ============================================================================
+  - key: summary
     use: [build-gcc-12, build-gcc-13-coverage, build-clang-20-b2-cxx20, build-clang-20-b2-cxx23, build-clang-20-cmake, build-clang-20-asan-ubsan, build-clang-17, build-clang-20-x86-cxx20, build-clang-20-x86-cxx23]
     cache: false
     run: |
-      set -x  # Enable command tracing for debugging
-      echo "════════════════════════════════════════════════════════════════" >&2
-      echo "RWX CI BUILD PERFORMANCE ANALYSIS" >&2
-      echo "════════════════════════════════════════════════════════════════" >&2
-      echo "" >&2
-
-      # Check if timing data exists and aggregate it
-      WORKSPACE_ROOT=$(pwd)
-      echo "Working directory: $WORKSPACE_ROOT" >&2
-      ls -la "$WORKSPACE_ROOT/timing-logs/" >&2 || echo "timing-logs directory not found" >&2
-
-      if [ -f "$WORKSPACE_ROOT/timing-logs/tasks.log" ]; then
-        echo "📊 Build Task Timings (sorted by duration):" >&2
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
-        sort -rn -t'|' -k1 "$WORKSPACE_ROOT/timing-logs/tasks.log" | while IFS='|' read -r duration task status; do
-          printf "  %-35s %8ss  [%s]\n" "$task" "$duration" "$status" >&2
-        done
-
-        # Extract and highlight the longest (bottleneck) task
-        LONGEST_LINE=$(sort -rn -t'|' -k1 "$WORKSPACE_ROOT/timing-logs/tasks.log" | head -1)
-        LONGEST_DURATION=$(echo "$LONGEST_LINE" | cut -d'|' -f1)
-        LONGEST_TASK=$(echo "$LONGEST_LINE" | cut -d'|' -f2)
-
-        echo "" >&2
-        echo "🎯 LONGEST TASK: ${LONGEST_TASK} = ${LONGEST_DURATION}s" >&2
-        echo "" >&2
-
-        # Show cache statistics if available
-        if [ -f "$WORKSPACE_ROOT/cache-stats/summary.log" ]; then
-          echo "📦 Cache Statistics Summary:" >&2
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
-          cat "$WORKSPACE_ROOT/cache-stats/summary.log" >&2
-          echo "" >&2
-        fi
-      else
-        echo "⚠️  No timing data available at $WORKSPACE_ROOT/timing-logs/tasks.log" >&2
-        echo "" >&2
-        echo "📊 Build Tasks Status:" >&2
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
-        echo "  Task                           Status" >&2
-        echo "  ─────────────────────────────  ──────" >&2
-        echo "  build-gcc-12                   ✅ Complete" >&2
-        echo "  build-gcc-13-coverage          ✅ Complete" >&2
-        echo "  build-clang-20-b2-cxx20        ✅ Complete" >&2
-        echo "  build-clang-20-b2-cxx23        ✅ Complete" >&2
-        echo "  build-clang-20-cmake           ✅ Complete" >&2
-        echo "  build-clang-20-asan-ubsan      ✅ Complete" >&2
-        echo "  build-clang-17                 ✅ Complete" >&2
-        echo "  build-clang-20-x86-cxx20       ✅ Complete" >&2
-        echo "  build-clang-20-x86-cxx23       ✅ Complete" >&2
-        echo "" >&2
-      fi
-
-      echo "💡 Optimization Targets (<60s per task):" >&2
-      echo "  • sccache effectiveness: Check 'Cache hit rate' in task logs" >&2
-      echo "  • Incremental builds: Verify artifact restoration messages" >&2
-      echo "  • Boost clone time: Monitor git clone duration in logs" >&2
-      echo "" >&2
-      echo "📈 Performance Notes:" >&2
-      echo "  • Each task outputs ⏱ TASK: <name> completed in Xs" >&2
-      echo "  • Timing data aggregated from \$WORKSPACE_ROOT/timing-logs/tasks.log" >&2
-      echo "  • Use: rwx logs <run-id>:performance-analysis --output-dir ./logs" >&2
-      echo "  • Then: grep '⏱\|🎯' ./logs/*.txt" >&2
-      echo "" >&2
-
-      # Force flush to ensure logs are captured
-      sync
+      echo "════════════════════════════════════════════════════════════════"
+      echo "RWX CI BUILD SUMMARY"
+      echo "════════════════════════════════════════════════════════════════"
+      echo ""
+      echo "✅ All build tasks completed successfully"
+      echo ""
+      echo "📊 Build Tasks:"
+      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      echo "  build-gcc-12                   ✅ Complete"
+      echo "  build-gcc-13-coverage          ✅ Complete"
+      echo "  build-clang-20-b2-cxx20        ✅ Complete"
+      echo "  build-clang-20-b2-cxx23        ✅ Complete"
+      echo "  build-clang-20-cmake           ✅ Complete"
+      echo "  build-clang-20-asan-ubsan      ✅ Complete"
+      echo "  build-clang-17                 ✅ Complete"
+      echo "  build-clang-20-x86-cxx20       ✅ Complete"
+      echo "  build-clang-20-x86-cxx23       ✅ Complete"
+      echo ""
+      echo "📈 Performance Metrics:"
+      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      echo "  Each task outputs timing with ⏱ TASK: <name> completed in Xs"
+      echo "  Extract timing from individual task logs using:"
+      echo "    rwx logs <run-id>:<task-key> | grep '⏱ TASK:'"
+      echo ""
+      echo "💡 Optimization Targets:"
+      echo "  • Target: <60s per task for incremental builds"
+      echo "  • Check sccache hit rates in task logs"
+      echo "  • Verify incremental build artifact restoration"
+      echo ""
