@@ -550,7 +550,7 @@ tasks:
       - tmp/build-artifacts-clang20-b2-cxx20/**
 
   - key: build-clang-20-b2-cxx23
-    use: [clone-capy, install-sccache, install-clang-20]
+    use: [setup-boost-tree, install-sccache, install-clang-20]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -563,7 +563,7 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-b2-cxx23"
       sccache --show-stats
 
-      # Create sccache wrapper scripts for clang-20 BEFORE bootstrap
+      # Create sccache wrapper scripts for clang-20 BEFORE using boost tree
       mkdir -p ~/bin
       cat > ~/bin/clang++-20 << 'EOF'
       #!/bin/bash
@@ -576,29 +576,14 @@ tasks:
       chmod +x ~/bin/clang++-20 ~/bin/clang-20
       export PATH=~/bin:$PATH
 
-      # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
-
-      # Clone Boost with shallow clone
-      git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
-      cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-
-      # Create root Jamfile for B2 project structure
-      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
-      echo "build-project build ;" >> libs/capy/Jamfile
-      echo "build-project test ;" >> libs/capy/Jamfile
-
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-
-      # Bootstrap B2 build system
-      ./bootstrap.sh gcc
+      # Copy shared Boost tree to local workspace (avoids RWX workspace isolation issues)
+      cp -r boost-source boost-build
+      cd boost-build
 
       BUILD_START=$(date +%s)
 
       # ===== INCREMENTAL BUILD CACHING =====
-      # Restore previous build artifacts AFTER Boost tree setup (enables incremental builds)
+      # Restore previous build artifacts for incremental builds
       ARTIFACTS_DIR="$WORKSPACE_ROOT/tmp/build-artifacts-clang20-b2-cxx23"
       echo "📦 Artifacts location: $ARTIFACTS_DIR"
       if [ -d "$ARTIFACTS_DIR/bin.v2" ]; then
@@ -607,6 +592,7 @@ tasks:
       else
         echo "✗ No previous artifacts - full build"
       fi
+      echo "✓ Using shared Boost tree from setup-boost-tree task"
 
       # Run B2 build for C++23 only (sccache caches object files, artifacts enable incremental builds)
       ./b2 \
