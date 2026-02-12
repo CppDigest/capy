@@ -111,7 +111,7 @@ tasks:
       echo "build-project test ;" >> libs/capy/Jamfile
 
       # Run dependency installer once
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --no-tags" capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -283,7 +283,7 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --no-tags" capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -502,7 +502,7 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --no-tags" capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -608,7 +608,7 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --no-tags" capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -795,7 +795,7 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --no-tags" capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -910,7 +910,7 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --no-tags" capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -1027,7 +1027,7 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --no-tags" capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -1132,7 +1132,7 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --no-tags" capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
