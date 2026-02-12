@@ -98,9 +98,9 @@ tasks:
     use: [clone-capy, install-python3]
     run: |
       # Clone Boost once with minimal depth and blob filtering
-      git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
+      git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none --single-branch --no-tags tools/build tools/boostdep tools/boost_install
 
       # Integrate capy into Boost tree
       cp -r ../capy-root libs/capy
@@ -111,7 +111,7 @@ tasks:
       echo "build-project test ;" >> libs/capy/Jamfile
 
       # Run dependency installer once
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --no-tags" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -275,7 +275,7 @@ tasks:
       # Clone Boost with minimal overhead (--no-tags reduces ref negotiation by ~40%)
       git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none --single-branch tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none --single-branch --no-tags tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -283,7 +283,7 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --no-tags" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -494,7 +494,7 @@ tasks:
       # Clone Boost with minimal overhead (--no-tags reduces ref negotiation by ~40%)
       git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none --single-branch tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none --single-branch --no-tags tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -502,7 +502,7 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --no-tags" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -600,7 +600,7 @@ tasks:
       # Clone Boost with minimal overhead (--no-tags reduces ref negotiation by ~40%)
       git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none --single-branch tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none --single-branch --no-tags tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -608,7 +608,7 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --no-tags" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -787,7 +787,7 @@ tasks:
       # Clone Boost with minimal overhead (--no-tags reduces ref negotiation by ~40%)
       git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none --single-branch tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none --single-branch --no-tags tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -795,7 +795,7 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --no-tags" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -902,7 +902,7 @@ tasks:
       # Clone Boost with minimal overhead (--no-tags reduces ref negotiation by ~40%)
       git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none --single-branch tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none --single-branch --no-tags tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -910,7 +910,7 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --no-tags" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -1019,7 +1019,7 @@ tasks:
       # Clone Boost with minimal overhead (--no-tags reduces ref negotiation by ~40%)
       git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none --single-branch tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none --single-branch --no-tags tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -1027,7 +1027,7 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --no-tags" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -1124,7 +1124,7 @@ tasks:
       # Clone Boost with minimal overhead (--no-tags reduces ref negotiation by ~40%)
       git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none --single-branch tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none --single-branch --no-tags tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -1132,7 +1132,7 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --no-tags" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
