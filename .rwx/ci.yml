@@ -244,9 +244,10 @@ tasks:
       export PATH=~/bin:$PATH
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
-      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
+      # Use --filter=tree:0 for minimal clone (fetches only commit data, not trees/blobs until checkout)
+      git clone --depth 1 --filter=tree:0 --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=tree:0 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -461,9 +462,10 @@ tasks:
       export PATH=~/bin:$PATH
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
-      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
+      # Use --filter=tree:0 for minimal clone (fetches only commit data, not trees/blobs until checkout)
+      git clone --depth 1 --filter=tree:0 --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=tree:0 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -565,9 +567,10 @@ tasks:
       export PATH=~/bin:$PATH
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
-      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
+      # Use --filter=tree:0 for minimal clone (fetches only commit data, not trees/blobs until checkout)
+      git clone --depth 1 --filter=tree:0 --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=tree:0 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -750,9 +753,10 @@ tasks:
       export PATH=~/bin:$PATH
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
-      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
+      # Use --filter=tree:0 for minimal clone (fetches only commit data, not trees/blobs until checkout)
+      git clone --depth 1 --filter=tree:0 --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=tree:0 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -863,9 +867,10 @@ tasks:
       export PATH=~/bin:$PATH
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
-      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
+      # Use --filter=tree:0 for minimal clone (fetches only commit data, not trees/blobs until checkout)
+      git clone --depth 1 --filter=tree:0 --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=tree:0 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -978,9 +983,10 @@ tasks:
       export PATH=~/bin:$PATH
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
-      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
+      # Use --filter=tree:0 for minimal clone (fetches only commit data, not trees/blobs until checkout)
+      git clone --depth 1 --filter=tree:0 --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=tree:0 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -1081,9 +1087,10 @@ tasks:
       export PATH=~/bin:$PATH
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
-      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
+      # Use --filter=tree:0 for minimal clone (fetches only commit data, not trees/blobs until checkout)
+      git clone --depth 1 --filter=tree:0 --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=tree:0 tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
