@@ -100,7 +100,7 @@ tasks:
       # Clone Boost once with minimal depth and blob filtering
       git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none --single-branch --no-tags tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
 
       # Integrate capy into Boost tree
       cp -r ../capy-root libs/capy
@@ -275,7 +275,7 @@ tasks:
       # Clone Boost with minimal overhead (--no-tags reduces ref negotiation by ~40%)
       git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none --single-branch --no-tags tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -494,7 +494,7 @@ tasks:
       # Clone Boost with minimal overhead (--no-tags reduces ref negotiation by ~40%)
       git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none --single-branch --no-tags tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -600,7 +600,7 @@ tasks:
       # Clone Boost with minimal overhead (--no-tags reduces ref negotiation by ~40%)
       git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none --single-branch --no-tags tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -787,7 +787,7 @@ tasks:
       # Clone Boost with minimal overhead (--no-tags reduces ref negotiation by ~40%)
       git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none --single-branch --no-tags tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -902,7 +902,7 @@ tasks:
       # Clone Boost with minimal overhead (--no-tags reduces ref negotiation by ~40%)
       git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none --single-branch --no-tags tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -1019,7 +1019,7 @@ tasks:
       # Clone Boost with minimal overhead (--no-tags reduces ref negotiation by ~40%)
       git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none --single-branch --no-tags tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -1124,7 +1124,7 @@ tasks:
       # Clone Boost with minimal overhead (--no-tags reduces ref negotiation by ~40%)
       git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none --single-branch --no-tags tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
