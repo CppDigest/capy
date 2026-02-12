@@ -255,8 +255,8 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      # Parallelize dependency fetching with --jobs flag (parallelizes git operations)
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" --jobs $(nproc) capy
+      # Fetch Boost dependencies (depinst.py does not support --jobs flag)
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -474,8 +474,8 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      # Parallelize dependency fetching with --jobs flag (parallelizes git operations)
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" --jobs $(nproc) capy
+      # Fetch Boost dependencies (depinst.py does not support --jobs flag)
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -580,8 +580,8 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      # Parallelize dependency fetching with --jobs flag (parallelizes git operations)
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" --jobs $(nproc) capy
+      # Fetch Boost dependencies (depinst.py does not support --jobs flag)
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -767,8 +767,8 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      # Parallelize dependency fetching with --jobs flag (parallelizes git operations)
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" --jobs $(nproc) capy
+      # Fetch Boost dependencies (depinst.py does not support --jobs flag)
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -882,8 +882,8 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      # Parallelize dependency fetching with --jobs flag (parallelizes git operations)
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" --jobs $(nproc) capy
+      # Fetch Boost dependencies (depinst.py does not support --jobs flag)
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -999,8 +999,8 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      # Parallelize dependency fetching with --jobs flag (parallelizes git operations)
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" --jobs $(nproc) capy
+      # Fetch Boost dependencies (depinst.py does not support --jobs flag)
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -1104,8 +1104,8 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      # Parallelize dependency fetching with --jobs flag (parallelizes git operations)
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" --jobs $(nproc) capy
+      # Fetch Boost dependencies (depinst.py does not support --jobs flag)
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
