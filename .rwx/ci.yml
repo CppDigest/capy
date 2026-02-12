@@ -375,8 +375,10 @@ tasks:
         echo "✗ No previous artifacts - full build"
       fi
 
-      # Build with sccache (caches object files)
+      # Build with sccache and parallel jobs (auto-detect CPU cores)
       BUILD_START=$(date +%s)
+      NPROC=$(nproc)
+      echo "🔧 Building with ${NPROC} parallel jobs"
       cmake -B __build__ \
         -DCMAKE_BUILD_TYPE=Debug \
         -DCMAKE_CXX_STANDARD=20 \
@@ -386,8 +388,8 @@ tasks:
         -DCMAKE_C_COMPILER_LAUNCHER=sccache \
         -DCMAKE_CXX_FLAGS="--coverage -fprofile-arcs -ftest-coverage" \
         -DCMAKE_C_FLAGS="--coverage -fprofile-arcs -ftest-coverage"
-      cmake --build __build__ --target boost_capy_tests
-      ctest --test-dir __build__
+      cmake --build __build__ --target boost_capy_tests --parallel ${NPROC}
+      ctest --test-dir __build__ --parallel ${NPROC}
       BUILD_END=$(date +%s)
       BUILD_TIME=$((BUILD_END - BUILD_START))
 
@@ -683,8 +685,10 @@ tasks:
         echo "✗ No previous artifacts - full build"
       fi
 
-      # Build
+      # Build with parallel jobs (auto-detect CPU cores)
       BUILD_START=$(date +%s)
+      NPROC=$(nproc)
+      echo "🔧 Building with ${NPROC} parallel jobs"
       cmake -B __build__ \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_CXX_STANDARD=23 \
@@ -692,8 +696,8 @@ tasks:
         -DCMAKE_C_COMPILER=clang-20 \
         -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
         -DCMAKE_C_COMPILER_LAUNCHER=sccache
-      cmake --build __build__ --target boost_capy_tests
-      ctest --test-dir __build__
+      cmake --build __build__ --target boost_capy_tests --parallel ${NPROC}
+      ctest --test-dir __build__ --parallel ${NPROC}
       BUILD_END=$(date +%s)
       BUILD_TIME=$((BUILD_END - BUILD_START))
 
