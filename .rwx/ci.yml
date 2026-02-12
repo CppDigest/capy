@@ -244,10 +244,10 @@ tasks:
       export PATH=~/bin:$PATH
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
-      # Use --filter=tree:0 for minimal clone (fetches only commit data, not trees/blobs until checkout)
-      git clone --depth 1 --filter=tree:0 --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
+      # Use --filter=blob:none for faster cloning (skips file contents until checkout)
+      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=tree:0 tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -255,8 +255,8 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      # Parallelize dependency fetching to reduce 15-20s down to 5-8s per task
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --jobs=$(nproc)" capy
+      # Parallelize dependency fetching with --jobs flag (parallelizes git operations)
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" --jobs $(nproc) capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -463,10 +463,10 @@ tasks:
       export PATH=~/bin:$PATH
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
-      # Use --filter=tree:0 for minimal clone (fetches only commit data, not trees/blobs until checkout)
-      git clone --depth 1 --filter=tree:0 --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
+      # Use --filter=blob:none for faster cloning (skips file contents until checkout)
+      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=tree:0 tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -474,8 +474,8 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      # Parallelize dependency fetching to reduce 15-20s down to 5-8s per task
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --jobs=$(nproc)" capy
+      # Parallelize dependency fetching with --jobs flag (parallelizes git operations)
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" --jobs $(nproc) capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -569,10 +569,10 @@ tasks:
       export PATH=~/bin:$PATH
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
-      # Use --filter=tree:0 for minimal clone (fetches only commit data, not trees/blobs until checkout)
-      git clone --depth 1 --filter=tree:0 --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
+      # Use --filter=blob:none for faster cloning (skips file contents until checkout)
+      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=tree:0 tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -580,8 +580,8 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      # Parallelize dependency fetching to reduce 15-20s down to 5-8s per task
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --jobs=$(nproc)" capy
+      # Parallelize dependency fetching with --jobs flag (parallelizes git operations)
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" --jobs $(nproc) capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -756,10 +756,10 @@ tasks:
       export PATH=~/bin:$PATH
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
-      # Use --filter=tree:0 for minimal clone (fetches only commit data, not trees/blobs until checkout)
-      git clone --depth 1 --filter=tree:0 --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
+      # Use --filter=blob:none for faster cloning (skips file contents until checkout)
+      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=tree:0 tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -767,8 +767,8 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      # Parallelize dependency fetching to reduce 15-20s down to 5-8s per task
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --jobs=$(nproc)" capy
+      # Parallelize dependency fetching with --jobs flag (parallelizes git operations)
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" --jobs $(nproc) capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -871,10 +871,10 @@ tasks:
       export PATH=~/bin:$PATH
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
-      # Use --filter=tree:0 for minimal clone (fetches only commit data, not trees/blobs until checkout)
-      git clone --depth 1 --filter=tree:0 --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
+      # Use --filter=blob:none for faster cloning (skips file contents until checkout)
+      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=tree:0 tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -882,8 +882,8 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      # Parallelize dependency fetching to reduce 15-20s down to 5-8s per task
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --jobs=$(nproc)" capy
+      # Parallelize dependency fetching with --jobs flag (parallelizes git operations)
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" --jobs $(nproc) capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -988,10 +988,10 @@ tasks:
       export PATH=~/bin:$PATH
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
-      # Use --filter=tree:0 for minimal clone (fetches only commit data, not trees/blobs until checkout)
-      git clone --depth 1 --filter=tree:0 --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
+      # Use --filter=blob:none for faster cloning (skips file contents until checkout)
+      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=tree:0 tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -999,8 +999,8 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      # Parallelize dependency fetching to reduce 15-20s down to 5-8s per task
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --jobs=$(nproc)" capy
+      # Parallelize dependency fetching with --jobs flag (parallelizes git operations)
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" --jobs $(nproc) capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
@@ -1093,10 +1093,10 @@ tasks:
       export PATH=~/bin:$PATH
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
-      # Use --filter=tree:0 for minimal clone (fetches only commit data, not trees/blobs until checkout)
-      git clone --depth 1 --filter=tree:0 --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
+      # Use --filter=blob:none for faster cloning (skips file contents until checkout)
+      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git submodule update --init --depth 1 --filter=tree:0 tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -1104,8 +1104,8 @@ tasks:
       echo "build-project build ;" >> libs/capy/Jamfile
       echo "build-project test ;" >> libs/capy/Jamfile
 
-      # Parallelize dependency fetching to reduce 15-20s down to 5-8s per task
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1 --jobs=$(nproc)" capy
+      # Parallelize dependency fetching with --jobs flag (parallelizes git operations)
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" --jobs $(nproc) capy
 
       # Bootstrap B2 build system
       ./bootstrap.sh gcc
