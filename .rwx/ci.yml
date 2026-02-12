@@ -288,8 +288,11 @@ tasks:
         echo "✗ No previous artifacts - full build"
       fi
 
-      # Run B2 build (using sccache wrappers, artifacts enable incremental builds)
+      # Run B2 build with parallel jobs (using sccache wrappers, artifacts enable incremental builds)
+      NPROC=$(nproc)
+      echo "🔧 Building with ${NPROC} parallel jobs"
       ./b2 \
+        -j${NPROC} \
         toolset=gcc-12 \
         cxxstd=20 \
         variant=release \
@@ -506,8 +509,11 @@ tasks:
         echo "✗ No previous artifacts - full build"
       fi
 
-      # Run B2 build for C++20 only (sccache caches object files, artifacts enable incremental builds)
+      # Run B2 build for C++20 only with parallel jobs (sccache caches object files, artifacts enable incremental builds)
+      NPROC=$(nproc)
+      echo "🔧 Building with ${NPROC} parallel jobs"
       ./b2 \
+        -j${NPROC} \
         toolset=clang-20 \
         cxxstd=20 \
         variant=release \
@@ -610,8 +616,11 @@ tasks:
         echo "✗ No previous artifacts - full build"
       fi
 
-      # Run B2 build for C++23 only (sccache caches object files, artifacts enable incremental builds)
+      # Run B2 build for C++23 only with parallel jobs (sccache caches object files, artifacts enable incremental builds)
+      NPROC=$(nproc)
+      echo "🔧 Building with ${NPROC} parallel jobs"
       ./b2 \
+        -j${NPROC} \
         toolset=clang-20 \
         cxxstd=23 \
         variant=release \
@@ -796,9 +805,12 @@ tasks:
       # Disable ASLR for sanitizers
       sudo sysctl vm.mmap_rnd_bits=28 || true
 
-      # Run B2 build (sccache caches object files, artifacts enable incremental builds)
+      # Run B2 build with parallel jobs (sccache caches object files, artifacts enable incremental builds)
       BUILD_START=$(date +%s)
+      NPROC=$(nproc)
+      echo "🔧 Building with ${NPROC} parallel jobs"
       ./b2 \
+        -j${NPROC} \
         toolset=clang-20 \
         cxxstd=20 \
         variant=debug \
@@ -909,8 +921,11 @@ tasks:
         echo "✗ No previous artifacts - full build"
       fi
 
-      # Run B2 build (sccache caches object files, artifacts enable incremental builds)
+      # Run B2 build with parallel jobs (sccache caches object files, artifacts enable incremental builds)
+      NPROC=$(nproc)
+      echo "🔧 Building with ${NPROC} parallel jobs"
       ./b2 \
+        -j${NPROC} \
         toolset=clang-17 \
         cxxstd=20 \
         variant=release \
@@ -1022,9 +1037,12 @@ tasks:
         echo "✗ No previous artifacts - full build"
       fi
 
-      # Run B2 build for C++20 only (32-bit x86, sccache caches object files, artifacts enable incremental builds)
+      # Run B2 build for C++20 only with parallel jobs (32-bit x86, sccache caches object files, artifacts enable incremental builds)
       BUILD_START=$(date +%s)
+      NPROC=$(nproc)
+      echo "🔧 Building with ${NPROC} parallel jobs"
       ./b2 \
+        -j${NPROC} \
         toolset=clang-20 \
         cxxstd=20 \
         variant=release \
@@ -1125,9 +1143,12 @@ tasks:
         echo "✗ No previous artifacts - full build"
       fi
 
-      # Run B2 build for C++23 only (32-bit x86, sccache caches object files, artifacts enable incremental builds)
+      # Run B2 build for C++23 only with parallel jobs (32-bit x86, sccache caches object files, artifacts enable incremental builds)
       BUILD_START=$(date +%s)
+      NPROC=$(nproc)
+      echo "🔧 Building with ${NPROC} parallel jobs"
       ./b2 \
+        -j${NPROC} \
         toolset=clang-20 \
         cxxstd=23 \
         variant=release \
