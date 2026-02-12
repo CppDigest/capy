@@ -92,20 +92,36 @@ tasks:
     filter:
       - .rwx/ci.yml
 
-  # Shared Boost base repository clone (cached reference for --reference clones)
-  # Acts as object database for lightweight clones, eliminating 50+ MB downloads per task
-  # Each build task uses git clone --reference to this base, creating instant clones
-  - key: setup-boost-base
-    use: [install-python3]
+  # Shared Boost repository clone (cached, reused across all B2 builds)
+  # This eliminates redundant 50+ MB downloads per build task
+  - key: setup-boost-tree
+    use: [clone-capy, install-python3]
     run: |
-      # Clone Boost once as object database (with .git preserved for --reference)
-      git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-base
-      cd boost-base
+      # Clone Boost once with minimal depth and blob filtering
+      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
+      cd boost-source
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
-      echo "✓ Boost base repository ready for --reference clones"
+
+      # Integrate capy into Boost tree
+      cp -r ../capy-root libs/capy
+
+      # Create root Jamfile for B2 project structure
+      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
+      echo "build-project build ;" >> libs/capy/Jamfile
+      echo "build-project test ;" >> libs/capy/Jamfile
+
+      # Run dependency installer once
+      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
+
+      # Bootstrap B2 build system
+      ./bootstrap.sh gcc
+
+      echo "✓ Boost tree setup complete"
     cache: true
     filter:
+      - capy-root/**
       - .rwx/ci.yml
+      - boost-source/**
 
   # ============================================================================
   # Windows and macOS Builds
@@ -228,7 +244,7 @@ tasks:
 
   # GCC 12: B2 build only (matches original workflow)
   - key: build-gcc-12
-    use: [clone-capy, install-sccache, install-python3, install-gcc-12, setup-boost-base]
+    use: [setup-boost-tree, install-sccache, install-gcc-12]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -241,7 +257,7 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-gcc12-b2"
       sccache --show-stats
 
-      # Create sccache wrapper scripts for gcc-12 BEFORE bootstrap
+      # Create sccache wrapper scripts for gcc-12 BEFORE B2 build
       mkdir -p ~/bin
       cat > ~/bin/g++-12 << 'EOF'
       #!/bin/bash
@@ -254,24 +270,8 @@ tasks:
       chmod +x ~/bin/g++-12 ~/bin/gcc-12
       export PATH=~/bin:$PATH
 
-      # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
-
-      # Use git clone --reference for instant clone (shares objects with boost-base, ~1s vs ~30s)
-      # Use absolute path for --reference to ensure it works across different task workspaces
-      git clone --reference "$WORKSPACE_ROOT/boost-base" --dissociate https://github.com/boostorg/boost.git boost-source
+      # Use shared Boost tree from setup-boost-tree task
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-
-      # Create root Jamfile for B2 project structure
-      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
-      echo "build-project build ;" >> libs/capy/Jamfile
-      echo "build-project test ;" >> libs/capy/Jamfile
-
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-
-      # Bootstrap B2 build system
-      ./bootstrap.sh gcc
 
       BUILD_START=$(date +%s)
 
@@ -448,7 +448,7 @@ tasks:
   # Clang 20: Both B2 and CMake builds (matches build-cmake: true in GitHub Actions)
   # Split into C++20 and C++23 builds to keep each task <2min
   - key: build-clang-20-b2-cxx20
-    use: [clone-capy, install-sccache, install-python3, install-clang-20, setup-boost-base]
+    use: [setup-boost-tree, install-sccache, install-clang-20]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -461,7 +461,7 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-b2-cxx20"
       sccache --show-stats
 
-      # Create sccache wrapper scripts for clang-20 BEFORE bootstrap
+      # Create sccache wrapper scripts for clang-20 BEFORE B2 build
       mkdir -p ~/bin
       cat > ~/bin/clang++-20 << 'EOF'
       #!/bin/bash
@@ -474,24 +474,8 @@ tasks:
       chmod +x ~/bin/clang++-20 ~/bin/clang-20
       export PATH=~/bin:$PATH
 
-      # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
-
-      # Use git clone --reference for instant clone (shares objects with boost-base, ~1s vs ~30s)
-      # Use absolute path for --reference to ensure it works across different task workspaces
-      git clone --reference "$WORKSPACE_ROOT/boost-base" --dissociate https://github.com/boostorg/boost.git boost-source
+      # Use shared Boost tree from setup-boost-tree task
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-
-      # Create root Jamfile for B2 project structure
-      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
-      echo "build-project build ;" >> libs/capy/Jamfile
-      echo "build-project test ;" >> libs/capy/Jamfile
-
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-
-      # Bootstrap B2 build system
-      ./bootstrap.sh gcc
 
       BUILD_START=$(date +%s)
 
@@ -555,7 +539,7 @@ tasks:
       - tmp/build-artifacts-clang20-b2-cxx20/**
 
   - key: build-clang-20-b2-cxx23
-    use: [clone-capy, install-sccache, install-python3, install-clang-20, setup-boost-base]
+    use: [setup-boost-tree, install-sccache, install-clang-20]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -568,7 +552,7 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-b2-cxx23"
       sccache --show-stats
 
-      # Create sccache wrapper scripts for clang-20 BEFORE bootstrap
+      # Create sccache wrapper scripts for clang-20 BEFORE B2 build
       mkdir -p ~/bin
       cat > ~/bin/clang++-20 << 'EOF'
       #!/bin/bash
@@ -581,24 +565,8 @@ tasks:
       chmod +x ~/bin/clang++-20 ~/bin/clang-20
       export PATH=~/bin:$PATH
 
-      # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
-
-      # Use git clone --reference for instant clone (shares objects with boost-base, ~1s vs ~30s)
-      # Use absolute path for --reference to ensure it works across different task workspaces
-      git clone --reference "$WORKSPACE_ROOT/boost-base" --dissociate https://github.com/boostorg/boost.git boost-source
+      # Use shared Boost tree from setup-boost-tree task
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-
-      # Create root Jamfile for B2 project structure
-      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
-      echo "build-project build ;" >> libs/capy/Jamfile
-      echo "build-project test ;" >> libs/capy/Jamfile
-
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-
-      # Bootstrap B2 build system
-      ./bootstrap.sh gcc
 
       BUILD_START=$(date +%s)
 
@@ -742,7 +710,7 @@ tasks:
 
   # Clang 20 asan+ubsan: B2 build only
   - key: build-clang-20-asan-ubsan
-    use: [clone-capy, install-sccache, install-python3, install-clang-20, setup-boost-base]
+    use: [setup-boost-tree, install-sccache, install-clang-20]
     env:
       SCCACHE_CACHE_SIZE: 1G
       ASAN_OPTIONS: detect_invalid_pointer_pairs=0:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
@@ -756,7 +724,7 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-asan"
       sccache --show-stats
 
-      # Create sccache wrapper scripts for clang-20 BEFORE bootstrap
+      # Create sccache wrapper scripts for clang-20 BEFORE B2 build
       mkdir -p ~/bin
       cat > ~/bin/clang++-20 << 'EOF'
       #!/bin/bash
@@ -769,24 +737,8 @@ tasks:
       chmod +x ~/bin/clang++-20 ~/bin/clang-20
       export PATH=~/bin:$PATH
 
-      # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
-
-      # Use git clone --reference for instant clone (shares objects with boost-base, ~1s vs ~30s)
-      # Use absolute path for --reference to ensure it works across different task workspaces
-      git clone --reference "$WORKSPACE_ROOT/boost-base" --dissociate https://github.com/boostorg/boost.git boost-source
+      # Use shared Boost tree from setup-boost-tree task
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-
-      # Create root Jamfile for B2 project structure
-      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
-      echo "build-project build ;" >> libs/capy/Jamfile
-      echo "build-project test ;" >> libs/capy/Jamfile
-
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-
-      # Bootstrap B2 build system
-      ./bootstrap.sh gcc
 
       # ===== INCREMENTAL BUILD CACHING =====
       # Restore previous build artifacts AFTER Boost tree setup (enables incremental builds)
@@ -859,7 +811,7 @@ tasks:
 
   # Clang 17: B2 build only (matches original workflow)
   - key: build-clang-17
-    use: [clone-capy, install-sccache, install-python3, install-clang-17, setup-boost-base]
+    use: [setup-boost-tree, install-sccache, install-clang-17]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -872,7 +824,7 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang17-b2"
       sccache --show-stats
 
-      # Create sccache wrapper scripts for clang-17 BEFORE bootstrap
+      # Create sccache wrapper scripts for clang-17 BEFORE B2 build
       mkdir -p ~/bin
       cat > ~/bin/clang++-17 << 'EOF'
       #!/bin/bash
@@ -885,24 +837,8 @@ tasks:
       chmod +x ~/bin/clang++-17 ~/bin/clang-17
       export PATH=~/bin:$PATH
 
-      # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
-
-      # Use git clone --reference for instant clone (shares objects with boost-base, ~1s vs ~30s)
-      # Use absolute path for --reference to ensure it works across different task workspaces
-      git clone --reference "$WORKSPACE_ROOT/boost-base" --dissociate https://github.com/boostorg/boost.git boost-source
+      # Use shared Boost tree from setup-boost-tree task
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-
-      # Create root Jamfile for B2 project structure
-      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
-      echo "build-project build ;" >> libs/capy/Jamfile
-      echo "build-project test ;" >> libs/capy/Jamfile
-
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-
-      # Bootstrap B2 build system
-      ./bootstrap.sh gcc
 
       BUILD_START=$(date +%s)
 
@@ -977,7 +913,7 @@ tasks:
   # Clang 20 x86: B2 build only (matches original workflow)
   # Split into C++20 and C++23 builds to keep each task <2min
   - key: build-clang-20-x86-cxx20
-    use: [clone-capy, install-sccache, install-python3, install-clang-20-multilib, setup-boost-base]
+    use: [setup-boost-tree, install-sccache, install-clang-20-multilib]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -990,7 +926,7 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-x86-cxx20"
       sccache --show-stats
 
-      # Create sccache wrapper scripts for clang-20 BEFORE bootstrap
+      # Create sccache wrapper scripts for clang-20 BEFORE B2 build
       mkdir -p ~/bin
       cat > ~/bin/clang++-20 << 'EOF'
       #!/bin/bash
@@ -1003,24 +939,8 @@ tasks:
       chmod +x ~/bin/clang++-20 ~/bin/clang-20
       export PATH=~/bin:$PATH
 
-      # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
-
-      # Use git clone --reference for instant clone (shares objects with boost-base, ~1s vs ~30s)
-      # Use absolute path for --reference to ensure it works across different task workspaces
-      git clone --reference "$WORKSPACE_ROOT/boost-base" --dissociate https://github.com/boostorg/boost.git boost-source
+      # Use shared Boost tree from setup-boost-tree task
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-
-      # Create root Jamfile for B2 project structure
-      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
-      echo "build-project build ;" >> libs/capy/Jamfile
-      echo "build-project test ;" >> libs/capy/Jamfile
-
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-
-      # Bootstrap B2 build system
-      ./bootstrap.sh gcc
 
       # ===== INCREMENTAL BUILD CACHING =====
       # Restore previous build artifacts AFTER Boost tree setup (enables incremental builds)
@@ -1083,7 +1003,7 @@ tasks:
       - tmp/build-artifacts-clang20-x86-cxx20/**
 
   - key: build-clang-20-x86-cxx23
-    use: [clone-capy, install-sccache, install-python3, install-clang-20-multilib, setup-boost-base]
+    use: [setup-boost-tree, install-sccache, install-clang-20-multilib]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -1096,7 +1016,7 @@ tasks:
       export SCCACHE_DIR="$WORKSPACE_ROOT/tmp/sccache-clang20-x86-cxx23"
       sccache --show-stats
 
-      # Create sccache wrapper scripts for clang-20 BEFORE bootstrap
+      # Create sccache wrapper scripts for clang-20 BEFORE B2 build
       mkdir -p ~/bin
       cat > ~/bin/clang++-20 << 'EOF'
       #!/bin/bash
@@ -1109,24 +1029,8 @@ tasks:
       chmod +x ~/bin/clang++-20 ~/bin/clang-20
       export PATH=~/bin:$PATH
 
-      # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
-
-      # Use git clone --reference for instant clone (shares objects with boost-base, ~1s vs ~30s)
-      # Use absolute path for --reference to ensure it works across different task workspaces
-      git clone --reference "$WORKSPACE_ROOT/boost-base" --dissociate https://github.com/boostorg/boost.git boost-source
+      # Use shared Boost tree from setup-boost-tree task
       cd boost-source
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
-      cp -r ../capy-root libs/capy
-
-      # Create root Jamfile for B2 project structure
-      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
-      echo "build-project build ;" >> libs/capy/Jamfile
-      echo "build-project test ;" >> libs/capy/Jamfile
-
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-
-      # Bootstrap B2 build system
-      ./bootstrap.sh gcc
 
       # ===== INCREMENTAL BUILD CACHING =====
       # Restore previous build artifacts AFTER Boost tree setup (enables incremental builds)
