@@ -272,13 +272,10 @@ tasks:
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
-      # Clone Boost with optimized sparse checkout (reduces clone from ~50MB to ~15MB)
-      git clone --depth 1 --filter=blob:none --branch develop --no-checkout https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with shallow single-branch clone (--single-branch reduces ref negotiation overhead)
+      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git sparse-checkout init --cone
-      git sparse-checkout set libs tools/build tools/boostdep tools/boost_install
-      git checkout develop
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none --single-branch tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -494,13 +491,10 @@ tasks:
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
-      # Clone Boost with optimized sparse checkout (reduces clone from ~50MB to ~15MB)
-      git clone --depth 1 --filter=blob:none --branch develop --no-checkout https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with shallow single-branch clone (--single-branch reduces ref negotiation overhead)
+      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git sparse-checkout init --cone
-      git sparse-checkout set libs tools/build tools/boostdep tools/boost_install
-      git checkout develop
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none --single-branch tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -603,13 +597,10 @@ tasks:
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
-      # Clone Boost with optimized sparse checkout (reduces clone from ~50MB to ~15MB)
-      git clone --depth 1 --filter=blob:none --branch develop --no-checkout https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with shallow single-branch clone (--single-branch reduces ref negotiation overhead)
+      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git sparse-checkout init --cone
-      git sparse-checkout set libs tools/build tools/boostdep tools/boost_install
-      git checkout develop
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none --single-branch tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -793,13 +784,10 @@ tasks:
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
-      # Clone Boost with optimized sparse checkout (reduces clone from ~50MB to ~15MB)
-      git clone --depth 1 --filter=blob:none --branch develop --no-checkout https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with shallow single-branch clone (--single-branch reduces ref negotiation overhead)
+      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git sparse-checkout init --cone
-      git sparse-checkout set libs tools/build tools/boostdep tools/boost_install
-      git checkout develop
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none --single-branch tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -911,13 +899,10 @@ tasks:
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
-      # Clone Boost with optimized sparse checkout (reduces clone from ~50MB to ~15MB)
-      git clone --depth 1 --filter=blob:none --branch develop --no-checkout https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with shallow single-branch clone (--single-branch reduces ref negotiation overhead)
+      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git sparse-checkout init --cone
-      git sparse-checkout set libs tools/build tools/boostdep tools/boost_install
-      git checkout develop
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none --single-branch tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -1031,13 +1016,10 @@ tasks:
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
-      # Clone Boost with optimized sparse checkout (reduces clone from ~50MB to ~15MB)
-      git clone --depth 1 --filter=blob:none --branch develop --no-checkout https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with shallow single-branch clone (--single-branch reduces ref negotiation overhead)
+      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git sparse-checkout init --cone
-      git sparse-checkout set libs tools/build tools/boostdep tools/boost_install
-      git checkout develop
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none --single-branch tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
@@ -1139,13 +1121,10 @@ tasks:
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
-      # Clone Boost with optimized sparse checkout (reduces clone from ~50MB to ~15MB)
-      git clone --depth 1 --filter=blob:none --branch develop --no-checkout https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with shallow single-branch clone (--single-branch reduces ref negotiation overhead)
+      git clone --depth 1 --filter=blob:none --branch develop --single-branch https://github.com/boostorg/boost.git boost-source
       cd boost-source
-      git sparse-checkout init --cone
-      git sparse-checkout set libs tools/build tools/boostdep tools/boost_install
-      git checkout develop
-      git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
+      git submodule update --init --depth 1 --filter=blob:none --single-branch tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
       # Create root Jamfile for B2 project structure
