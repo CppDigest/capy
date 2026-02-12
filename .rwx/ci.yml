@@ -92,36 +92,20 @@ tasks:
     filter:
       - .rwx/ci.yml
 
-  # Shared Boost repository clone (cached, reused across all B2 builds)
-  # This eliminates redundant 50+ MB downloads per build task
-  - key: setup-boost-tree
-    use: [clone-capy, install-python3]
+  # Shared Boost base repository clone (cached reference for --reference clones)
+  # Acts as object database for lightweight clones, eliminating 50+ MB downloads per task
+  # Each build task uses git clone --reference to this base, creating instant clones
+  - key: setup-boost-base
+    use: [install-python3]
     run: |
-      # Clone Boost once with minimal depth and blob filtering
-      git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
-      cd boost-source
+      # Clone Boost once as object database (with .git preserved for --reference)
+      git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-base
+      cd boost-base
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
-
-      # Integrate capy into Boost tree
-      cp -r ../capy-root libs/capy
-
-      # Create root Jamfile for B2 project structure
-      echo "use-project /boost/capy : build ;" > libs/capy/Jamfile
-      echo "build-project build ;" >> libs/capy/Jamfile
-      echo "build-project test ;" >> libs/capy/Jamfile
-
-      # Run dependency installer once
-      python3 tools/boostdep/depinst/depinst.py --git_args "--depth 1" capy
-
-      # Bootstrap B2 build system
-      ./bootstrap.sh gcc
-
-      echo "✓ Boost tree setup complete"
+      echo "✓ Boost base repository ready for --reference clones"
     cache: true
     filter:
-      - capy-root/**
       - .rwx/ci.yml
-      - boost-source/**
 
   # ============================================================================
   # Windows and macOS Builds
@@ -244,7 +228,7 @@ tasks:
 
   # GCC 12: B2 build only (matches original workflow)
   - key: build-gcc-12
-    use: [clone-capy, install-sccache, install-python3, install-gcc-12]
+    use: [clone-capy, install-sccache, install-python3, install-gcc-12, setup-boost-base]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -272,8 +256,8 @@ tasks:
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
-      # Clone Boost with minimal overhead (--no-tags reduces ref negotiation by ~40%)
-      git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
+      # Use git clone --reference for instant clone (shares objects with boost-base, ~1s vs ~30s)
+      git clone --reference ../boost-base --dissociate https://github.com/boostorg/boost.git boost-source
       cd boost-source
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
@@ -463,7 +447,7 @@ tasks:
   # Clang 20: Both B2 and CMake builds (matches build-cmake: true in GitHub Actions)
   # Split into C++20 and C++23 builds to keep each task <2min
   - key: build-clang-20-b2-cxx20
-    use: [clone-capy, install-sccache, install-python3, install-clang-20]
+    use: [clone-capy, install-sccache, install-python3, install-clang-20, setup-boost-base]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -491,8 +475,8 @@ tasks:
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
-      # Clone Boost with minimal overhead (--no-tags reduces ref negotiation by ~40%)
-      git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
+      # Use git clone --reference for instant clone (shares objects with boost-base, ~1s vs ~30s)
+      git clone --reference ../boost-base --dissociate https://github.com/boostorg/boost.git boost-source
       cd boost-source
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
@@ -569,7 +553,7 @@ tasks:
       - tmp/build-artifacts-clang20-b2-cxx20/**
 
   - key: build-clang-20-b2-cxx23
-    use: [clone-capy, install-sccache, install-python3, install-clang-20]
+    use: [clone-capy, install-sccache, install-python3, install-clang-20, setup-boost-base]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -597,8 +581,8 @@ tasks:
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
-      # Clone Boost with minimal overhead (--no-tags reduces ref negotiation by ~40%)
-      git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
+      # Use git clone --reference for instant clone (shares objects with boost-base, ~1s vs ~30s)
+      git clone --reference ../boost-base --dissociate https://github.com/boostorg/boost.git boost-source
       cd boost-source
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
@@ -755,7 +739,7 @@ tasks:
 
   # Clang 20 asan+ubsan: B2 build only
   - key: build-clang-20-asan-ubsan
-    use: [clone-capy, install-sccache, install-python3, install-clang-20]
+    use: [clone-capy, install-sccache, install-python3, install-clang-20, setup-boost-base]
     env:
       SCCACHE_CACHE_SIZE: 1G
       ASAN_OPTIONS: detect_invalid_pointer_pairs=0:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
@@ -784,8 +768,8 @@ tasks:
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
-      # Clone Boost with minimal overhead (--no-tags reduces ref negotiation by ~40%)
-      git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
+      # Use git clone --reference for instant clone (shares objects with boost-base, ~1s vs ~30s)
+      git clone --reference ../boost-base --dissociate https://github.com/boostorg/boost.git boost-source
       cd boost-source
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
@@ -871,7 +855,7 @@ tasks:
 
   # Clang 17: B2 build only (matches original workflow)
   - key: build-clang-17
-    use: [clone-capy, install-sccache, install-python3, install-clang-17]
+    use: [clone-capy, install-sccache, install-python3, install-clang-17, setup-boost-base]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -899,8 +883,8 @@ tasks:
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
-      # Clone Boost with minimal overhead (--no-tags reduces ref negotiation by ~40%)
-      git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
+      # Use git clone --reference for instant clone (shares objects with boost-base, ~1s vs ~30s)
+      git clone --reference ../boost-base --dissociate https://github.com/boostorg/boost.git boost-source
       cd boost-source
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
@@ -988,7 +972,7 @@ tasks:
   # Clang 20 x86: B2 build only (matches original workflow)
   # Split into C++20 and C++23 builds to keep each task <2min
   - key: build-clang-20-x86-cxx20
-    use: [clone-capy, install-sccache, install-python3, install-clang-20-multilib]
+    use: [clone-capy, install-sccache, install-python3, install-clang-20-multilib, setup-boost-base]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -1016,8 +1000,8 @@ tasks:
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
-      # Clone Boost with minimal overhead (--no-tags reduces ref negotiation by ~40%)
-      git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
+      # Use git clone --reference for instant clone (shares objects with boost-base, ~1s vs ~30s)
+      git clone --reference ../boost-base --dissociate https://github.com/boostorg/boost.git boost-source
       cd boost-source
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
@@ -1093,7 +1077,7 @@ tasks:
       - tmp/build-artifacts-clang20-x86-cxx20/**
 
   - key: build-clang-20-x86-cxx23
-    use: [clone-capy, install-sccache, install-python3, install-clang-20-multilib]
+    use: [clone-capy, install-sccache, install-python3, install-clang-20-multilib, setup-boost-base]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -1121,8 +1105,8 @@ tasks:
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
-      # Clone Boost with minimal overhead (--no-tags reduces ref negotiation by ~40%)
-      git clone --depth 1 --filter=blob:none --branch develop --single-branch --no-tags https://github.com/boostorg/boost.git boost-source
+      # Use git clone --reference for instant clone (shares objects with boost-base, ~1s vs ~30s)
+      git clone --reference ../boost-base --dissociate https://github.com/boostorg/boost.git boost-source
       cd boost-source
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
