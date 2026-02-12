@@ -257,7 +257,8 @@ tasks:
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
       # Use git clone --reference for instant clone (shares objects with boost-base, ~1s vs ~30s)
-      git clone --reference ../boost-base --dissociate https://github.com/boostorg/boost.git boost-source
+      # Use absolute path for --reference to ensure it works across different task workspaces
+      git clone --reference "$WORKSPACE_ROOT/boost-base" --dissociate https://github.com/boostorg/boost.git boost-source
       cd boost-source
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
@@ -476,7 +477,8 @@ tasks:
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
       # Use git clone --reference for instant clone (shares objects with boost-base, ~1s vs ~30s)
-      git clone --reference ../boost-base --dissociate https://github.com/boostorg/boost.git boost-source
+      # Use absolute path for --reference to ensure it works across different task workspaces
+      git clone --reference "$WORKSPACE_ROOT/boost-base" --dissociate https://github.com/boostorg/boost.git boost-source
       cd boost-source
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
@@ -582,7 +584,8 @@ tasks:
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
       # Use git clone --reference for instant clone (shares objects with boost-base, ~1s vs ~30s)
-      git clone --reference ../boost-base --dissociate https://github.com/boostorg/boost.git boost-source
+      # Use absolute path for --reference to ensure it works across different task workspaces
+      git clone --reference "$WORKSPACE_ROOT/boost-base" --dissociate https://github.com/boostorg/boost.git boost-source
       cd boost-source
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
@@ -769,7 +772,8 @@ tasks:
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
       # Use git clone --reference for instant clone (shares objects with boost-base, ~1s vs ~30s)
-      git clone --reference ../boost-base --dissociate https://github.com/boostorg/boost.git boost-source
+      # Use absolute path for --reference to ensure it works across different task workspaces
+      git clone --reference "$WORKSPACE_ROOT/boost-base" --dissociate https://github.com/boostorg/boost.git boost-source
       cd boost-source
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
@@ -884,7 +888,8 @@ tasks:
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
       # Use git clone --reference for instant clone (shares objects with boost-base, ~1s vs ~30s)
-      git clone --reference ../boost-base --dissociate https://github.com/boostorg/boost.git boost-source
+      # Use absolute path for --reference to ensure it works across different task workspaces
+      git clone --reference "$WORKSPACE_ROOT/boost-base" --dissociate https://github.com/boostorg/boost.git boost-source
       cd boost-source
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
@@ -1001,7 +1006,8 @@ tasks:
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
       # Use git clone --reference for instant clone (shares objects with boost-base, ~1s vs ~30s)
-      git clone --reference ../boost-base --dissociate https://github.com/boostorg/boost.git boost-source
+      # Use absolute path for --reference to ensure it works across different task workspaces
+      git clone --reference "$WORKSPACE_ROOT/boost-base" --dissociate https://github.com/boostorg/boost.git boost-source
       cd boost-source
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
@@ -1106,7 +1112,8 @@ tasks:
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
       # Use git clone --reference for instant clone (shares objects with boost-base, ~1s vs ~30s)
-      git clone --reference ../boost-base --dissociate https://github.com/boostorg/boost.git boost-source
+      # Use absolute path for --reference to ensure it works across different task workspaces
+      git clone --reference "$WORKSPACE_ROOT/boost-base" --dissociate https://github.com/boostorg/boost.git boost-source
       cd boost-source
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
