@@ -75,12 +75,19 @@ tasks:
     filter:
       - .rwx/ci.yml
 
+  # Shared apt-get update (eliminates 5+ redundant update calls across install tasks)
+  # Each apt-get update takes 5-10s, this saves 25-50s total
+  - key: apt-update
+    run: sudo apt-get update
+    cache: true
+    filter:
+      - .rwx/ci.yml
+
   # Shared Python3 installation (required for B2 builds using depinst.py)
   # Eliminates 10 duplicate apt-get install calls across build tasks
   - key: install-python3
-    run: |
-      sudo apt-get update
-      sudo apt-get install -y python3 python-is-python3 git
+    use: [apt-update]
+    run: sudo apt-get install -y python3 python-is-python3 git
     cache: true
     filter:
       - .rwx/ci.yml
@@ -88,9 +95,9 @@ tasks:
   # Shared Boost repository clone (cached, reused across all B2 builds)
   # This eliminates redundant 50+ MB downloads per build task
   - key: setup-boost-tree
-    use: [clone-capy]
+    use: [clone-capy, apt-update]
     run: |
-      sudo apt-get update && sudo apt-get install -y python3 python-is-python3 git
+      sudo apt-get install -y python3 python-is-python3 git
 
       # Clone Boost once with minimal depth and blob filtering
       git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
@@ -234,9 +241,8 @@ tasks:
   #   env:
   #     ASAN_OPTIONS: detect_invalid_pointer_pairs=2:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
   - key: install-gcc-12
-    run: |
-      sudo apt-get update
-      sudo apt-get install -y gcc-12 g++-12 build-essential git cmake
+    use: [apt-update]
+    run: sudo apt-get install -y gcc-12 g++-12 build-essential git cmake
 
   # GCC 12: B2 build only (matches original workflow)
   - key: build-gcc-12
@@ -352,9 +358,8 @@ tasks:
       - tmp/build-artifacts-gcc12/**
 
   - key: install-gcc-13-coverage
-    run: |
-      sudo apt-get update
-      sudo apt-get install -y gcc-13 g++-13 build-essential git cmake lcov wget unzip
+    use: [apt-update]
+    run: sudo apt-get install -y gcc-13 g++-13 build-essential git cmake lcov wget unzip
 
   # GCC 13 coverage: CMake build only (coverage flag disables B2 in GitHub Actions)
   - key: build-gcc-13-coverage
@@ -449,8 +454,8 @@ tasks:
   # Linux Clang Builds (5 configurations: Clang 17, Clang 20 variants, Clang 20 x86)
   # ============================================================================
   - key: install-clang-20
+    use: [apt-update]
     run: |
-      sudo apt-get update
       sudo apt-get install -y wget gnupg software-properties-common
       wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
       sudo add-apt-repository "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main"
@@ -863,9 +868,8 @@ tasks:
       - tmp/build-artifacts-clang20-asan/**
 
   - key: install-clang-17
-    run: |
-      sudo apt-get update
-      sudo apt-get install -y clang-17 build-essential git cmake
+    use: [apt-update]
+    run: sudo apt-get install -y clang-17 build-essential git cmake
 
   # Clang 17: B2 build only (matches original workflow)
   - key: build-clang-17
@@ -975,8 +979,8 @@ tasks:
       - tmp/build-artifacts-clang17/**
 
   - key: install-clang-20-multilib
+    use: [apt-update]
     run: |
-      sudo apt-get update
       sudo apt-get install -y wget gnupg software-properties-common
       wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
       sudo add-apt-repository "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main"
