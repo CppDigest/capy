@@ -272,9 +272,12 @@ tasks:
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
-      # Clone Boost with shallow clone
-      git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with optimized sparse checkout (reduces clone from ~50MB to ~15MB)
+      git clone --depth 1 --filter=blob:none --branch develop --no-checkout https://github.com/boostorg/boost.git boost-source
       cd boost-source
+      git sparse-checkout init --cone
+      git sparse-checkout set libs tools/build tools/boostdep tools/boost_install
+      git checkout develop
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
@@ -491,9 +494,12 @@ tasks:
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
-      # Clone Boost with shallow clone
-      git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with optimized sparse checkout (reduces clone from ~50MB to ~15MB)
+      git clone --depth 1 --filter=blob:none --branch develop --no-checkout https://github.com/boostorg/boost.git boost-source
       cd boost-source
+      git sparse-checkout init --cone
+      git sparse-checkout set libs tools/build tools/boostdep tools/boost_install
+      git checkout develop
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
@@ -597,9 +603,12 @@ tasks:
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
-      # Clone Boost with shallow clone
-      git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with optimized sparse checkout (reduces clone from ~50MB to ~15MB)
+      git clone --depth 1 --filter=blob:none --branch develop --no-checkout https://github.com/boostorg/boost.git boost-source
       cd boost-source
+      git sparse-checkout init --cone
+      git sparse-checkout set libs tools/build tools/boostdep tools/boost_install
+      git checkout develop
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
@@ -784,9 +793,12 @@ tasks:
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
-      # Clone Boost with shallow clone
-      git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with optimized sparse checkout (reduces clone from ~50MB to ~15MB)
+      git clone --depth 1 --filter=blob:none --branch develop --no-checkout https://github.com/boostorg/boost.git boost-source
       cd boost-source
+      git sparse-checkout init --cone
+      git sparse-checkout set libs tools/build tools/boostdep tools/boost_install
+      git checkout develop
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
@@ -899,9 +911,12 @@ tasks:
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
-      # Clone Boost with shallow clone
-      git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with optimized sparse checkout (reduces clone from ~50MB to ~15MB)
+      git clone --depth 1 --filter=blob:none --branch develop --no-checkout https://github.com/boostorg/boost.git boost-source
       cd boost-source
+      git sparse-checkout init --cone
+      git sparse-checkout set libs tools/build tools/boostdep tools/boost_install
+      git checkout develop
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
@@ -1016,9 +1031,12 @@ tasks:
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
-      # Clone Boost with shallow clone
-      git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with optimized sparse checkout (reduces clone from ~50MB to ~15MB)
+      git clone --depth 1 --filter=blob:none --branch develop --no-checkout https://github.com/boostorg/boost.git boost-source
       cd boost-source
+      git sparse-checkout init --cone
+      git sparse-checkout set libs tools/build tools/boostdep tools/boost_install
+      git checkout develop
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
@@ -1121,9 +1139,12 @@ tasks:
 
       # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
-      # Clone Boost with shallow clone
-      git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
+      # Clone Boost with optimized sparse checkout (reduces clone from ~50MB to ~15MB)
+      git clone --depth 1 --filter=blob:none --branch develop --no-checkout https://github.com/boostorg/boost.git boost-source
       cd boost-source
+      git sparse-checkout init --cone
+      git sparse-checkout set libs tools/build tools/boostdep tools/boost_install
+      git checkout develop
       git submodule update --init --depth 1 --filter=blob:none tools/build tools/boostdep tools/boost_install
       cp -r ../capy-root libs/capy
 
