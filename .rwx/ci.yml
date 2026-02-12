@@ -75,6 +75,16 @@ tasks:
     filter:
       - .rwx/ci.yml
 
+  # Shared Python3 installation (required for B2 builds using depinst.py)
+  # Eliminates 10 duplicate apt-get install calls across build tasks
+  - key: install-python3
+    run: |
+      sudo apt-get update
+      sudo apt-get install -y python3 python-is-python3 git
+    cache: true
+    filter:
+      - .rwx/ci.yml
+
   # Shared Boost repository clone (cached, reused across all B2 builds)
   # This eliminates redundant 50+ MB downloads per build task
   - key: setup-boost-tree
@@ -230,7 +240,7 @@ tasks:
 
   # GCC 12: B2 build only (matches original workflow)
   - key: build-gcc-12
-    use: [clone-capy, install-sccache, install-gcc-12]
+    use: [clone-capy, install-sccache, install-python3, install-gcc-12]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -256,8 +266,7 @@ tasks:
       chmod +x ~/bin/g++-12 ~/bin/gcc-12
       export PATH=~/bin:$PATH
 
-      # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
+      # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
       # Clone Boost with shallow clone
       git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
@@ -451,7 +460,7 @@ tasks:
   # Clang 20: Both B2 and CMake builds (matches build-cmake: true in GitHub Actions)
   # Split into C++20 and C++23 builds to keep each task <2min
   - key: build-clang-20-b2-cxx20
-    use: [clone-capy, install-sccache, install-clang-20]
+    use: [clone-capy, install-sccache, install-python3, install-clang-20]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -477,8 +486,7 @@ tasks:
       chmod +x ~/bin/clang++-20 ~/bin/clang-20
       export PATH=~/bin:$PATH
 
-      # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
+      # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
       # Clone Boost with shallow clone
       git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
@@ -558,7 +566,7 @@ tasks:
       - tmp/build-artifacts-clang20-b2-cxx20/**
 
   - key: build-clang-20-b2-cxx23
-    use: [clone-capy, install-sccache, install-clang-20]
+    use: [clone-capy, install-sccache, install-python3, install-clang-20]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -584,8 +592,7 @@ tasks:
       chmod +x ~/bin/clang++-20 ~/bin/clang-20
       export PATH=~/bin:$PATH
 
-      # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
+      # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
       # Clone Boost with shallow clone
       git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
@@ -745,7 +752,7 @@ tasks:
 
   # Clang 20 asan+ubsan: B2 build only
   - key: build-clang-20-asan-ubsan
-    use: [clone-capy, install-sccache, install-clang-20]
+    use: [clone-capy, install-sccache, install-python3, install-clang-20]
     env:
       SCCACHE_CACHE_SIZE: 1G
       ASAN_OPTIONS: detect_invalid_pointer_pairs=0:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
@@ -772,8 +779,7 @@ tasks:
       chmod +x ~/bin/clang++-20 ~/bin/clang-20
       export PATH=~/bin:$PATH
 
-      # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
+      # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
       # Clone Boost with shallow clone
       git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
@@ -863,7 +869,7 @@ tasks:
 
   # Clang 17: B2 build only (matches original workflow)
   - key: build-clang-17
-    use: [clone-capy, install-sccache, install-clang-17]
+    use: [clone-capy, install-sccache, install-python3, install-clang-17]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -889,8 +895,7 @@ tasks:
       chmod +x ~/bin/clang++-17 ~/bin/clang-17
       export PATH=~/bin:$PATH
 
-      # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
+      # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
       # Clone Boost with shallow clone
       git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
@@ -981,7 +986,7 @@ tasks:
   # Clang 20 x86: B2 build only (matches original workflow)
   # Split into C++20 and C++23 builds to keep each task <2min
   - key: build-clang-20-x86-cxx20
-    use: [clone-capy, install-sccache, install-clang-20-multilib]
+    use: [clone-capy, install-sccache, install-python3, install-clang-20-multilib]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -1007,8 +1012,7 @@ tasks:
       chmod +x ~/bin/clang++-20 ~/bin/clang-20
       export PATH=~/bin:$PATH
 
-      # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
+      # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
       # Clone Boost with shallow clone
       git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
@@ -1087,7 +1091,7 @@ tasks:
       - tmp/build-artifacts-clang20-x86-cxx20/**
 
   - key: build-clang-20-x86-cxx23
-    use: [clone-capy, install-sccache, install-clang-20-multilib]
+    use: [clone-capy, install-sccache, install-python3, install-clang-20-multilib]
     env:
       SCCACHE_CACHE_SIZE: 1G
     run: |
@@ -1113,8 +1117,7 @@ tasks:
       chmod +x ~/bin/clang++-20 ~/bin/clang-20
       export PATH=~/bin:$PATH
 
-      # Setup Boost tree with capy integrated
-      sudo apt-get install -y python3 python-is-python3
+      # Setup Boost tree with capy integrated (python3 already installed via install-python3 task)
 
       # Clone Boost with shallow clone
       git clone --depth 1 --filter=blob:none --branch develop https://github.com/boostorg/boost.git boost-source
